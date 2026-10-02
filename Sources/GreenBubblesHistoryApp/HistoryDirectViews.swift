@@ -740,15 +740,17 @@ private struct HistoryDirectTimelineView: View {
   @Bindable var model: HistoryBrowserModel
   let conversationID: String
   @State private var chatSearch = ""
+  @State private var isChatSearchVisible = false
   @State private var readingPosition: String?
   @State private var paginationAnchor: String?
 
   var body: some View {
     VStack(spacing: 0) {
-      HStack {
+      HStack(spacing: 8) {
         VStack(alignment: .leading, spacing: 3) {
           Text(model.selectedDirectConversation?.displayName ?? conversationID)
             .font(.title2.weight(.semibold))
+            .lineLimit(1)
           Text(
             model.selectedDirectConversation.map { model.directCategory(for: $0) } == "other"
               ? "其他会话" : conversationID.hasSuffix("@chatroom") ? "群聊" : "个人聊天"
@@ -756,35 +758,45 @@ private struct HistoryDirectTimelineView: View {
           .font(.caption).foregroundStyle(.secondary)
         }
         Spacer()
+        if isChatSearchVisible {
+          HistorySearchField(
+            prompt: "搜索当前聊天", text: $chatSearch, focusOnAppear: true,
+            onSubmit: searchCurrentChat, onCancel: closeChatSearch
+          )
+          .frame(minWidth: 120, idealWidth: 220, maxWidth: 260)
+          .accessibilityIdentifier("chat-search-field")
+        }
+        Button {
+          if isChatSearchVisible {
+            closeChatSearch()
+          } else {
+            isChatSearchVisible = true
+          }
+        } label: {
+          Image(systemName: "magnifyingglass")
+            .frame(width: 32, height: 32)
+            .contentShape(Rectangle())
+            .foregroundStyle(isChatSearchVisible ? HistoryDesign.accent : Color.secondary)
+        }
+        .buttonStyle(.plain)
+        .help(isChatSearchVisible ? "收起搜索（Esc）" : "搜索当前聊天")
+        .accessibilityLabel(isChatSearchVisible ? "收起聊天搜索" : "搜索当前聊天")
+        .accessibilityIdentifier("chat-search-toggle")
         Button {
           model.returnToLatestDirectMessages()
         } label: {
           Image(systemName: "arrow.clockwise")
-        }.help("刷新最新消息")
+            .frame(width: 32, height: 32)
+            .contentShape(Rectangle())
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .help("刷新最新消息")
 
       }
       .padding(.horizontal, 18)
       .padding(.vertical, 12)
       .background(HistoryChatPalette.timeline)
-
-      HStack(spacing: 10) {
-        HistorySearchField(
-          prompt: "在当前聊天中搜索", text: $chatSearch,
-          onSubmit: {
-            guard !chatSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-              return
-            }
-            model.directSearchConversationID = conversationID
-            model.directSearchQuery = chatSearch
-            model.directSection = .search
-          }
-        ).frame(height: 28)
-        Button("搜索") {
-          model.directSearchConversationID = conversationID
-          model.directSearchQuery = chatSearch
-          model.directSection = .search
-        }.disabled(chatSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-      }.padding(.horizontal, 18).padding(.vertical, 10).background(HistoryChatPalette.timeline)
 
       if let error = model.directMessageError {
         DirectInlineError(message: error)
@@ -887,6 +899,20 @@ private struct HistoryDirectTimelineView: View {
       }
     }
     .background(HistoryChatPalette.timeline)
+    .onChange(of: conversationID) { _, _ in closeChatSearch() }
+  }
+
+  private func closeChatSearch() {
+    isChatSearchVisible = false
+    chatSearch = ""
+  }
+
+  private func searchCurrentChat() {
+    let query = chatSearch.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !query.isEmpty else { return }
+    model.directSearchConversationID = conversationID
+    model.directSearchQuery = query
+    model.directSection = .search
   }
 }
 
@@ -1093,9 +1119,9 @@ private struct DirectFilterField: View {
   let prompt: String
   var body: some View {
     HistorySearchField(prompt: prompt, text: $text)
-      .frame(height: 28)
-      .padding(.horizontal, 12)
-      .padding(.vertical, 8)
+      .padding(.horizontal, 14)
+      .padding(.top, 2)
+      .padding(.bottom, 10)
       .background(HistoryChatPalette.sidebar)
   }
 }
