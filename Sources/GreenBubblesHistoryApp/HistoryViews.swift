@@ -44,6 +44,12 @@ struct HistoryRootView: View {
       #endif
       model.openStartupBundleIfNeeded()
     }
+    .task {
+      while !Task.isCancelled {
+        do { try await Task.sleep(for: .seconds(60)) } catch { return }
+        model.refreshConversationRangeClock()
+      }
+    }
     .dropDestination(for: URL.self) { urls, _ in
       guard let directory = urls.first,
         (try? directory.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true

@@ -20,6 +20,16 @@ struct HistoryDirectConnectionSheet: View {
       }
 
       Form {
+        Section("会话显示") {
+          Picker("联系人和群聊时间范围", selection: $model.conversationRange) {
+            ForEach(HistoryConversationRange.allCases) { range in
+              Text(range.title).tag(range)
+            }
+          }
+          .accessibilityIdentifier("conversation-time-range")
+          Text("按最近消息时间显示会话，选择后立即生效并自动保存。选择“所有”可查看全部会话。")
+            .font(.caption).foregroundStyle(.secondary)
+        }
         Section("本机读取工具") {
           pathField(
             title: "读取工具",
@@ -727,7 +737,7 @@ private struct HistoryDirectConversationList: View {
           ContentUnavailableView(
             "暂无会话",
             systemImage: "bubble.left",
-            description: Text("可调整搜索条件；其余会话会自动补齐。")
+            description: Text("可调整搜索条件，或在高级设置中扩大时间范围；其余会话会自动补齐。")
           )
         }
       }

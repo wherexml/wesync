@@ -25,6 +25,8 @@ which parts, if any, an AI gets to see. Start with the
 
 ## Everyday use
 
+- [会话时间范围](CONVERSATION_RANGE.md)：设置联系人和群聊的显示期限、持久化及重复验收。
+
 - [User guide](USER_GUIDE.md): first run, finding your WeChat data, browsing,
   and making and opening backups.
 - [FAQ](FAQ.md): common questions, including the ones where the answer is

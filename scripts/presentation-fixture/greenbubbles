@@ -29,6 +29,18 @@ elif operation=='conversations.list':
   base.update(items=page,page={'limit':100,'returned':len(page),'hasMore':offset+100<230})
   if offset+100<230:base['page']['nextCursor']=str(offset+100)
 
+ if (root/'conversation-range-acceptance').exists():
+  import datetime
+  now=datetime.datetime(2026,10,2,12,tzinfo=datetime.timezone.utc)
+  dates=[int((now-datetime.timedelta(days=d)).timestamp()) for d in [1,8,40,100,400]]
+  dates += [int(datetime.datetime(2026,9,2,12,tzinfo=datetime.timezone.utc).timestamp()),0]
+  base['items']=[]
+  for category in ['personal','group','other']:
+   for i,stamp in enumerate(dates):
+    ident=f'range-{category}-{i}'+('@chatroom' if category=='group' else '')
+    base['items'].append({'id':ident,'displayName':f'Synthetic {category} {i}','summary':'Synthetic range fixture','summaryDecodeState':'complete','summaryTruncated':False,'sortTimestamp':stamp*1000 if i==0 else stamp,'isOfficialAccount':category=='other'})
+  base['page']={'limit':100,'returned':len(base['items']),'hasMore':False}
+
 elif operation=='messages.list':
  if '--json' not in a:raise SystemExit('Native message queries must explicitly request JSON')
  samples=[('text','Text','这是一段合成消息，开发与验收不连接微信。'),('quote','Quote',{'reply_text':'这个方向可以，周五确认。','refer_sender':'小林','refer_content':'新界面什么时候可以验收？'}),('image','Image',{}),('quote','Quote',{'reply_text':None,'refer_content':None,'raw_xml':''}),('image','Image',{}),('quote','Quote',{'raw_xml':'<msg><appmsg><title>XML 引用恢复成功</title><refermsg><displayname>小周</displayname><content>仅使用现有原文，不猜测缺失内容。</content></refermsg></appmsg></msg>'}),('system','System','一条消息已撤回')]

@@ -36,6 +36,79 @@
         domain: "OfflineAcceptance", code: 2, userInfo: [NSLocalizedDescriptionKey: "Timed out"])
     }
     var failure: String?
+    if FileManager.default.fileExists(
+      atPath: root.appending(path: "conversation-range-acceptance").path)
+    {
+      do {
+        model.rememberDirectConnection = false
+        model.conversationRangeReferenceDate = Date(timeIntervalSince1970: 1_790_942_400)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
+        try require(model.directConversations.count == 21, "full-source-retained")
+        for category in ["personal", "group", "other"] {
+          model.directChatCategory = category
+          for (range, count) in [
+            (HistoryConversationRange.week, 1), (.month, 3), (.threeMonths, 4), (.year, 5),
+            (.all, 7),
+          ] {
+            model.conversationRange = range
+            try require(
+              model.filteredDirectConversations.count == count, "\(category)-\(range.rawValue)")
+            model.conversationFilter = "Synthetic"
+            try require(
+              model.filteredDirectConversations.count == count,
+              "search-intersection-\(category)-\(range.rawValue)")
+            model.conversationFilter = ""
+          }
+        }
+        model.directChatCategory = "personal"
+        model.selectDirectConversation("range-personal-4")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.conversationRange = .month
+        try require(
+          model.directSelectedConversationID == nil && model.directMessages.isEmpty,
+          "hidden-selection-cleared")
+        model.conversationRange = .all
+        try require(
+          model.filteredDirectConversations.count == 7, "expansion-restores-unknown-and-old")
+        try require(model.directConversations.count == 21, "filter-never-deletes-source")
+        model.conversationRange = .threeMonths
+        let restored = HistoryBrowserModel(arguments: [])
+        try require(restored.conversationRange == .threeMonths, "preference-persisted")
+        let calendar = Calendar(identifier: .gregorian)
+        let monthEnd = Date(timeIntervalSince1970: 1_743_422_400)
+        let cutoff = HistoryConversationRange.month.cutoff(
+          relativeTo: monthEnd, calendar: calendar)!
+        try require(
+          calendar.dateComponents([.month, .day], from: cutoff).month == 2
+            && calendar.component(.day, from: cutoff) == 28, "calendar-month-end")
+        for range in HistoryConversationRange.allCases where range != .all {
+          let cutoff = range.cutoff(relativeTo: model.conversationRangeReferenceDate)!
+          try require(
+            range.includes(cutoff, relativeTo: model.conversationRangeReferenceDate),
+            "inclusive-boundary-\(range.rawValue)")
+          try require(
+            !range.includes(
+              cutoff.addingTimeInterval(-1), relativeTo: model.conversationRangeReferenceDate),
+            "older-than-boundary-\(range.rawValue)")
+          try require(
+            !range.includes(nil, relativeTo: model.conversationRangeReferenceDate),
+            "unknown-time-hidden-\(range.rawValue)")
+        }
+        model.conversationRange = .month
+      } catch { failure = error.localizedDescription }
+      let report: [String: Any] = [
+        "checks": checks, "passed": failure == nil, "error": failure ?? "",
+        "source": "synthetic-only", "wechatRead": false,
+      ]
+      if let data = try? JSONSerialization.data(
+        withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+      {
+        try? data.write(to: root.appending(path: "conversation-range-acceptance.json"))
+      }
+      return
+    }
     if FileManager.default.fileExists(atPath: root.appending(path: "message-cache-acceptance").path)
     {
       do {

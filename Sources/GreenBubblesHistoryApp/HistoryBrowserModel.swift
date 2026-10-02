@@ -72,6 +72,14 @@ final class HistoryBrowserModel {
   var selectedSection: HistorySection? = .overview
   var selectedConversationID: String?
   var selectedContactID: String?
+  var conversationRangeReferenceDate = Date()
+  var conversationRange: HistoryConversationRange = .month {
+    didSet {
+      UserDefaults.standard.set(
+        conversationRange.rawValue, forKey: HistoryConversationRange.defaultsKey)
+      clearConversationOutsideRange()
+    }
+  }
   var conversationFilter = ""
   var contactFilter = ""
   var searchQuery = ""
@@ -204,6 +212,9 @@ final class HistoryBrowserModel {
       liveExecutablePath = executable.path
     }
     let defaults = UserDefaults.standard
+    conversationRange =
+      defaults.string(forKey: HistoryConversationRange.defaultsKey)
+      .flatMap(HistoryConversationRange.init(rawValue:)) ?? .month
     directCategoryOverrides =
       defaults.dictionary(forKey: "history.direct.categoryOverrides.v1") as? [String: String] ?? [:]
     rememberDirectConnection = defaults.object(forKey: "history.direct.remember") as? Bool ?? true
@@ -263,8 +274,13 @@ final class HistoryBrowserModel {
   var filteredConversations: [HistoryConversation] {
     guard let session else { return [] }
     let query = conversationFilter.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !query.isEmpty else { return session.conversations }
-    return session.conversations.filter { conversation in
+    let visible = session.conversations.filter {
+      conversationRange.includes(
+        session.conversationStatistics[$0.id]?.latestMessageDate,
+        relativeTo: conversationRangeReferenceDate)
+    }
+    guard !query.isEmpty else { return visible }
+    return visible.filter { conversation in
       conversation.humanLabel.localizedCaseInsensitiveContains(query)
         || conversation.participants.contains {
           $0.displayName.localizedCaseInsensitiveContains(query)
@@ -275,8 +291,16 @@ final class HistoryBrowserModel {
   var filteredContacts: [HistoryContact] {
     guard let session else { return [] }
     let query = contactFilter.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !query.isEmpty else { return session.contacts }
-    return session.contacts.filter { contact in
+    let visible = session.contacts.filter { contact in
+      conversationRange == .all
+        || contact.enabledConversationIDs.contains {
+          conversationRange.includes(
+            session.conversationStatistics[$0]?.latestMessageDate,
+            relativeTo: conversationRangeReferenceDate)
+        }
+    }
+    guard !query.isEmpty else { return visible }
+    return visible.filter { contact in
       contact.displayName.localizedCaseInsensitiveContains(query)
         || contact.conversationProfiles.contains {
           $0.conversationLabel.localizedCaseInsensitiveContains(query)
@@ -332,12 +356,48 @@ final class HistoryBrowserModel {
     let query = conversationFilter.trimmingCharacters(in: .whitespacesAndNewlines)
     let visible = directConversations.filter { item in
       directCategory(for: item) == directChatCategory
+        && conversationRange.includes(item.sortDate, relativeTo: conversationRangeReferenceDate)
     }
     guard !query.isEmpty else { return visible }
     return visible.filter { conversation in
       conversation.displayName.localizedCaseInsensitiveContains(query)
         || (conversation.summary?.localizedCaseInsensitiveContains(query) == true)
         || (conversation.lastSenderDisplayName?.localizedCaseInsensitiveContains(query) == true)
+    }
+  }
+
+  func refreshConversationRangeClock() {
+    conversationRangeReferenceDate = Date()
+    clearConversationOutsideRange()
+  }
+
+  private func clearConversationOutsideRange() {
+    if let conversation = selectedDirectConversation,
+      !conversationRange.includes(conversation.sortDate, relativeTo: conversationRangeReferenceDate)
+    {
+      directMessageTask?.cancel()
+      activeDirectMessageID = UUID()
+      isLoadingDirectMessages = false
+      directSelectedConversationID = nil
+      directMessages = []
+      directMessageCursor = nil
+      directMessageError = nil
+      directIsSearchContext = false
+    }
+    if let id = selectedConversationID, let session,
+      !conversationRange.includes(
+        session.conversationStatistics[id]?.latestMessageDate,
+        relativeTo: conversationRangeReferenceDate)
+    {
+      timelineTask?.cancel()
+      activeTimelineID = UUID()
+      isLoadingTimeline = false
+      selectedConversationID = nil
+      timelineMessages = []
+      timelineCursor = nil
+    }
+    if let id = selectedContactID, !filteredContacts.contains(where: { $0.id == id }) {
+      selectedContactID = nil
     }
   }
 
