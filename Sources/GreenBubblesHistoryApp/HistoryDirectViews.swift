@@ -140,7 +140,7 @@ struct HistoryDirectConnectionSheet: View {
           .keyboardShortcut(.cancelAction)
         Spacer()
         Button("连接并查看", action: connect)
-          .buttonStyle(.borderedProminent)
+          .buttonStyle(HistoryActionStyle(prominent: true))
           .keyboardShortcut(.defaultAction)
       }
     }
@@ -347,7 +347,11 @@ struct HistoryDirectLibraryView: View {
     HSplitView {
       VStack(spacing: 0) {
         HStack {
-          Text("聊天").font(.title2.weight(.semibold))
+          VStack(alignment: .leading, spacing: 3) {
+            Text("聊天").font(.system(size: 22, weight: .semibold, design: .rounded))
+            Text("GreenBubbles").font(.system(size: 11, weight: .medium)).foregroundStyle(
+              .secondary)
+          }
           Spacer()
           Menu {
             Button("连接设置…") { model.presentDirectConnection() }
@@ -367,7 +371,9 @@ struct HistoryDirectLibraryView: View {
           Text(notice).font(.caption).foregroundStyle(.orange).padding(.horizontal)
         }
         HistoryDirectConversationList(model: model)
-      }.frame(minWidth: 280, idealWidth: 320, maxWidth: 380)
+      }
+      .frame(minWidth: 280, idealWidth: 320, maxWidth: 380)
+      .background(HistoryChatPalette.sidebar)
       Group {
         if model.directSection == .overview {
           HistoryDirectOverviewContents(model: model)
@@ -377,6 +383,7 @@ struct HistoryDirectLibraryView: View {
           detail
         }
       }.frame(minWidth: 580, maxWidth: .infinity, maxHeight: .infinity)
+        .background(HistoryDesign.canvas)
     }
   }
 
@@ -664,7 +671,7 @@ private struct HistoryDirectConversationList: View {
                   .lineLimit(2)
               }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 8)
             .contentShape(Rectangle())
           }
           .buttonStyle(.plain)
@@ -690,7 +697,7 @@ private struct HistoryDirectConversationList: View {
           }
           .listRowBackground(
             model.directSelectedConversationID == conversation.id
-              ? Color.accentColor.opacity(0.12) : Color.clear
+              ? HistoryDesign.selection : Color.clear
           )
         }
 
@@ -711,6 +718,9 @@ private struct HistoryDirectConversationList: View {
           .disabled(model.isLoadingDirectConversations)
         }
       }
+      .listStyle(.inset)
+      .scrollContentBackground(.hidden)
+      .background(HistoryChatPalette.sidebar)
       .overlay {
         if model.filteredDirectConversations.isEmpty && !model.isLoadingDirectConversations {
           ContentUnavailableView(
@@ -752,7 +762,7 @@ private struct HistoryDirectTimelineView: View {
       }
       .padding(.horizontal, 18)
       .padding(.vertical, 12)
-      .background(.bar)
+      .background(HistoryChatPalette.timeline)
 
       HStack(spacing: 10) {
         HistorySearchField(
@@ -771,7 +781,7 @@ private struct HistoryDirectTimelineView: View {
           model.directSearchQuery = chatSearch
           model.directSection = .search
         }.disabled(chatSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-      }.padding(.horizontal, 18).padding(.vertical, 10).background(.bar)
+      }.padding(.horizontal, 18).padding(.vertical, 10).background(HistoryChatPalette.timeline)
 
       if let error = model.directMessageError {
         DirectInlineError(message: error)
@@ -789,7 +799,7 @@ private struct HistoryDirectTimelineView: View {
               Button("返回最新消息") {
                 model.returnToLatestDirectMessages()
               }
-              .buttonStyle(.bordered)
+              .buttonStyle(HistoryActionStyle())
             } else if model.directMessageCursor != nil {
               Button {
                 model.loadOlderDirectMessages()
@@ -800,7 +810,7 @@ private struct HistoryDirectTimelineView: View {
                   Label("加载更早消息", systemImage: "arrow.up.circle")
                 }
               }
-              .buttonStyle(.bordered)
+              .buttonStyle(HistoryActionStyle())
             }
 
             let messages = Array(model.directMessages.reversed())
@@ -860,11 +870,12 @@ private struct HistoryDirectTimelineView: View {
         }
       }
     }
-    .background(Color(nsColor: .textBackgroundColor).opacity(0.45))
+    .background(HistoryChatPalette.timeline)
   }
 }
 
 struct HistoryDirectMessageBubble: View {
+  @Environment(\.colorScheme) private var colorScheme
   let model: HistoryBrowserModel
   let message: HistoryDirectMessage
   let highlighted: Bool
@@ -904,18 +915,26 @@ struct HistoryDirectMessageBubble: View {
             }
           )
           .font(.system(size: 14))
+          .foregroundStyle(
+            outgoing ? HistoryChatPalette.outgoingText : Color.primary,
+            outgoing ? HistoryChatPalette.outgoingText.opacity(0.85) : Color.secondary,
+            outgoing ? HistoryChatPalette.outgoingText.opacity(0.8) : Color.secondary
+          )
+          .environment(\.colorScheme, outgoing && !imageOnly ? .light : colorScheme)
           .padding(imageOnly ? 0 : 11)
           .background(
             imageOnly
               ? Color.clear
               : outgoing
-                ? Color(red: 0.83, green: 0.94, blue: 0.77)
-                : Color(nsColor: .controlBackgroundColor),
-            in: RoundedRectangle(cornerRadius: 9)
+                ? HistoryChatPalette.outgoing
+                : HistoryChatPalette.incoming,
+            in: RoundedRectangle(cornerRadius: HistoryDesign.radius, style: .continuous)
           )
           .overlay {
-            RoundedRectangle(cornerRadius: 9).stroke(
-              highlighted ? Color.accentColor : .clear, lineWidth: 2)
+            RoundedRectangle(cornerRadius: HistoryDesign.radius, style: .continuous).strokeBorder(
+              highlighted
+                ? HistoryDesign.accent : (imageOnly ? .clear : HistoryDesign.border.opacity(0.6)),
+              lineWidth: highlighted ? 2 : 0.5)
           }
           .contextMenu {
             Button("复制消息") {
@@ -983,7 +1002,7 @@ private struct HistoryDirectSearchView: View {
               .font(.caption)
               .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 8)
           }
           .buttonStyle(.plain)
         }
@@ -1061,7 +1080,7 @@ private struct DirectFilterField: View {
       .frame(height: 28)
       .padding(.horizontal, 12)
       .padding(.vertical, 8)
-      .background(.bar)
+      .background(HistoryChatPalette.sidebar)
   }
 }
 

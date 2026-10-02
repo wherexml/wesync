@@ -1,0 +1,10 @@
+{
+  "baselineBuild": "14",
+  "candidateBuild": "15",
+  "sameDesignatedRequirement": true,
+  "helperBytesUnchanged": true,
+  "signature": "PASS",
+  "binarySHA256": "1491919f7021bba637ad46be601bd989ece4b212bbcfe9523f0f3054c7f66ec8",
+  "installedRestart": "PENDING",
+  "connectionDataTouched": false
+}

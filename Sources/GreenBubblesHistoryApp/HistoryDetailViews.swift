@@ -103,7 +103,7 @@ struct ConversationTimelineView: View {
       }
       timeline
     }
-    .background(Color(nsColor: .textBackgroundColor).opacity(0.45))
+    .background(HistoryChatPalette.timeline)
   }
 
   private var conversationHeader: some View {
@@ -132,7 +132,7 @@ struct ConversationTimelineView: View {
     }
     .padding(.horizontal, 18)
     .padding(.vertical, 12)
-    .background(.bar)
+    .background(HistoryChatPalette.timeline)
   }
 
   private var timeline: some View {
@@ -143,7 +143,7 @@ struct ConversationTimelineView: View {
             Button("返回最新消息") {
               model.returnToLatestMessages()
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(HistoryActionStyle())
             .padding(.vertical, 8)
           } else if model.timelineCursor != nil {
             Button {
@@ -155,7 +155,7 @@ struct ConversationTimelineView: View {
                 Label("加载更早的 100 条消息", systemImage: "arrow.up.circle")
               }
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(HistoryActionStyle())
             .padding(.vertical, 8)
           }
 
@@ -207,6 +207,7 @@ struct ConversationTimelineView: View {
 }
 
 private struct MessageBubble: View {
+  @Environment(\.colorScheme) private var colorScheme
   let model: HistoryBrowserModel
   let message: HistoryMessage
   let highlighted: Bool
@@ -215,13 +216,21 @@ private struct MessageBubble: View {
     HStack {
       if resolvedDirection == "outgoing" { Spacer(minLength: 90) }
       bubbleContent
+        .foregroundStyle(
+          resolvedDirection == "outgoing" ? HistoryChatPalette.outgoingText : Color.primary
+        )
+        .environment(\.colorScheme, resolvedDirection == "outgoing" ? .light : colorScheme)
         .padding(.horizontal, 13)
         .padding(.vertical, 10)
         .frame(maxWidth: 650, alignment: .leading)
-        .background(bubbleColor, in: RoundedRectangle(cornerRadius: 14))
+        .background(
+          bubbleColor, in: RoundedRectangle(cornerRadius: HistoryDesign.radius, style: .continuous)
+        )
         .overlay {
-          RoundedRectangle(cornerRadius: 14)
-            .stroke(highlighted ? Color.accentColor : .clear, lineWidth: 3)
+          RoundedRectangle(cornerRadius: HistoryDesign.radius, style: .continuous)
+            .strokeBorder(
+              highlighted ? HistoryDesign.accent : HistoryDesign.border.opacity(0.6),
+              lineWidth: highlighted ? 2 : 0.5)
         }
         .contextMenu {
           Button("复制消息文字") {
@@ -298,8 +307,8 @@ private struct MessageBubble: View {
 
   private var bubbleColor: Color {
     switch resolvedDirection {
-    case "outgoing": .green.opacity(0.18)
-    case "incoming": Color(nsColor: .controlBackgroundColor)
+    case "outgoing": HistoryChatPalette.outgoing
+    case "incoming": HistoryChatPalette.incoming
     default: .orange.opacity(0.10)
     }
   }
@@ -373,7 +382,7 @@ private struct ArtifactReferenceView: View {
           Button("预览") {
             model.requestMediaPreview(artifact)
           }
-          .buttonStyle(.bordered)
+          .buttonStyle(HistoryActionStyle())
           .controlSize(.small)
         }
       }

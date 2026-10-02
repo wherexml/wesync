@@ -28,11 +28,13 @@ struct HistoryRootView: View {
         )
       }
     }
+    .tint(HistoryDesign.accent)
+    .background(HistoryDesign.canvas)
     .task {
       #if DEBUG
         if [
           "me.greenbubbles.PresentationPreview", "me.greenbubbles.PolishPreview",
-          "me.greenbubbles.ChinesePreview",
+          "me.greenbubbles.ChinesePreview", "me.greenbubbles.DarkModePreview",
         ].contains(Bundle.main.bundleIdentifier ?? ""),
           Bundle.main.object(forInfoDictionaryKey: "GBOfflineAcceptance") as? Bool == true
         {
@@ -74,7 +76,7 @@ private struct HistoryWelcomeView: View {
         .foregroundStyle(.primary).accessibilityLabel("GreenBubbles")
       VStack(spacing: 8) {
         Text("查看你的微信聊天记录")
-          .font(.largeTitle.weight(.semibold))
+          .font(.system(size: 28, weight: .semibold, design: .rounded))
         Text(
           "查看本机微信记录、打开加密备份，或浏览已导出的聊天记录。"
         )
@@ -88,18 +90,18 @@ private struct HistoryWelcomeView: View {
           .padding(.horizontal, 10)
           .padding(.vertical, 4)
       }
-      .buttonStyle(.borderedProminent)
+      .buttonStyle(HistoryActionStyle(prominent: true))
       .controlSize(.large)
 
       Button(action: createSnapshot) {
         Label("创建可恢复的加密备份…", systemImage: "externaldrive.badge.plus")
       }
-      .buttonStyle(.bordered)
+      .buttonStyle(HistoryActionStyle())
 
       Button(action: openBundle) {
         Label("打开已导出的聊天记录…", systemImage: "folder.badge.plus")
       }
-      .buttonStyle(.bordered)
+      .buttonStyle(HistoryActionStyle())
 
       if let errorMessage {
         Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
@@ -241,6 +243,8 @@ private struct HistoryLibraryView: View {
         .navigationSplitViewColumnWidth(min: 170, ideal: 205, max: 260)
     } content: {
       contentColumn
+        .scrollContentBackground(.hidden)
+        .background(HistoryChatPalette.sidebar)
         .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 450)
     } detail: {
       detailColumn
@@ -283,6 +287,8 @@ private struct HistoryLibraryView: View {
       }
     }
     .listStyle(.sidebar)
+    .scrollContentBackground(.hidden)
+    .background(HistoryChatPalette.sidebar)
     .safeAreaInset(edge: .bottom) {
       Button {
         model.chooseBundle()

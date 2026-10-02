@@ -8,6 +8,8 @@ polish='--polish' in sys.argv
 chinese='--chinese' in sys.argv
 app_name='GreenBubbles Chinese Preview' if chinese else 'GreenBubbles Polish Preview' if polish else 'GreenBubbles Preview'
 app_id='me.greenbubbles.ChinesePreview' if chinese else 'me.greenbubbles.PolishPreview' if polish else 'me.greenbubbles.PresentationPreview'
+if '--dark-mode' in sys.argv:
+ app_name='GreenBubbles Dark Mode Preview';app_id='me.greenbubbles.DarkModePreview'
 app=repo/('.local-install/'+app_name+'.app');mac=app/'Contents/MacOS';res=app/'Contents/Resources';data=res/'offline-fixture'
 mac.mkdir(parents=True,exist_ok=True);data.mkdir(parents=True,exist_ok=True);os.chmod(data,0o700)
 shutil.copy2(repo/'.build/debug/greenbubbles-history',mac/'greenbubbles-history')

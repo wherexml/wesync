@@ -12,7 +12,7 @@
     guard
       [
         "me.greenbubbles.PresentationPreview", "me.greenbubbles.PolishPreview",
-        "me.greenbubbles.ChinesePreview",
+        "me.greenbubbles.ChinesePreview", "me.greenbubbles.DarkModePreview",
       ].contains(Bundle.main.bundleIdentifier ?? ""),
       let resources = Bundle.main.resourceURL, let binary = Bundle.main.executableURL
     else { return }
@@ -347,6 +347,41 @@
       }
       try png.write(to: root.appending(path: "presentation.png"))
       try require(true, "native-swiftui-render")
+      // Repeat the production bubble render in both appearances using synthetic data only.
+      for (name, scheme, appearanceName) in [
+        ("light", ColorScheme.light, NSAppearance.Name.aqua),
+        ("dark", ColorScheme.dark, NSAppearance.Name.darkAqua),
+      ] {
+        let appearance = NSAppearance(named: appearanceName)!
+        var imageData: Data?
+        appearance.performAsCurrentDrawingAppearance {
+          let themed = HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 16) {
+              Text("聊天").font(.title2.bold())
+              Text("合成会话").font(.headline)
+              Text("仅用于配色验收").foregroundStyle(.secondary)
+              Spacer()
+            }.padding(20).frame(width: 220).frame(maxHeight: .infinity)
+              .background(HistoryChatPalette.sidebar)
+            VStack(alignment: .leading, spacing: 16) {
+              Text("明暗配色 · 合成消息").font(.title2.bold())
+              ForEach(Array(model.directMessages.reversed())) { message in
+                HistoryDirectMessageBubble(model: model, message: message, highlighted: false)
+              }
+            }.padding(24).frame(width: 820).background(HistoryChatPalette.timeline)
+          }.fixedSize().environment(\.colorScheme, scheme)
+          let themedRenderer = ImageRenderer(content: themed)
+          themedRenderer.scale = 1
+          if let image = themedRenderer.nsImage, let tiff = image.tiffRepresentation,
+            let bitmap = NSBitmapImageRep(data: tiff)
+          {
+            imageData = bitmap.representation(using: .png, properties: [:])
+          }
+        }
+        try require(imageData != nil, "native-\(name)-palette-render")
+        try imageData?.write(to: root.appending(path: "presentation-\(name).png"))
+      }
+
       model.returnToLatestDirectMessages()
       try await waitFor { !model.isLoadingDirectMessages }
       try require(model.directMessages.count == 12, "refresh-restores-message-page")

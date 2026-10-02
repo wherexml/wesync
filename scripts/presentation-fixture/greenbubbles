@@ -51,7 +51,7 @@ elif operation=='attachment.inspect':
 elif operation=='attachment.materialize':
  output=pathlib.Path(option('--output')).resolve()
  app_id=plistlib.loads((root.parents[1]/'Info.plist').read_bytes())['CFBundleIdentifier']
- if app_id not in ['me.greenbubbles.PresentationPreview','me.greenbubbles.PolishPreview','me.greenbubbles.ChinesePreview']:raise SystemExit('Not an acceptance app')
+ if app_id not in ['me.greenbubbles.PresentationPreview','me.greenbubbles.PolishPreview','me.greenbubbles.ChinesePreview','me.greenbubbles.DarkModePreview']:raise SystemExit('Not an acceptance app')
  allowed=pathlib.Path.home()/'Library/Application Support'/app_id/'Presentation/Previews'
  if output.parent!=allowed:raise SystemExit('Offline fixture output outside preview sandbox')
  document=option('--kind')=='document'
