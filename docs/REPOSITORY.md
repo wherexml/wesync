@@ -21,3 +21,5 @@ gh run list --repo wherexml/chat-sync --branch main
 Swift 6.1 编译兼容：图片和 PDF 加载闭包显式标注 `@MainActor`，使非 Sendable 的 AppKit/PDFKit 预览对象留在 UI actor 内，避免跨隔离域返回值。
 
 搜索框 AppKit coordinator 显式使用主线程隔离；Rust 附件读取移除冗余引用，展示辅助函数置于现有测试模块之前，满足严格 Clippy 检查。
+
+既有搜索进程集成测试的参数断言同步 `--json` 输出协议；保留凭证和查询仅经 stdin 传递的全部断言，不新增单元测试。
