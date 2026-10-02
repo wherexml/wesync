@@ -111,3 +111,5 @@ notes for the record. They may be out of date; read
 - [私有 GitHub 仓库维护](REPOSITORY.md)：远端、隐私边界和 CI 验证。
 
 - [正文表情与无网址图片表情](EMOJI_DISPLAY.md)：别名展示、单消息资源补全、TLS 兼容与可重复 E2E。
+
+- [图片消息对齐](IMAGE_ALIGNMENT.md)：缩略图边界、与同侧文字气泡的对齐规则及原生验收证据。
