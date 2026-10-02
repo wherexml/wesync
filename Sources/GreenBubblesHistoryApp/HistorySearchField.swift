@@ -30,7 +30,7 @@ struct HistorySearchField: NSViewRepresentable {
       field.stringValue = text
     }
   }
-  final class Coordinator: NSObject, NSSearchFieldDelegate {
+  @MainActor final class Coordinator: NSObject, NSSearchFieldDelegate {
     var parent: HistorySearchField
     init(_ parent: HistorySearchField) { self.parent = parent }
     func controlTextDidChange(_ obj: Notification) {

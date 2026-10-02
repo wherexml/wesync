@@ -348,7 +348,7 @@ pub fn materialize_image_attachment(
             )
         })?;
 
-    let encrypted = read_file_candidate(&candidate)?;
+    let encrypted = read_file_candidate(candidate)?;
     let v2_aes_key = if candidate.image_format == Some(wx_media::DatFormat::V2) {
         Some(
             wx_media::derive_v2_key_from_dir(&source.account_root).map_err(|_| {
@@ -449,7 +449,7 @@ pub fn materialize_message_attachment(
     let protected_root = account_root.unwrap_or_else(|| source.root());
     let (decoded_format, decoded_byte_count, decoded_sha256) = match kind {
         AttachmentKind::Image => {
-            let encrypted = read_file_candidate(&candidate)?;
+            let encrypted = read_file_candidate(candidate)?;
             let v2_aes_key = if candidate.image_format == Some(wx_media::DatFormat::V2) {
                 let account_root = account_root.ok_or_else(|| {
                     LiveAttachmentError::Unavailable(
@@ -480,7 +480,7 @@ pub fn materialize_message_attachment(
                     "the selected voice candidate has an incompatible source".into(),
                 ));
             };
-            let (data, format) = match wx_media::transcode_silk_to_ogg_opus(&data) {
+            let (data, format) = match wx_media::transcode_silk_to_ogg_opus(data) {
                 Ok(decoded) => (decoded.data, decoded.ext.to_string()),
                 Err(_) => (data.clone(), "silk".to_string()),
             };
@@ -498,7 +498,7 @@ pub fn materialize_message_attachment(
             let (byte_count, digest) = publish_file_candidate(
                 protected_root,
                 output,
-                &candidate,
+                candidate,
                 kind.maximum_source_bytes(),
             )?;
             (format, byte_count, digest)

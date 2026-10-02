@@ -6511,6 +6511,75 @@ fn database_error(message: &str) -> LiveQueryError {
     LiveQueryError::Database(safe.into())
 }
 
+/// Bounded schema-only metadata for presentation compatibility. Never emits chat content.
+pub fn presentation_metadata(source: &LiveQuerySource<'_>) -> Result<Value, LiveQueryError> {
+    let mut tables = BTreeMap::<String, Vec<String>>::new();
+    if let Some(connection) =
+        source.open_optional_database(Path::new("head_image/head_image.db"))?
+    {
+        let mut stmt = connection
+            .prepare("SELECT name FROM sqlite_master WHERE type='table' LIMIT 20")
+            .map_err(|e| database_error(&e.to_string()))?;
+        let names = stmt
+            .query_map([], |r| r.get::<_, String>(0))
+            .map_err(|e| database_error(&e.to_string()))?;
+        for name in names.flatten() {
+            if name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+                tables.insert(
+                    name.clone(),
+                    table_columns(&connection, &name)?.into_iter().collect(),
+                );
+            }
+        }
+    }
+    let contact_columns = source
+        .open_optional_database(Path::new("contact/contact.db"))?
+        .map(|c| table_columns(&c, "contact"))
+        .transpose()?
+        .unwrap_or_default();
+    Ok(
+        json!({"contactColumns":contact_columns,"schema": QUERY_SCHEMA,"formatVersion":1,"operation":"source.presentation","ok":true,
+        "source":source_description(source),"avatarTables":tables,"accountHolder":source.account_holder_source_id()}),
+    )
+}
+
+/// Only cached head-image blobs, exact identifiers and bounded output. No URL fetching.
+fn cached_head_images<'a>(
+    source: &LiveQuerySource<'_>,
+    identifiers: impl Iterator<Item = &'a str>,
+) -> (BTreeMap<String, String>, bool) {
+    let mut result = BTreeMap::new();
+    let Ok(Some(connection)) = source.open_optional_database(Path::new("head_image/head_image.db"))
+    else {
+        return (result, false);
+    };
+    let Ok(columns) = table_columns(&connection, "head_image") else {
+        return (result, true);
+    };
+    if !columns.contains("username") || !columns.contains("image_buffer") {
+        return (result, true);
+    }
+    let Ok(mut statement) = connection.prepare("SELECT image_buffer FROM head_image WHERE username=?1 AND length(image_buffer) BETWEEN 1 AND 131072 LIMIT 1") else { return (result, true) };
+    let mut budget = 3 * 1024 * 1024;
+    for id in identifiers.take(MAX_PAGE_LIMIT) {
+        if id.is_empty() || result.contains_key(id) {
+            continue;
+        }
+        if let Ok(bytes) = statement.query_row([id], |row| row.get::<_, Vec<u8>>(0)) {
+            // Count each occurrence in the final page conservatively below at serialization.
+            if bytes.len() > budget {
+                break;
+            }
+            budget -= bytes.len();
+            result.insert(
+                id.to_string(),
+                base64::engine::general_purpose::STANDARD.encode(bytes),
+            );
+        }
+    }
+    (result, true)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -7455,73 +7524,4 @@ mod tests {
         assert!(text.is_char_boundary(text.len()));
         assert!(serialize_query_response(&page).unwrap().len() <= MAX_SERIALIZED_RESPONSE_BYTES);
     }
-}
-
-/// Bounded schema-only metadata for presentation compatibility. Never emits chat content.
-pub fn presentation_metadata(source: &LiveQuerySource<'_>) -> Result<Value, LiveQueryError> {
-    let mut tables = BTreeMap::<String, Vec<String>>::new();
-    if let Some(connection) =
-        source.open_optional_database(Path::new("head_image/head_image.db"))?
-    {
-        let mut stmt = connection
-            .prepare("SELECT name FROM sqlite_master WHERE type='table' LIMIT 20")
-            .map_err(|e| database_error(&e.to_string()))?;
-        let names = stmt
-            .query_map([], |r| r.get::<_, String>(0))
-            .map_err(|e| database_error(&e.to_string()))?;
-        for name in names.flatten() {
-            if name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
-                tables.insert(
-                    name.clone(),
-                    table_columns(&connection, &name)?.into_iter().collect(),
-                );
-            }
-        }
-    }
-    let contact_columns = source
-        .open_optional_database(Path::new("contact/contact.db"))?
-        .map(|c| table_columns(&c, "contact"))
-        .transpose()?
-        .unwrap_or_default();
-    Ok(
-        json!({"contactColumns":contact_columns,"schema": QUERY_SCHEMA,"formatVersion":1,"operation":"source.presentation","ok":true,
-        "source":source_description(source),"avatarTables":tables,"accountHolder":source.account_holder_source_id()}),
-    )
-}
-
-/// Only cached head-image blobs, exact identifiers and bounded output. No URL fetching.
-fn cached_head_images<'a>(
-    source: &LiveQuerySource<'_>,
-    identifiers: impl Iterator<Item = &'a str>,
-) -> (BTreeMap<String, String>, bool) {
-    let mut result = BTreeMap::new();
-    let Ok(Some(connection)) = source.open_optional_database(Path::new("head_image/head_image.db"))
-    else {
-        return (result, false);
-    };
-    let Ok(columns) = table_columns(&connection, "head_image") else {
-        return (result, true);
-    };
-    if !columns.contains("username") || !columns.contains("image_buffer") {
-        return (result, true);
-    }
-    let Ok(mut statement) = connection.prepare("SELECT image_buffer FROM head_image WHERE username=?1 AND length(image_buffer) BETWEEN 1 AND 131072 LIMIT 1") else { return (result, true) };
-    let mut budget = 3 * 1024 * 1024;
-    for id in identifiers.take(MAX_PAGE_LIMIT) {
-        if id.is_empty() || result.contains_key(id) {
-            continue;
-        }
-        if let Ok(bytes) = statement.query_row([id], |row| row.get::<_, Vec<u8>>(0)) {
-            // Count each occurrence in the final page conservatively below at serialization.
-            if bytes.len() > budget {
-                break;
-            }
-            budget -= bytes.len();
-            result.insert(
-                id.to_string(),
-                base64::engine::general_purpose::STANDARD.encode(bytes),
-            );
-        }
-    }
-    (result, true)
 }
