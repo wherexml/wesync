@@ -32,7 +32,7 @@
     "searchResultPage": "PASS",
     "matchingMessages": "PASS: read-only bounded query; content omitted",
     "returnToChat": "PASS",
-    "finalRefreshRecheck": "BLOCKED: native automation reported concurrent user interaction"
+    "finalRefreshRecheck": "PASS: retried after concurrent interaction ended; message timeline, collapsed search toggle and automatic connection remain available"
   },
   "privacy": "No credentials entered or connection settings changed. No real chat screenshots, names, content or query terms archived.",
   "reproduction": "docs/SEARCH.md"
