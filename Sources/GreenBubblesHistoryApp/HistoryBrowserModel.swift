@@ -536,6 +536,34 @@ final class HistoryBrowserModel {
     return HistoryPDFPreview(url: output, document: document)
   }
 
+  func resolveDirectSticker(_ message: HistoryDirectMessage) async throws -> HistorySticker {
+    guard message.isSticker, let configuration = directConfiguration,
+      let executable = Bundle.main.executableURL?.deletingLastPathComponent()
+        .appending(path: "greenbubbles-sticker-query"),
+      FileManager.default.isExecutableFile(atPath: executable.path),
+      let expected = Bundle.main.object(forInfoDictionaryKey: "GBStickerQuerySHA256") as? String,
+      try HistoryRememberedConnection.digest(executable) == expected
+    else { throw StickerLoadError.unavailable }
+    let sessionID = activeDirectLoadID
+    var key = directKeyUTF8
+    defer { key.resetBytes(in: 0..<key.count) }
+    let metadataConfiguration = HistoryDirectConfiguration(
+      executableURL: executable,
+      sourceURL: configuration.sourceURL, accessMode: configuration.accessMode,
+      recoveryKitURL: configuration.recoveryKitURL,
+      localCredentialURL: configuration.localCredentialURL)
+    let resource = try await directClient.message(
+      configuration: metadataConfiguration, keyUTF8: key,
+      conversationID: message.conversationID, messageID: message.id)
+    try Task.checkCancellation()
+    guard directConfiguration == configuration, activeDirectLoadID == sessionID,
+      resource.source.identity == directStatus?.source.identity,
+      resource.item.id == message.id, let sticker = resource.item.sticker,
+      sticker.md5 == message.sticker?.md5
+    else { throw StickerLoadError.unavailable }
+    return sticker
+  }
+
   func previewDirectImage(_ message: HistoryDirectMessage) async throws -> NSImage {
     guard let configuration = directConfiguration else { throw PresentationError.sourceChanged }
     let sessionID = activeDirectLoadID

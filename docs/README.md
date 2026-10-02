@@ -109,3 +109,5 @@ notes for the record. They may be out of date; read
 - [消息浏览缓存](MESSAGE_CACHE.md)：内存缓存容量、历史页保留、刷新行为及可重复验收。
 
 - [私有 GitHub 仓库维护](REPOSITORY.md)：远端、隐私边界和 CI 验证。
+
+- [正文表情与无网址图片表情](EMOJI_DISPLAY.md)：别名展示、单消息资源补全、TLS 兼容与可重复 E2E。

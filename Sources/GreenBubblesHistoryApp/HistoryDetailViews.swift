@@ -240,7 +240,7 @@ private struct MessageBubble: View {
   private var bubbleContent: some View {
     VStack(alignment: .leading, spacing: 7) {
       senderHeader
-      Text(message.displayText)
+      Text(HistoryEmojiText.render(message.displayText))
         .font(.body)
         .textSelection(.enabled)
       if message.payloadSummaryTruncated == true {

@@ -37,6 +37,11 @@ jobs:
       - name: Run tests
         run: swift test
 
+      - name: Verify text emoji and bounded local stickers end to end
+        run: |
+          scripts/sticker-acceptance/local-e2e.sh
+          cat docs/acceptance/emoji-fix-20261002/synthetic.json
+
       - name: Build release executable
         run: swift build -c release
 
@@ -157,6 +162,12 @@ jobs:
       - name: Run restoration-engine tests
         working-directory: Native/GreenBubbles
         run: cargo test --locked --all-targets
+
+      - name: Verify exact-message sticker metadata end to end
+        run: |
+          cargo build --locked --manifest-path Native/GreenBubbles/Cargo.toml
+          python3 scripts/sticker-acceptance/metadata-e2e.py Native/GreenBubbles/target/debug/greenbubbles docs/acceptance/emoji-fix-20261002/metadata.json
+          cat docs/acceptance/emoji-fix-20261002/metadata.json
 
       - name: Check the cross-language send vectors are current
         working-directory: Native/GreenBubbles

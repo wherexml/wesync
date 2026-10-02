@@ -1237,13 +1237,18 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             let message_id = required_option(&remaining, "--message")?;
             let source = invocation.access.open_source(&invocation.source_root)?;
             let conversation = resolve_conversation(&source, &conversation)?;
-            let response = match get_live_message(&source, &conversation, &message_id) {
+            let mut response = match get_live_message(&source, &conversation, &message_id) {
                 Ok(response) => response,
                 Err(LiveQueryError::InvalidCursor(_)) => {
                     get_live_search_result_message(&source, &conversation, &message_id)?
                 }
                 Err(error) => return Err(error.into()),
             };
+            if greenbubbles::sticker_metadata::enrich(&source, &mut response.item) {
+                response.consistency.database_count += 1;
+                response.consistency.cross_database_atomic = false;
+                response.consistency.guarantee = "independentDatabaseReadStatements";
+            }
             println!("{}", serialize_query_response(&response)?);
         }
         "attachment" => {

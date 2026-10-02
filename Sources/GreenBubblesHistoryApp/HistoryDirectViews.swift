@@ -891,7 +891,11 @@ struct HistoryDirectMessageBubble: View {
             Text(message.senderLabel).font(.system(size: 11)).foregroundStyle(.secondary)
           }
           HistoryRichMessageBody(
-            message: message, cachedImage: model.directImagePreviews[message.id],
+            message: message,
+            localStickerSource: model.directConfiguration?.accessMode == .liveEncrypted
+              ? model.directConfiguration?.sourceURL : nil,
+            resolveStickerMetadata: { try await model.resolveDirectSticker(message) },
+            cachedImage: model.directImagePreviews[message.id],
             loadImage: {
               try await model.previewDirectImage(message)
             },
@@ -969,7 +973,7 @@ private struct HistoryDirectSearchView: View {
                   .font(.caption2)
                   .foregroundStyle(.tertiary)
               }
-              Text(hit.snippet)
+              Text(HistoryEmojiText.render(hit.snippet))
                 .foregroundStyle(.primary)
                 .lineLimit(3)
               Text(

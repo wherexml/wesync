@@ -121,6 +121,7 @@ cp Packaging/GreenBubblesInputHelper/me.greenbubbles.InputHelper.plist \
 cp .build/release/greenbubbles-history "$app_bundle/Contents/MacOS/"
 cp .build/release/greenbubbles-send "$app_bundle/Contents/MacOS/"
 cp Native/GreenBubbles/target/release/greenbubbles "$app_bundle/Contents/MacOS/"
+cp Native/GreenBubbles/target/release/greenbubbles "$app_bundle/Contents/MacOS/greenbubbles-sticker-query"
 cp .build/release/greenbubbles-input-helper "$helper_bundle/Contents/MacOS/"
 cp LICENSE NOTICE.md THIRD_PARTY_NOTICES.md "$app_bundle/Contents/Resources/"
 
@@ -180,11 +181,13 @@ codesign --force --timestamp --options runtime \
   --entitlements Packaging/GreenBubblesInputHelper.entitlements \
   --identifier me.greenbubbles.InputHelper \
   --sign "$signing_identity" "$helper_bundle"
-for executable in greenbubbles-history greenbubbles-send greenbubbles; do
+for executable in greenbubbles-history greenbubbles-send greenbubbles greenbubbles-sticker-query; do
   codesign --force --timestamp --options runtime \
     --entitlements Packaging/GreenBubbles.entitlements \
     --sign "$signing_identity" "$app_bundle/Contents/MacOS/$executable"
 done
+sticker_query_sha256=$(shasum -a 256 "$app_bundle/Contents/MacOS/greenbubbles-sticker-query" | awk '{print $1}')
+/usr/libexec/PlistBuddy -c "Add :GBStickerQuerySHA256 string $sticker_query_sha256" "$app_bundle/Contents/Info.plist"
 codesign --force --timestamp --options runtime \
   --entitlements Packaging/GreenBubbles.entitlements \
   --identifier me.greenbubbles.GreenBubbles \
