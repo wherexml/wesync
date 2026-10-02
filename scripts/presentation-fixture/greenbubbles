@@ -21,6 +21,14 @@ elif operation=='conversations.list':
  for ident,name,official in [('cmb4008205555','合成银行服务',True),('wxid_legacy_public','合成老公众号',True),('notifymessage','服务通知',False),('gh_demo','合成公众号',False),('demo-human','服务通知',False),('demo@openim','企业联系人',False)]:
   item=dict(base['items'][0]);item.update(id=ident,displayName=name,isOfficialAccount=official);base['items'].append(item)
  base['page']['returned']=len(base['items'])
+ if (root/'message-cache-acceptance').exists():
+  offset=int(option('--cursor')) if '--cursor' in a else 0
+  template=base['items'][0]
+  all_items=[dict(template,id='demo-room' if i==0 else f'synthetic-{i}',displayName=f'Synthetic conversation {i}',chatCategory='personal',avatarBase64=None) for i in range(230)]
+  page=all_items[offset:offset+100]
+  base.update(items=page,page={'limit':100,'returned':len(page),'hasMore':offset+100<230})
+  if offset+100<230:base['page']['nextCursor']=str(offset+100)
+
 elif operation=='messages.list':
  if '--json' not in a:raise SystemExit('Native message queries must explicitly request JSON')
  samples=[('text','Text','这是一段合成消息，开发与验收不连接微信。'),('quote','Quote',{'reply_text':'这个方向可以，周五确认。','refer_sender':'小林','refer_content':'新界面什么时候可以验收？'}),('image','Image',{}),('quote','Quote',{'reply_text':None,'refer_content':None,'raw_xml':''}),('image','Image',{}),('quote','Quote',{'raw_xml':'<msg><appmsg><title>XML 引用恢复成功</title><refermsg><displayname>小周</displayname><content>仅使用现有原文，不猜测缺失内容。</content></refermsg></appmsg></msg>'}),('system','System','一条消息已撤回')]
@@ -35,7 +43,7 @@ elif operation=='messages.list':
   offset=int(option('--cursor')) if '--cursor' in a else 0
   items=[]
   for i in range(offset,offset+40):
-   item=dict(base['items'][0]);item.update(id=f'cache-{i}',sortSequence=1000-i,content={'Text':f'Synthetic cache message {i}'})
+   item=dict(base['items'][0]);item.update(id=f'cache-{i}',sortSequence=1000-i,messageType=1,messageTypeLabel='text',messageSubtype=0,messageSubtypeLabel='text',content={'Text':f'Synthetic cache message {i}'})
    items.append(item)
   base.update(items=items,page={'limit':40,'returned':40,'hasMore':True,'nextCursor':str(offset+40)})
 

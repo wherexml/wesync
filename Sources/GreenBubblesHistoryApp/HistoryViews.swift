@@ -7,7 +7,7 @@ struct HistoryRootView: View {
 
   var body: some View {
     Group {
-      if model.isDirectConnecting {
+      if model.isDirectConnecting && model.directConversations.isEmpty {
         HistoryDirectConnectingView {
           model.closeBundle()
         }

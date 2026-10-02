@@ -1,0 +1,7 @@
+{
+  "build": "16",
+  "sameSigningIdentity": true,
+  "cliAndSendBytesPreserved": true,
+  "signature": "PASS",
+  "executableSHA256": "4bb06825c5d89ed1be16d616f2beccaff405ef4c5251620d9fee96c51e79139f"
+}

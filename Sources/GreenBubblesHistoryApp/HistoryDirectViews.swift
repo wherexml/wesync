@@ -641,6 +641,8 @@ private struct HistoryDirectConversationList: View {
       DirectFilterField(text: $model.conversationFilter, prompt: "搜索当前分类的会话")
       if let error = model.directConversationError {
         DirectInlineError(message: error)
+        Button("重试") { model.loadMoreDirectConversations() }
+          .buttonStyle(.plain).padding(.bottom, 6)
       }
       List {
         ForEach(model.filteredDirectConversations) { conversation in
@@ -702,21 +704,21 @@ private struct HistoryDirectConversationList: View {
         }
 
         if model.directConversationCursor != nil {
-          Button {
-            model.loadMoreDirectConversations()
-          } label: {
-            HStack {
-              Spacer()
-              if model.isLoadingDirectConversations {
-                ProgressView().controlSize(.small)
-              } else {
-                Label("加载更多会话", systemImage: "arrow.down.circle")
-              }
-              Spacer()
+          HStack {
+            Spacer()
+            if model.isLoadingDirectConversations {
+              ProgressView().controlSize(.small)
+              Text("正在补齐会话…").font(.caption).foregroundStyle(.secondary)
+            } else {
+              Text("向下滚动继续浏览").font(.caption).foregroundStyle(.secondary)
             }
+            Spacer()
           }
-          .disabled(model.isLoadingDirectConversations)
+          .onAppear {
+            if model.directConversationError == nil { model.loadMoreDirectConversations() }
+          }
         }
+
       }
       .listStyle(.inset)
       .scrollContentBackground(.hidden)
@@ -726,7 +728,7 @@ private struct HistoryDirectConversationList: View {
           ContentUnavailableView(
             "暂无会话",
             systemImage: "bubble.left",
-            description: Text("可调整搜索条件或加载更多会话。")
+            description: Text("可调整搜索条件；其余会话会自动补齐。")
           )
         }
       }
@@ -739,6 +741,8 @@ private struct HistoryDirectTimelineView: View {
   @Bindable var model: HistoryBrowserModel
   let conversationID: String
   @State private var chatSearch = ""
+  @State private var readingPosition: String?
+  @State private var paginationAnchor: String?
 
   var body: some View {
     VStack(spacing: 0) {
@@ -801,30 +805,29 @@ private struct HistoryDirectTimelineView: View {
               }
               .buttonStyle(HistoryActionStyle())
             } else if model.directMessageCursor != nil {
-              Button {
-                model.loadOlderDirectMessages()
-              } label: {
-                if model.isLoadingDirectMessages {
-                  ProgressView().controlSize(.small)
-                } else {
-                  Label("加载更早消息", systemImage: "arrow.up.circle")
-                }
+              HStack {
+                if model.isLoadingDirectMessages { ProgressView().controlSize(.small) }
+                Text(model.isLoadingDirectMessages ? "正在加载更早消息…" : "向上滚动查看更早消息")
+                  .font(.caption).foregroundStyle(.secondary)
               }
-              .buttonStyle(HistoryActionStyle())
+
             }
 
             let messages = Array(model.directMessages.reversed())
             ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
-              if let date = message.createdAt as Date?,
-                HistoryMessageTime.showsSeparator(
-                  for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
-              {
-                HistoryMessageTimestamp(date: date)
+              VStack(spacing: 10) {
+                if let date = message.createdAt as Date?,
+                  HistoryMessageTime.showsSeparator(
+                    for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
+                {
+                  HistoryMessageTimestamp(date: date)
+                }
+                HistoryDirectMessageBubble(
+                  model: model, message: message,
+                  highlighted: message.id == model.directHighlightedMessageID
+                )
               }
-              HistoryDirectMessageBubble(
-                model: model, message: message,
-                highlighted: message.id == model.directHighlightedMessageID
-              )
+              .id(message.id)
             }
 
             if model.isLoadingDirectMessages && model.directMessages.isEmpty {
@@ -851,9 +854,23 @@ private struct HistoryDirectTimelineView: View {
               )
               .padding(40)
             }
+            Color.clear.frame(height: 1).id("latest")
           }
+          .scrollTargetLayout()
           .padding(18)
-          Color.clear.frame(height: 1).id("latest")
+          .background(
+            HistoryScrollPrefetch {
+              guard !model.isLoadingDirectMessages, model.directMessageCursor != nil else { return }
+              paginationAnchor = readingPosition ?? model.directMessages.last?.id
+              model.loadOlderDirectMessages()
+            })
+        }
+        .scrollPosition(id: $readingPosition, anchor: .top)
+        .onChange(of: model.directMessages.last?.id) { _, _ in
+          if let anchor = paginationAnchor {
+            proxy.scrollTo(anchor, anchor: .top)
+            paginationAnchor = nil
+          }
         }
         .onChange(of: model.directMessages.first?.id) { _, _ in
           Task { @MainActor in

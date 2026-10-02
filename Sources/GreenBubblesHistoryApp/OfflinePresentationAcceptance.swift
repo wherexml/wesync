@@ -44,6 +44,11 @@
           executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
         try await waitFor { !model.isDirectConnecting }
         try require(model.isDirectHistoryOpen, "fixture-connected")
+        try await waitFor {
+          model.directConversationCursor == nil && !model.isLoadingDirectConversations
+        }
+        try require(
+          model.directConversations.count == 230, "all-conversations-loaded-without-click")
         model.selectDirectConversation("demo-room")
         try await waitFor { !model.isLoadingDirectMessages }
         try require(model.directMessages.count == 40, "first-page")
@@ -92,6 +97,43 @@
         try require(
           model.directMessages.isEmpty && model.isLoadingDirectMessages,
           "reconnect-does-not-reuse-prior-session")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.closeBundle()
+        model.rememberDirectConnection = true
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root,
+          accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
+        model.selectDirectConversation("demo-room")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.loadOlderDirectMessages()
+        try await waitFor { !model.isLoadingDirectMessages }
+        let configuration = model.directConfiguration!
+        let disk = HistoryPersistentCache(configuration: configuration, secret: [], enabled: true)!
+        let encrypted = try Data(contentsOf: disk.url)
+        try require(
+          encrypted.range(of: Data("Synthetic cache message".utf8)) == nil,
+          "disk-has-no-plaintext-chat")
+        model.closeBundle()
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root,
+          accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try require(
+          model.directConversations.count == 230, "reconnect-restores-full-list-synchronously")
+        model.selectDirectConversation("demo-room")
+        try require(
+          model.directMessages.count == 80 && !model.isLoadingDirectMessages,
+          "reconnect-restores-history-and-cursor")
+        try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
+        model.closeBundle()
+        try Data("corrupt".utf8).write(to: disk.url)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root,
+          accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try require(model.directConversations.isEmpty, "corrupt-cache-is-ignored")
+        try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
+        try require(model.directConversations.count == 230, "corrupt-cache-rebuilt-from-source")
+        model.selectDirectConversation("demo-room")
         try await waitFor { !model.isLoadingDirectMessages }
       } catch { failure = error.localizedDescription }
       let report: [String: Any] = [
