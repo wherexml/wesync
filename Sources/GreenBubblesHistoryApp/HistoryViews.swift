@@ -416,7 +416,7 @@ private struct ConversationRow: View {
             .lineLimit(1)
           Spacer()
           if let date = statistics?.latestMessageDate {
-            Text(date, format: .dateTime.month().day())
+            HistoryConversationTimestamp(date: date)
               .font(.caption2)
               .foregroundStyle(.tertiary)
           }

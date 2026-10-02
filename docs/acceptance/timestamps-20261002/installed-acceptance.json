@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-02",
+  "build": 9,
+  "releaseBuild": "PASS",
+  "fixedSigningIdentity": "PASS",
+  "queryAndSendHelpersUnchanged": "PASS",
+  "nativeQuitAndReopen": "PASS",
+  "automaticConnectionWithoutKeyEntry": "PASS",
+  "visibleLabels": {
+    "today": [
+      "17:01",
+      "15:06",
+      "00:27"
+    ],
+    "yesterday": [
+      "昨天 20:20"
+    ],
+    "earlier": [
+      "09/30"
+    ]
+  },
+  "nativeVisualNoTimestampTruncation": "PASS",
+  "importedList": "Same component; native path not separately exercised",
+  "midnightRollover": "Minute refresh implemented; overnight UI not exercised",
+  "privacy": "No contacts, message contents, or credential values retained",
+  "repeat": "Quit installed GreenBubbles via Cmd+Q; reopen /Applications/GreenBubbles.app through native UI; confirm automatic connection and all three date categories in conversation list."
+}
