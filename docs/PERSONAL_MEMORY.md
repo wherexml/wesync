@@ -33,7 +33,7 @@ contains personal details about you and the people you talk to.
 
 A later update opens the same folder and revises the same articles. It doesn't
 start a second set of notes. The full instructions the agent follows are in the
-[personal-memory skill](../skills/greenbubbles-personal-memory/SKILL.md).
+[personal-memory skill](../skills/wechatsync-personal-memory/SKILL.md).
 
 ## Commands the agent uses
 
@@ -91,7 +91,7 @@ The older workflow has two parts:
    and make it private:
 
    ```sh
-   cp skills/greenbubbles-personal-memory/references/selection-policy.json \
+   cp skills/wechatsync-personal-memory/references/selection-policy.json \
      /private/path/selection-policy.json
    chmod 600 /private/path/selection-policy.json
    ```

@@ -201,7 +201,7 @@ with helper files next to it. Nothing needs to be installed. With Homebrew,
 this prints where the skill is:
 
 ```sh
-echo "$(brew --prefix greenbubbles)/libexec/skills/greenbubbles-personal-memory/SKILL.md"
+echo "$(brew --prefix greenbubbles)/libexec/skills/wechatsync-personal-memory/SKILL.md"
 ```
 
 Then tell your agent something like:
@@ -210,7 +210,7 @@ Then tell your agent something like:
 > conversations in the recent month into Markdown notes.
 
 If you use the ZIP or a source checkout, the skill is at
-`skills/greenbubbles-personal-memory/SKILL.md`; keep the files around it in
+`skills/wechatsync-personal-memory/SKILL.md`; keep the files around it in
 place. To have your agent find the skill automatically in future sessions,
 copy it into the agent's skills folder:
 

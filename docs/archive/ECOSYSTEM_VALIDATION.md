@@ -5,7 +5,7 @@ connector data and tool metadata.
 
 ## Primary CLI skill workflow
 
-The `greenbubbles-context` repository skill routes an agent to the one-shot
+The `wechatsync-context` repository skill routes an agent to the one-shot
 `ai-query` command and checkpoint-consistent `ai-export` bundle. Integration
 tests prove policy-scoped search without a daemon, normalized static
 conversations/contacts/messages/artifacts, source coverage on every response,

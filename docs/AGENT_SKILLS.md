@@ -1,11 +1,11 @@
-# Use GreenBubbles with your own agent
+# Use WeChatSync skills with your own agent
 
 You can have a coding agent you already use read your WeChat history and write
 notes from it: Codex, Claude Code, OpenCode, Kimi Code, Gemini CLI, Grok Build,
 or any other agent that can run shell commands. GreenBubbles reads the data;
 your agent does the summarizing and writing.
 
-GreenBubbles teaches the agent how through **skills**: Markdown files of
+The WeChatSync skill package teaches the agent how through **skills**: Markdown files of
 instructions, with a few helper files next to them. Your agent can read a skill
 straight from where it is. Installing it is optional.
 
@@ -29,23 +29,40 @@ is signed in with your subscription and not an API key. See
 [Codex authentication](https://learn.chatgpt.com/docs/auth) and
 [Claude Code costs](https://code.claude.com/docs/en/costs).
 
+## Skill naming and existing installations
+
+The three skills use the `wechatsync-` prefix. The underlying application and
+CLI remain GreenBubbles: run `greenbubbles`, and retain its existing source
+configuration, credentials, protocol names, and signing identity.
+
+Install the new names with the commands below. Earlier skill directories used
+the `greenbubbles-` prefix; the installer does not remove those copies. Compare
+and preserve any local customizations, then move the old three directories out
+of the agent discovery folder after verifying the new installation. Restart
+the agent session if its skill catalog still lists the old names.
+
+Repeatable packaging acceptance: run
+`python3 -m unittest discover -s scripts -p 'test_skill_package.py' -v`.
+This includes relocating a portable bundle and installing it twice for all six
+supported agent hosts, without reading messages or credentials.
+
 ## Get started
 
 1. Finish key setup first. See [Getting your database key](PASSPHRASE_ACQUISITION.md).
 2. Find the skill file. With Homebrew:
 
    ```sh
-   echo "$(brew --prefix greenbubbles)/libexec/skills/greenbubbles-personal-memory/SKILL.md"
+   echo "$(brew --prefix greenbubbles)/libexec/skills/wechatsync-personal-memory/SKILL.md"
    ```
 
    In a source checkout or the extracted CLI ZIP, it is
-   `skills/greenbubbles-personal-memory/SKILL.md`.
+   `skills/wechatsync-personal-memory/SKILL.md`.
 3. Open your agent and ask it something like:
 
-   > Read `/absolute/path/to/greenbubbles-personal-memory/SKILL.md` and follow
+   > Read `/absolute/path/to/wechatsync-personal-memory/SKILL.md` and follow
    > it to build Markdown notes from my WeChat history in `~/memory/me`, in
    > this session. If GreenBubbles isn't set up yet, read the setup skill at
-   > `../greenbubbles-setup/SKILL.md` next to it.
+   > `../wechatsync-setup/SKILL.md` next to it.
 
 Keep each `SKILL.md` together with the files around it; the skill refers to
 them. The agent needs permission to run shell commands, run the `greenbubbles`
@@ -55,7 +72,7 @@ command, and edit files in your notes folder.
 
 To build notes for the first time:
 
-> Use greenbubbles-personal-memory to organize my WeChat history into a
+> Use wechatsync-personal-memory to organize my WeChat history into a
 > private knowledge base at `~/memory/me`. Read the live database in
 > this session. Ask me what time range to cover if I haven't said. Revise the
 > articles in place.
@@ -100,9 +117,9 @@ python3 "$(brew --prefix greenbubbles)/libexec/scripts/install-skills.py" --agen
 
 This copies three skills:
 
-- `greenbubbles-setup`: checks that GreenBubbles works and helps with first setup.
-- `greenbubbles-context`: searches and retrieves messages.
-- `greenbubbles-personal-memory`: builds and updates your notes.
+- `wechatsync-setup`: checks that GreenBubbles works and helps with first setup.
+- `wechatsync-context`: searches and retrieves messages.
+- `wechatsync-personal-memory`: builds and updates your notes.
 
 It only copies files. It doesn't change your agent's settings, sign-in, model,
 or permissions, and the copies keep working if you move the checkout.
@@ -131,10 +148,10 @@ setup skill:
 
 | Agent | How to start the setup skill |
 | --- | --- |
-| Codex | `$greenbubbles-setup` |
-| Claude Code, Grok Build | `/greenbubbles-setup` |
-| Kimi Code | `/skill:greenbubbles-setup` |
-| OpenCode | ask it to use `greenbubbles-setup` |
+| Codex | `$wechatsync-setup` |
+| Claude Code, Grok Build | `/wechatsync-setup` |
+| Kimi Code | `/skill:wechatsync-setup` |
+| OpenCode | ask it to use `wechatsync-setup` |
 | Gemini CLI | run `/skills reload`, then ask it to use the skill |
 
 The `grok` option is for xAI's Grok Build command-line tool. It doesn't give the
@@ -153,7 +170,7 @@ More about each agent's skills: [Codex](https://learn.chatgpt.com/docs/build-ski
 Run the setup check:
 
 ```sh
-python3 skills/greenbubbles-setup/scripts/doctor.py \
+python3 skills/wechatsync-setup/scripts/doctor.py \
   --greenbubbles /absolute/path/to/greenbubbles --profile live
 ```
 
@@ -200,7 +217,7 @@ for details.
 ## Copy the skills to another Mac
 
 ```sh
-python3 scripts/install-skills.py --bundle /tmp/greenbubbles-skills
+python3 scripts/install-skills.py --bundle /tmp/wechatsync-skills
 ```
 
 This makes a standalone folder with the three skills, the installer, the

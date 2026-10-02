@@ -19,7 +19,7 @@ def load(name, path):
 
 
 installer = load("installer", ROOT / "scripts/install-skills.py")
-doctor = load("doctor", ROOT / "skills/greenbubbles-setup/scripts/doctor.py")
+doctor = load("doctor", ROOT / "skills/wechatsync-setup/scripts/doctor.py")
 
 
 class PortableInstallation(unittest.TestCase):
@@ -44,7 +44,7 @@ class PortableInstallation(unittest.TestCase):
                     self.assertEqual(installer.inventory(relocated / "skills" / name),
                                      installer.inventory(installed / name))
                 result = subprocess.run([sys.executable,
-                    str(installed / "greenbubbles-setup/scripts/doctor.py"),
+                    str(installed / "wechatsync-setup/scripts/doctor.py"),
                     "--greenbubbles", str(base / "missing")], capture_output=True, text=True)
                 self.assertEqual(result.returncode, 1)
                 self.assertEqual(json.loads(result.stdout)["checks"]["cli"], "missing")
