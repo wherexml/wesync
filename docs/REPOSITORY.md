@@ -17,3 +17,5 @@ gh run list --repo wherexml/chat-sync --branch main
 ```
 
 初始化 CI 兼容性：macOS runner 默认 Swift 6.1.2，窗口隐藏遍历使用标准 `for-in`，兼容其严格格式检查。
+
+Swift 6.1 编译兼容：图片和 PDF 加载闭包显式标注 `@MainActor`，使非 Sendable 的 AppKit/PDFKit 预览对象留在 UI actor 内，避免跨隔离域返回值。

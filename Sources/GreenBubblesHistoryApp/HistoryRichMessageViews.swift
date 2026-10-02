@@ -43,8 +43,8 @@ struct HistoryPersonAvatar: View {
 struct HistoryRichMessageBody: View {
   let message: HistoryDirectMessage
   var cachedImage: NSImage? = nil
-  let loadImage: () async throws -> NSImage
-  var loadPDF: (() async throws -> HistoryPDFPreview)? = nil
+  let loadImage: @MainActor () async throws -> NSImage
+  var loadPDF: (@MainActor () async throws -> HistoryPDFPreview)? = nil
   @State private var image: NSImage?
   @State private var error: String?
   @State private var loading = false
