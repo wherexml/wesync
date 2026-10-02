@@ -353,19 +353,18 @@ struct HistoryDirectLibraryView: View {
               .secondary)
           }
           Spacer()
-          Menu {
-            Button("连接设置…") { model.presentDirectConnection() }
-            Button("搜索全部消息") {
-              model.directSearchConversationID = nil
-              model.directSection = .search
-            }
-            Button("返回聊天") { model.directSection = .chats }
-            Button("查看来源信息") { model.directSection = .overview }
-            Button("忘记已保存的连接") { model.forgetRememberedConnection() }
+          Button {
+            model.presentDirectConnection()
           } label: {
-            Image(systemName: "ellipsis.circle")
+            Image(systemName: "gearshape")
+              .font(.system(size: 16))
+              .frame(width: 32, height: 32)
+              .contentShape(Rectangle())
           }
-          .menuStyle(.borderlessButton).frame(width: 24)
+          .buttonStyle(.plain)
+          .foregroundStyle(.secondary)
+          .help("高级设置")
+          .accessibilityLabel("高级设置")
         }.padding(16)
         if let notice = model.connectionPersistenceNotice {
           Text(notice).font(.caption).foregroundStyle(.orange).padding(.horizontal)
