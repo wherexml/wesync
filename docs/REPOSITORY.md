@@ -15,3 +15,5 @@ git remote -v
 swift scripts/check-secret-hygiene.swift
 gh run list --repo wherexml/chat-sync --branch main
 ```
+
+初始化 CI 兼容性：macOS runner 默认 Swift 6.1.2，窗口隐藏遍历使用标准 `for-in`，兼容其严格格式检查。

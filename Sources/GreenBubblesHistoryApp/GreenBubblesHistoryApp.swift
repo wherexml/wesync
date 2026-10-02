@@ -154,7 +154,9 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     activateHistoryWindow()
   }
   @objc private func hideHistory() {
-    NSApp.windows.filter { $0.canBecomeKey }.forEach { $0.orderOut(nil) }
+    for window in NSApp.windows where window.canBecomeKey {
+      window.orderOut(nil)
+    }
   }
   @objc private func toggleDock() {
     showDockIcon.toggle()
