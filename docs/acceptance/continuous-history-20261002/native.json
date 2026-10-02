@@ -3,7 +3,8 @@
     "firstAutomaticPage": "PASS: numbered messages 40-79 visible",
     "secondAutomaticPage": "PASS: numbered messages 80-119 visible",
     "loadMoreButtonRemoved": true,
-    "readPosition": "continued in historical messages without return to latest"
+    "readPosition": "continued in historical messages without return to latest",
+    "conversationListBeyondFirstPage": "PASS: native AX list showing 201-214 of 230 items after downward scroll"
   },
   "installedApp": {
     "baselineAtTaskStart": "connected with old load-more UI",
@@ -17,5 +18,6 @@
     "realMessageBodiesStored": false,
     "realScreenshotsStored": false,
     "credentialValuesRead": false
-  }
+  },
+  "importedTimelineNativeAcceptance": "NOT_RUN"
 }
