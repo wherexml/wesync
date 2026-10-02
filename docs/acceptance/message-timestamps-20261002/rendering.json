@@ -1,0 +1,20 @@
+{
+  "checks" : {
+    "chronological-timeline-labels" : true,
+    "last-week-sunday" : true,
+    "midnight-boundary" : true,
+    "missing-date" : true,
+    "monday-yesterday-priority" : true,
+    "year-visible" : true
+  },
+  "labels" : [
+    "8 月 20 日 18:13",
+    "星期三 18:22",
+    "昨天 22:56",
+    "10:00",
+    "10:29"
+  ],
+  "passed" : true,
+  "scope" : "production separator native rendering; installed acceptance recorded separately",
+  "source" : "synthetic-only"
+}

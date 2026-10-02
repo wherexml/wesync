@@ -159,7 +159,14 @@ struct ConversationTimelineView: View {
             .padding(.vertical, 8)
           }
 
-          ForEach(Array(model.timelineMessages.reversed())) { message in
+          let messages = Array(model.timelineMessages.reversed())
+          ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+            if let date = message.createdAt as Date?,
+              HistoryMessageTime.showsSeparator(
+                for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
+            {
+              HistoryMessageTimestamp(date: date)
+            }
             MessageBubble(
               model: model,
               message: message,
@@ -274,13 +281,10 @@ private struct MessageBubble: View {
 
   private var messageMetadata: some View {
     HStack(spacing: 7) {
-      if let date = message.createdAt {
-        Text(date, format: .dateTime.year().month().day().hour().minute())
-      } else {
+      if message.createdAt == nil {
         Text("Unknown time")
       }
       if let payloadKind = message.payloadKind {
-        Text("•")
         Text(historyHumanize(payloadKind))
       }
       if resolvedDirection == "unknown" {

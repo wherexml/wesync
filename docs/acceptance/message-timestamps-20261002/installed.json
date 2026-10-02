@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-02",
+  "build": "11",
+  "installedApp": "/Applications/GreenBubbles.app",
+  "stableSigningIdentity": "PASS",
+  "queryAndSendHelpersUnchanged": true,
+  "nativeQuitAndReopen": "PASS",
+  "automaticConnectionWithoutKeyEntry": "PASS",
+  "centeredLiveTimelineSeparators": "PASS",
+  "continuousMessagesWithoutRepeatedTimes": "PASS",
+  "observedLabels": ["9 月 21 日 11:39", "9 月 21 日 12:09", "昨天 18:31", "13:57", "16:59"],
+  "importedTimelineInstalledUI": "NOT_RUN: no imported fixture opened in installed application; shared formatter and release compilation verified",
+  "privateChatContentStored": false
+}

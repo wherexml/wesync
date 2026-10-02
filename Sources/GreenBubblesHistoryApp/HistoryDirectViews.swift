@@ -717,7 +717,14 @@ private struct HistoryDirectTimelineView: View {
             .buttonStyle(.bordered)
           }
 
-          ForEach(Array(model.directMessages.reversed())) { message in
+          let messages = Array(model.directMessages.reversed())
+          ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+            if let date = message.createdAt as Date?,
+              HistoryMessageTime.showsSeparator(
+                for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
+            {
+              HistoryMessageTimestamp(date: date)
+            }
             HistoryDirectMessageBubble(
               message: message,
               highlighted: message.id == model.directHighlightedMessageID
@@ -757,9 +764,6 @@ private struct HistoryDirectMessageBubble: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
           Spacer()
-          Text(message.createdAt, format: .dateTime.year().month().day().hour().minute())
-            .font(.caption2.monospacedDigit())
-            .foregroundStyle(.tertiary)
         }
         Text(message.displayText)
           .textSelection(.enabled)
