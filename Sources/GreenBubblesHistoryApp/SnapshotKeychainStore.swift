@@ -11,12 +11,12 @@ enum SnapshotKeychainError: Error, LocalizedError {
 
   var errorDescription: String? {
     switch self {
-    case .invalidSnapshot: "The selected directory is not a supported recoverable snapshot."
-    case .invalidCredential: "The local snapshot credential is malformed or outside safe limits."
-    case .unavailable: "macOS Keychain could not complete the local snapshot unlock operation."
-    case .duplicate: "A Keychain unlock already exists for this snapshot."
+    case .invalidSnapshot: "所选文件夹不是支持的加密备份。"
+    case .invalidCredential: "本机备份解锁文件格式不正确，或超出安全限制。"
+    case .unavailable: "本机钥匙串未能解锁这份备份。"
+    case .duplicate: "钥匙串中已保存这份备份的解锁方式。"
     case .unsafeTemporaryStorage:
-      "GreenBubbles could not create owner-only temporary Keychain material."
+      "无法创建仅本人可读的临时解锁文件。"
     }
   }
 }

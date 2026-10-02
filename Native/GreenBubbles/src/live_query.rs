@@ -695,7 +695,10 @@ pub struct QueryResourceEnvelope<T> {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConversationItem {
+    pub is_official_account: bool,
     pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar_base64: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
     pub summary: Option<String>,
@@ -773,6 +776,9 @@ pub struct ContactItem {
 #[serde(rename_all = "camelCase")]
 pub struct MessageItem {
     pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar_base64: Option<String>,
+    pub is_account_holder: Option<bool>,
     pub conversation_id: String,
     pub sort_sequence: i64,
     pub server_id: i64,
@@ -895,8 +901,10 @@ struct ConversationRow {
 
 #[derive(Debug)]
 struct ContactDisplayNameEnrichment {
+    official_ids: BTreeSet<String>,
     display_names: BTreeMap<String, String>,
     database_read: bool,
+    avatar_database_read: bool,
     coverage_complete: bool,
     warnings: Vec<QueryWarning>,
 }
@@ -1040,7 +1048,9 @@ fn project_message(
         raw.packed_info.as_deref(),
         raw.status,
         raw.compression_type,
-        raw.compressed_content.as_deref(),
+        raw.compressed_content
+            .as_deref()
+            .filter(|bytes| !bytes.is_empty()),
         wx_db::is_group_chat(conversation),
     );
     let (decoded_sender, mut content, decode_state, content_decode_failed) = match decoded {
@@ -1069,6 +1079,8 @@ fn project_message(
     let id = encode_message_cursor(source, conversation_digest, "message.identity", &raw.key)?;
     Ok((
         MessageItem {
+            avatar_base64: None,
+            is_account_holder: source.account_holder_source_id().map(|own| own == sender),
             id,
             conversation_id: conversation.to_string(),
             sort_sequence: raw.key.sort_sequence,
@@ -2641,6 +2653,8 @@ pub fn list_conversations(
     let mut items = decoded_rows
         .into_iter()
         .map(|row| ConversationItem {
+            is_official_account: false,
+            avatar_base64: None,
             id: row.username,
             display_name: None,
             summary: row.summary,
@@ -2665,7 +2679,9 @@ pub fn list_conversations(
     let contact_enrichment = enrich_conversation_items(source, &mut items)?;
     warnings.extend(contact_enrichment.warnings);
     coalesce_warnings(&mut warnings);
-    let database_count = 1 + usize::from(contact_enrichment.database_read);
+    let database_count = 1
+        + usize::from(contact_enrichment.database_read)
+        + usize::from(contact_enrichment.avatar_database_read);
 
     Ok(QueryEnvelope {
         schema: QUERY_SCHEMA,
@@ -2674,7 +2690,9 @@ pub fn list_conversations(
         ok: true,
         source: source_description(source),
         consistency: QueryConsistency {
-            guarantee: if contact_enrichment.database_read {
+            guarantee: if contact_enrichment.database_read
+                || contact_enrichment.avatar_database_read
+            {
                 "independentDatabaseReadStatements"
             } else {
                 "singleDatabaseReadStatement"
@@ -2903,6 +2921,8 @@ fn enrich_ranked_display_names(
         let mut placeholders = chunk
             .iter()
             .map(|item| ConversationItem {
+                is_official_account: false,
+                avatar_base64: None,
                 id: item.id.clone(),
                 display_name: None,
                 summary: None,
@@ -2967,6 +2987,8 @@ pub fn find_conversation(
                 "failed"
             };
             Ok(ConversationItem {
+                is_official_account: false,
+                avatar_base64: None,
                 id: username,
                 display_name: None,
                 summary,
@@ -2984,6 +3006,7 @@ pub fn find_conversation(
     drop(connection);
     if let Some(item) = row.as_mut() {
         let enrichment = resolve_contact_display_names(source, [item.id.as_str()])?;
+        item.is_official_account = enrichment.official_ids.contains(&item.id);
         item.display_name = enrichment.display_names.get(&item.id).cloned();
     }
     Ok(row)
@@ -3053,6 +3076,8 @@ pub fn find_conversations(
             "failed"
         };
         let item = ConversationItem {
+            is_official_account: false,
+            avatar_base64: None,
             id: username.clone(),
             display_name: None,
             summary,
@@ -3090,6 +3115,7 @@ pub fn find_conversations(
     let enrichment =
         resolve_contact_display_names(source, items.values().map(|item| item.id.as_str()))?;
     for item in items.values_mut() {
+        item.is_official_account = enrichment.official_ids.contains(&item.id);
         item.display_name = enrichment.display_names.get(&item.id).cloned();
     }
     Ok(items)
@@ -3503,16 +3529,18 @@ fn list_messages_in_time_range_with_open_shards(
         enrich_message_items(source, &mut projected)?
     } else {
         ContactDisplayNameEnrichment {
+            official_ids: BTreeSet::new(),
             display_names: BTreeMap::new(),
             database_read: false,
+            avatar_database_read: false,
             coverage_complete: true,
             warnings: Vec::new(),
         }
     };
-    let contact_database_read = contact_enrichment.database_read;
+    let contact_database_count = usize::from(contact_enrichment.database_read)
+        + usize::from(contact_enrichment.avatar_database_read);
     let contact_coverage_complete = contact_enrichment.coverage_complete;
-    queried_database_count =
-        queried_database_count.saturating_add(usize::from(contact_database_read));
+    queried_database_count = queried_database_count.saturating_add(contact_database_count);
     warnings.extend(contact_enrichment.warnings);
     coalesce_warnings(&mut warnings);
     let coverage_complete = contact_coverage_complete
@@ -3658,7 +3686,8 @@ pub fn get_message(
         project_message(source, conversation, &conversation_digest, raw)?;
     let mut items = vec![item];
     let contact_enrichment = enrich_message_items(source, &mut items)?;
-    let contact_database_read = contact_enrichment.database_read;
+    let contact_database_count = usize::from(contact_enrichment.database_read)
+        + usize::from(contact_enrichment.avatar_database_read);
     let contact_coverage_complete = contact_enrichment.coverage_complete;
     let mut warnings = if content_decode_failed {
         vec![QueryWarning {
@@ -3675,7 +3704,7 @@ pub fn get_message(
     let item = items
         .pop()
         .expect("exact message enrichment preserves one selected item");
-    let database_count = 1 + usize::from(contact_database_read);
+    let database_count = 1 + contact_database_count;
 
     Ok(QueryResourceEnvelope {
         schema: QUERY_SCHEMA,
@@ -3684,7 +3713,7 @@ pub fn get_message(
         ok: true,
         source: source_description(source),
         consistency: QueryConsistency {
-            guarantee: if contact_database_read {
+            guarantee: if contact_database_count > 0 {
                 "independentDatabaseReadStatements"
             } else {
                 "singleDatabaseReadStatement"
@@ -3820,7 +3849,8 @@ pub fn get_search_result_message(
         project_message(source, conversation, &message_digest, raw)?;
     let mut items = vec![item];
     let contact_enrichment = enrich_message_items(source, &mut items)?;
-    let contact_database_read = contact_enrichment.database_read;
+    let contact_database_count = usize::from(contact_enrichment.database_read)
+        + usize::from(contact_enrichment.avatar_database_read);
     let contact_coverage_complete = contact_enrichment.coverage_complete;
     let mut item = items
         .pop()
@@ -3838,8 +3868,7 @@ pub fn get_search_result_message(
     };
     warnings.extend(contact_enrichment.warnings);
     coalesce_warnings(&mut warnings);
-    queried_database_count =
-        queried_database_count.saturating_add(usize::from(contact_database_read));
+    queried_database_count = queried_database_count.saturating_add(contact_database_count);
     Ok(QueryResourceEnvelope {
         schema: QUERY_SCHEMA,
         format_version: QUERY_FORMAT_VERSION,
@@ -4160,7 +4189,8 @@ fn search_messages_native_in_time_range(
         });
     }
     let contact_enrichment = enrich_search_items(source, &mut items)?;
-    let contact_database_read = contact_enrichment.database_read;
+    let contact_database_count = usize::from(contact_enrichment.database_read)
+        + usize::from(contact_enrichment.avatar_database_read);
     let mut warnings = vec![QueryWarning {
         code: "nativeSearchIndexFreshnessUnverified",
         message: "results come from WeChat's native FTS database; its lag relative to message shards is not independently proven".into(),
@@ -4169,7 +4199,7 @@ fn search_messages_native_in_time_range(
     }];
     warnings.extend(contact_enrichment.warnings);
     coalesce_warnings(&mut warnings);
-    let database_count = 1 + usize::from(contact_database_read);
+    let database_count = 1 + contact_database_count;
 
     Ok(QueryEnvelope {
         schema: QUERY_SCHEMA,
@@ -4178,7 +4208,7 @@ fn search_messages_native_in_time_range(
         ok: true,
         source: source_description(source),
         consistency: QueryConsistency {
-            guarantee: if contact_database_read {
+            guarantee: if contact_database_count > 0 {
                 "nativeFtsAndContactReadStatements"
             } else {
                 "singleNativeFtsReadStatement"
@@ -4442,9 +4472,14 @@ fn search_messages_fallback_in_time_range(
     }
 
     let contact_enrichment = enrich_search_items(source, &mut items)?;
-    queried_database_count =
-        queried_database_count.saturating_add(usize::from(contact_enrichment.database_read));
-    statement_count = statement_count.saturating_add(usize::from(contact_enrichment.database_read));
+    queried_database_count = queried_database_count.saturating_add(
+        usize::from(contact_enrichment.database_read)
+            + usize::from(contact_enrichment.avatar_database_read),
+    );
+    statement_count = statement_count.saturating_add(
+        usize::from(contact_enrichment.database_read)
+            + usize::from(contact_enrichment.avatar_database_read),
+    );
     warnings.extend(contact_enrichment.warnings);
 
     warnings.push(QueryWarning {
@@ -5844,8 +5879,10 @@ fn resolve_contact_display_names<'b>(
     }
     if requested.is_empty() {
         return Ok(ContactDisplayNameEnrichment {
+            official_ids: BTreeSet::new(),
             display_names: BTreeMap::new(),
             database_read: false,
+            avatar_database_read: false,
             coverage_complete: true,
             warnings: Vec::new(),
         });
@@ -5862,8 +5899,10 @@ fn resolve_contact_display_names<'b>(
     let excluded_count = requested_count.saturating_sub(query_identifiers.len());
     if query_identifiers.is_empty() {
         return Ok(ContactDisplayNameEnrichment {
+            official_ids: BTreeSet::new(),
             display_names: BTreeMap::new(),
             database_read: false,
+            avatar_database_read: false,
             coverage_complete: false,
             warnings: vec![QueryWarning {
                 code: "contactDisplayNameUnresolved",
@@ -5915,11 +5954,12 @@ fn resolve_contact_display_names<'b>(
         .collect::<Vec<_>>()
         .join(", ");
     let sql = format!(
-        "SELECT [{identifier_column}], {}, {}, {} FROM [contact] \
+        "SELECT [{identifier_column}], {}, {}, {}, {} FROM [contact] \
          WHERE [{identifier_column}] IN ({placeholders})",
         selected_column(remark_column),
         selected_column(nickname_column),
         selected_column(alias_column),
+        selected_column(columns.contains("verify_flag").then_some("verify_flag")),
     );
     let mut statement = match connection.prepare(&sql) {
         Ok(statement) => statement,
@@ -5931,6 +5971,7 @@ fn resolve_contact_display_names<'b>(
     };
 
     let mut display_names = BTreeMap::new();
+    let mut official_ids = BTreeSet::new();
     let mut decode_failure_count = 0usize;
     let mut truncated_count = 0usize;
     let mut row_read_failed = false;
@@ -5954,6 +5995,9 @@ fn resolve_contact_display_names<'b>(
                 continue;
             }
         };
+        if row.get::<_, i64>(4).unwrap_or(0) & 8 != 0 {
+            official_ids.insert(identifier.clone());
+        }
         let mut display_name = None;
         for index in 1..=3 {
             match row
@@ -6018,8 +6062,10 @@ fn resolve_contact_display_names<'b>(
         });
     }
     Ok(ContactDisplayNameEnrichment {
+        official_ids,
         display_names,
         database_read: true,
+        avatar_database_read: false,
         coverage_complete: !row_read_failed
             && decode_failure_count == 0
             && unresolved_count == 0
@@ -6033,8 +6079,10 @@ fn unavailable_contact_enrichment(
     database_read: bool,
 ) -> ContactDisplayNameEnrichment {
     ContactDisplayNameEnrichment {
-        display_names: BTreeMap::new(),
+        official_ids: BTreeSet::new(),
+            display_names: BTreeMap::new(),
         database_read,
+        avatar_database_read: false,
         coverage_complete: false,
         warnings: vec![QueryWarning {
             code: "contactEnrichmentUnavailable",
@@ -6049,9 +6097,25 @@ fn enrich_conversation_items(
     source: &LiveQuerySource<'_>,
     items: &mut [ConversationItem],
 ) -> Result<ContactDisplayNameEnrichment, LiveQueryError> {
-    let enrichment =
+    let mut enrichment =
         resolve_contact_display_names(source, items.iter().map(|item| item.id.as_str()))?;
+    let (avatars, avatar_read) =
+        cached_head_images(source, items.iter().map(|item| item.id.as_str()));
+    enrichment.avatar_database_read = avatar_read;
+    let mut avatar_budget = 3 * 1024 * 1024;
     for item in items {
+        item.avatar_base64 = avatars
+            .get(&item.id)
+            .filter(|value| {
+                if value.len() > avatar_budget {
+                    false
+                } else {
+                    avatar_budget -= value.len();
+                    true
+                }
+            })
+            .cloned();
+        item.is_official_account = enrichment.official_ids.contains(&item.id);
         item.display_name = enrichment.display_names.get(&item.id).cloned();
     }
     Ok(enrichment)
@@ -6061,9 +6125,24 @@ fn enrich_message_items(
     source: &LiveQuerySource<'_>,
     items: &mut [MessageItem],
 ) -> Result<ContactDisplayNameEnrichment, LiveQueryError> {
-    let enrichment =
+    let mut enrichment =
         resolve_contact_display_names(source, items.iter().map(|item| item.sender.as_str()))?;
+    let (avatars, avatar_read) =
+        cached_head_images(source, items.iter().map(|item| item.sender.as_str()));
+    enrichment.avatar_database_read = avatar_read;
+    let mut avatar_budget = 3 * 1024 * 1024;
     for item in items {
+        item.avatar_base64 = avatars
+            .get(&item.sender)
+            .filter(|value| {
+                if value.len() > avatar_budget {
+                    false
+                } else {
+                    avatar_budget -= value.len();
+                    true
+                }
+            })
+            .cloned();
         item.sender_display_name = enrichment.display_names.get(&item.sender).cloned();
     }
     Ok(enrichment)
@@ -7376,4 +7455,73 @@ mod tests {
         assert!(text.is_char_boundary(text.len()));
         assert!(serialize_query_response(&page).unwrap().len() <= MAX_SERIALIZED_RESPONSE_BYTES);
     }
+}
+
+/// Bounded schema-only metadata for presentation compatibility. Never emits chat content.
+pub fn presentation_metadata(source: &LiveQuerySource<'_>) -> Result<Value, LiveQueryError> {
+    let mut tables = BTreeMap::<String, Vec<String>>::new();
+    if let Some(connection) =
+        source.open_optional_database(Path::new("head_image/head_image.db"))?
+    {
+        let mut stmt = connection
+            .prepare("SELECT name FROM sqlite_master WHERE type='table' LIMIT 20")
+            .map_err(|e| database_error(&e.to_string()))?;
+        let names = stmt
+            .query_map([], |r| r.get::<_, String>(0))
+            .map_err(|e| database_error(&e.to_string()))?;
+        for name in names.flatten() {
+            if name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+                tables.insert(
+                    name.clone(),
+                    table_columns(&connection, &name)?.into_iter().collect(),
+                );
+            }
+        }
+    }
+    let contact_columns = source
+        .open_optional_database(Path::new("contact/contact.db"))?
+        .map(|c| table_columns(&c, "contact"))
+        .transpose()?
+        .unwrap_or_default();
+    Ok(
+        json!({"contactColumns":contact_columns,"schema": QUERY_SCHEMA,"formatVersion":1,"operation":"source.presentation","ok":true,
+        "source":source_description(source),"avatarTables":tables,"accountHolder":source.account_holder_source_id()}),
+    )
+}
+
+/// Only cached head-image blobs, exact identifiers and bounded output. No URL fetching.
+fn cached_head_images<'a>(
+    source: &LiveQuerySource<'_>,
+    identifiers: impl Iterator<Item = &'a str>,
+) -> (BTreeMap<String, String>, bool) {
+    let mut result = BTreeMap::new();
+    let Ok(Some(connection)) = source.open_optional_database(Path::new("head_image/head_image.db"))
+    else {
+        return (result, false);
+    };
+    let Ok(columns) = table_columns(&connection, "head_image") else {
+        return (result, true);
+    };
+    if !columns.contains("username") || !columns.contains("image_buffer") {
+        return (result, true);
+    }
+    let Ok(mut statement) = connection.prepare("SELECT image_buffer FROM head_image WHERE username=?1 AND length(image_buffer) BETWEEN 1 AND 131072 LIMIT 1") else { return (result, true) };
+    let mut budget = 3 * 1024 * 1024;
+    for id in identifiers.take(MAX_PAGE_LIMIT) {
+        if id.is_empty() || result.contains_key(id) {
+            continue;
+        }
+        if let Ok(bytes) = statement.query_row([id], |row| row.get::<_, Vec<u8>>(0)) {
+            // Count each occurrence in the final page conservatively below at serialization.
+            if bytes.len() > budget {
+                break;
+            }
+            budget -= bytes.len();
+            result.insert(
+                id.to_string(),
+                base64::engine::general_purpose::STANDARD.encode(bytes),
+            );
+        }
+    }
+    (result, true)
 }

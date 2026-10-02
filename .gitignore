@@ -42,3 +42,7 @@ __pycache__/
 
 # Local personal-memory test runs; logs and outputs contain real chat data.
 /memory/
+
+# Local installed bundles and unreviewed native screenshots stay on this machine.
+/.local-install/
+/docs/acceptance/**/*.png

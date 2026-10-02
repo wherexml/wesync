@@ -22,13 +22,13 @@ public enum HistoryDirectAccessMode: String, CaseIterable, Equatable, Sendable {
 
   public var displayName: String {
     switch self {
-    case .liveEncrypted: "Live WeChat (read-only)"
-    case .snapshotKeychain: "Snapshot unlock in macOS Keychain"
-    case .snapshotLocalCredential: "Snapshot hidden-file unlock"
-    case .snapshotPassphrase: "Snapshot passphrase (Argon2id)"
-    case .snapshotRecoveryKit: "Snapshot recovery words (portable)"
-    case .snapshotEncrypted: "Legacy snapshot raw key"
-    case .decrypted: "Plaintext SQLite (explicit)"
+    case .liveEncrypted: "本机微信记录（只读）"
+    case .snapshotKeychain: "加密备份：使用本机钥匙串"
+    case .snapshotLocalCredential: "加密备份：使用解锁文件"
+    case .snapshotPassphrase: "加密备份：使用密码"
+    case .snapshotRecoveryKit: "加密备份：使用恢复词文件"
+    case .snapshotEncrypted: "旧版备份：使用恢复密钥"
+    case .decrypted: "已解密的数据库"
     }
   }
 }
@@ -105,6 +105,24 @@ public struct HistoryDirectPage: Codable, Equatable, Sendable {
 }
 
 public struct HistoryDirectConversation: Codable, Equatable, Identifiable, Sendable {
+  public var isOfficialAccount: Bool? = nil
+
+  /// IDs and source metadata determine category; display names never do.
+  public var chatCategory: String? {
+    if id.hasSuffix("@chatroom") { return "group" }
+    if id.hasPrefix("@placeholder") || id == "chatroom_session_box" { return nil }
+    let services: Set<String> = [
+      "blogapp", "brandsessionholder", "brandservicesessionholder",
+      "facebookapp", "feedsapp", "filehelper", "floatbottle", "fmessage", "lbsapp", "masssendapp",
+      "medianote", "newsapp", "notification_messages", "notifymessage", "qmessage", "qqfriend",
+      "qqmail", "readerapp", "recommendhelper", "shakeapp", "tmessage", "voiceinputapp", "weixin",
+      "opencustomerservicemsg",
+    ]
+    if isOfficialAccount == true || id.hasPrefix("gh_") || services.contains(id) { return "other" }
+    return id.hasPrefix("@") ? nil : "personal"
+  }
+
+  public var avatarBase64: String? = nil
   public let id: String
   public let contactDisplayName: String?
   public let summary: String?
@@ -117,7 +135,7 @@ public struct HistoryDirectConversation: Codable, Equatable, Identifiable, Senda
 
   public var displayName: String {
     if let contactDisplayName, !contactDisplayName.isEmpty { return contactDisplayName }
-    guard !id.isEmpty else { return "Unknown conversation" }
+    guard !id.isEmpty else { return "未知会话" }
     return id
   }
 
@@ -130,6 +148,8 @@ public struct HistoryDirectConversation: Codable, Equatable, Identifiable, Senda
   }
 
   enum CodingKeys: String, CodingKey {
+    case isOfficialAccount
+    case avatarBase64
     case id
     case contactDisplayName = "displayName"
     case summary
@@ -209,6 +229,8 @@ public enum HistoryDirectJSONValue: Codable, Equatable, Sendable {
 }
 
 public struct HistoryDirectMessage: Codable, Equatable, Identifiable, Sendable {
+  public var avatarBase64: String? = nil
+  public var isAccountHolder: Bool? = nil
   public let id: String
   public let conversationID: String
   public let sortSequence: Int64
@@ -226,13 +248,26 @@ public struct HistoryDirectMessage: Codable, Equatable, Identifiable, Sendable {
   public let contentTruncated: Bool
 
   public var createdAt: Date { Date(timeIntervalSince1970: TimeInterval(createdAtUnix)) }
-  public var displayText: String { content.displayText }
+  public var displayText: String {
+    if isSticker { return "[表情]" }
+    if let quote = content.quote {
+      let reference = [quote.sender, quote.text].compactMap { $0 }.joined(separator: ": ")
+      return [quote.reply, reference.isEmpty ? nil : "引用：" + reference]
+        .compactMap { $0 }.joined(separator: "\n").nonemptyQuoteFallback
+    }
+    let text = content.displayText
+    if messageType != 1 && text.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("<") {
+      return "[此消息暂不支持预览]"
+    }
+    return text
+  }
   public var senderLabel: String {
     if let senderDisplayName, !senderDisplayName.isEmpty { return senderDisplayName }
-    return sender.isEmpty ? "Unknown sender" : sender
+    return sender.isEmpty ? (messageTypeLabel == "system" ? "系统消息" : "Unknown sender") : sender
   }
 
   enum CodingKeys: String, CodingKey {
+    case avatarBase64, isAccountHolder
     case id
     case conversationID = "conversationId"
     case sortSequence
@@ -450,7 +485,7 @@ public struct HistoryDirectQueryClient: Sendable {
     }
     var arguments = [
       "messages", "list", configuration.sourceURL.path,
-      "--conversation", conversationID, "--limit", String(limit),
+      "--conversation", conversationID, "--limit", String(limit), "--json",
     ]
     if let cursor { arguments += ["--cursor", cursor] }
     return try await request(
@@ -610,6 +645,7 @@ public struct HistoryDirectQueryClient: Sendable {
     let process = Process()
     process.executableURL = configuration.executableURL
     process.arguments = arguments + configuration.accessArguments
+    if operation == "messages.search" { process.arguments?.append("--json") }
     process.standardInput = input
     process.standardOutput = output.pipe
     process.standardError = errors.pipe
@@ -668,7 +704,9 @@ public struct HistoryDirectQueryClient: Sendable {
     }
     if process.terminationStatus != 0 {
       if let envelope = try? JSONDecoder().decode(DirectErrorEnvelope.self, from: stdout),
-        envelope.schema == Self.schema, envelope.formatVersion == 1,
+        envelope.schema
+          == (operation.hasPrefix("attachment.") ? "greenbubbles.attachment.v1" : Self.schema),
+        envelope.formatVersion == 1,
         envelope.operation == operation, envelope.ok == false
       {
         throw HistoryDirectQueryError.commandFailed(
@@ -678,6 +716,14 @@ public struct HistoryDirectQueryClient: Sendable {
         )
       }
       throw HistoryDirectQueryError.invalidResponse
+    }
+    if operation.hasPrefix("attachment.") {
+      guard let identity = try? JSONDecoder().decode(HistoryAttachmentIdentity.self, from: stdout),
+        identity.schema == "greenbubbles.attachment.v1", identity.formatVersion == 1,
+        identity.operation == operation, identity.ok,
+        let response = try? JSONDecoder().decode(type, from: stdout)
+      else { throw HistoryDirectQueryError.invalidResponse }
+      return response
     }
     guard let envelope = try? JSONDecoder().decode(DirectSuccessIdentity.self, from: stdout),
       envelope.schema == Self.schema, envelope.formatVersion == 1,
@@ -915,4 +961,93 @@ private func terminateDirectProcess(_ process: Process, completion: DispatchSema
     kill(process.processIdentifier, SIGKILL)
     _ = completion.wait(timeout: .now() + .seconds(1))
   }
+}
+
+private struct HistoryAttachmentIdentity: Decodable {
+  let schema: String
+  let formatVersion: Int
+  let operation: String
+  let ok: Bool
+}
+
+public struct HistoryAttachmentInspection: Decodable, Sendable {
+  public let kind: String
+  public let availability: String
+  public let preferredAttachmentId: String?
+  public let preferredSourceByteCount: UInt64?
+  public let accountImageKeyRequired: Bool
+}
+
+public struct HistoryAttachmentMaterialization: Decodable, Sendable {
+  public let attachmentId: String
+  public let kind: String
+  public let decodedFormat: String
+  public let decodedByteCount: UInt64
+  public let decodedSha256: String
+}
+
+extension HistoryDirectQueryClient {
+  public func inspectDocument(
+    configuration: HistoryDirectConfiguration, keyUTF8: [UInt8],
+    message: HistoryDirectMessage
+  ) async throws -> HistoryAttachmentInspection {
+    try await request(
+      configuration: configuration, keyUTF8: keyUTF8,
+      operation: "attachment.inspect",
+      arguments: [
+        "attachment", "inspect", configuration.sourceURL.path,
+        "--conversation", message.conversationID, "--message", message.id, "--kind", "document",
+      ],
+      query: nil, type: HistoryAttachmentInspection.self)
+  }
+
+  public func materializeDocument(
+    configuration: HistoryDirectConfiguration, keyUTF8: [UInt8],
+    message: HistoryDirectMessage, attachmentID: String,
+    output: URL
+  ) async throws -> HistoryAttachmentMaterialization {
+    try await request(
+      configuration: configuration, keyUTF8: keyUTF8,
+      operation: "attachment.materialize",
+      arguments: [
+        "attachment", "materialize", configuration.sourceURL.path,
+        "--conversation", message.conversationID, "--message", message.id, "--kind", "document",
+        "--attachment", attachmentID, "--output", output.path,
+      ],
+      query: nil, type: HistoryAttachmentMaterialization.self)
+  }
+
+  public func inspectImage(
+    configuration: HistoryDirectConfiguration, keyUTF8: [UInt8],
+    message: HistoryDirectMessage
+  ) async throws -> HistoryAttachmentInspection {
+    try await request(
+      configuration: configuration, keyUTF8: keyUTF8,
+      operation: "attachment.inspect",
+      arguments: [
+        "attachment", "inspect", configuration.sourceURL.path,
+        "--conversation", message.conversationID, "--message", message.id, "--kind", "image",
+      ],
+      query: nil, type: HistoryAttachmentInspection.self)
+  }
+
+  public func materializeImage(
+    configuration: HistoryDirectConfiguration, keyUTF8: [UInt8],
+    message: HistoryDirectMessage, attachmentID: String,
+    output: URL
+  ) async throws -> HistoryAttachmentMaterialization {
+    try await request(
+      configuration: configuration, keyUTF8: keyUTF8,
+      operation: "attachment.materialize",
+      arguments: [
+        "attachment", "materialize", configuration.sourceURL.path,
+        "--conversation", message.conversationID, "--message", message.id, "--kind", "image",
+        "--attachment", attachmentID, "--output", output.path,
+      ],
+      query: nil, type: HistoryAttachmentMaterialization.self)
+  }
+}
+
+extension String {
+  fileprivate var nonemptyQuoteFallback: String { isEmpty ? "引用回复正文未能解析" : self }
 }

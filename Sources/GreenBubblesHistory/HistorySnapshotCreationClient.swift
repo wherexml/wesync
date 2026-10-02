@@ -8,8 +8,8 @@ public enum HistorySnapshotSourceAccess: String, CaseIterable, Sendable {
 
   public var displayName: String {
     switch self {
-    case .encryptedWeChat: "Encrypted WeChat SQLite"
-    case .decryptedSQLite: "Plaintext SQLite (explicit)"
+    case .encryptedWeChat: "微信加密数据库"
+    case .decryptedSQLite: "已解密的数据库"
     }
   }
 }
@@ -108,22 +108,22 @@ public enum HistorySnapshotCreationError: Error, Equatable, LocalizedError {
 
   public var errorDescription: String? {
     switch self {
-    case .invalidExecutable: "Choose a real local greenbubbles executable."
-    case .invalidSource: "Choose a current-user-owned real SQLite source directory."
+    case .invalidExecutable: "请选择有效的本机读取工具。"
+    case .invalidSource: "请选择属于当前用户的有效数据库文件夹。"
     case .unsafeOutput:
-      "Choose a new snapshot path beneath a current-user-owned owner-only directory."
+      "请在仅本人可访问的文件夹中选择新的备份位置。"
     case .unsafeProtector:
-      "Recovery and convenience files must be single-link owner-only files in owner-only directories."
-    case .invalidRecoveryKit: "The recovery kit is not the confirmed 24-word kit."
+      "恢复词和解锁文件必须保存在仅本人可访问的私有文件夹中，且不能使用文件链接。"
+    case .invalidRecoveryKit: "恢复词文件与已确认的 24 个恢复词不一致。"
     case .invalidSourceKey:
-      "The encrypted source key must be 32 raw bytes or 64 hexadecimal characters."
+      "源数据库密钥必须为 32 字节，或 64 位十六进制字符。"
     case .invalidPassphrase:
-      "The optional snapshot passphrase must be 12–1024 UTF-8 bytes with no line break."
-    case .responseTooLarge: "The local snapshot command exceeded its fixed response bound."
-    case .timedOut: "The local snapshot command exceeded its two-hour safety deadline."
+      "备份密码长度须为 12–1,024 字节，且不能包含换行。"
+    case .responseTooLarge: "备份工具返回的数据过大，操作已停止。"
+    case .timedOut: "备份操作超过两小时，已停止。请检查数据量和磁盘状态后重试。"
     case .commandFailed:
-      "The local snapshot command failed. The portable recovery kit was not deleted."
-    case .invalidResponse: "The local snapshot command returned an invalid bounded response."
+      "备份操作失败，恢复词文件已保留。"
+    case .invalidResponse: "备份工具返回的数据无法识别，请重试。"
     }
   }
 }

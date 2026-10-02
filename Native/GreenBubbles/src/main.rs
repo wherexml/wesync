@@ -585,7 +585,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
         "source" => {
             let subcommand = arguments.next().unwrap_or_else(|| "status".to_string());
-            if subcommand != "status" {
+            if subcommand != "status" && subcommand != "presentation" {
                 return Err(format!(
                     "'{subcommand}' is not a source command. Use 'greenbubbles source status'."
                 )
@@ -620,6 +620,11 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             )?;
             let invocation = resolve_query_invocation(database_root, &remaining)?;
             let source = invocation.access.open_source(&invocation.source_root)?;
+            if subcommand == "presentation" {
+                let response = greenbubbles::live_query::presentation_metadata(&source)?;
+                println!("{}", serde_json::to_string(&response)?);
+                return Ok(());
+            }
             let response = live_source_status(&source)?;
             println!("{}", serialize_query_response(&response)?);
         }

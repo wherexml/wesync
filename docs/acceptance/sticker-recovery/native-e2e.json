@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "scope": "isolated-native-production-sticker-view",
+  "realSticker": true,
+  "animationDifferentFrames": true,
+  "bounded160PointLayout": true,
+  "missingResourceFallback": true,
+  "invalidResourceRetryClicked": true,
+  "nativeQuitProcessAbsent": true,
+  "nativeRelaunchStickerDisplayed": true,
+  "installedAppRestart": "NOT_RUN",
+  "evidence": {
+    "native-frame-2.png": "2460ebd289cf598fe8ba170c00e4e74c6ec1f2156641099baa3f6e33f2b8775c",
+    "native-frame-1.png": "f50561091b8399da0c8a98d26ccdaefc1b67cf10609cd8de944c2bf4e436ac88",
+    "native-restart.png": "e86b24824f1341126bda41df37e3dd6899f151162a996470942383e483f84892"
+  }
+}

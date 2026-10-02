@@ -1,0 +1,19 @@
+{
+  "checks" : {
+    "cancelled-query-cannot-overwrite-selection" : true,
+    "disconnect-clears-visible-content" : true,
+    "first-page" : true,
+    "fixture-connected" : true,
+    "reconnect-does-not-reuse-prior-session" : true,
+    "refresh-failure-keeps-content" : true,
+    "refresh-preserves-contiguous-history" : true,
+    "refresh-retains-readable-content" : true,
+    "reselect-does-not-query" : true,
+    "return-after-nine-chats-keeps-history-immediately" : true,
+    "second-page" : true
+  },
+  "error" : "",
+  "passed" : true,
+  "source" : "synthetic-only",
+  "wechatRead" : false
+}

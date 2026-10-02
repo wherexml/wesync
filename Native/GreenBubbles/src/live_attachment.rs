@@ -227,6 +227,106 @@ pub fn inspect_image_attachment(
     })
 }
 
+// V1/V2 use an account-specific XOR tail, independent of the AES header key.
+// Restrict recovery to known trailers and already-authorized attachment siblings.
+fn dat_tail_size(data: &[u8]) -> Result<usize, LiveAttachmentError> {
+    if wx_media::detect_dat_format(data).is_none() {
+        return Ok(0);
+    }
+    if data.len() < 15 {
+        return Err(LiveAttachmentError::Decode(
+            "truncated image envelope".into(),
+        ));
+    }
+    let aes_size = u32::from_le_bytes(data[6..10].try_into().unwrap()) as usize;
+    let xor_size = u32::from_le_bytes(data[10..14].try_into().unwrap()) as usize;
+    let aligned = (aes_size / 16 + 1) * 16;
+    if aligned > data.len() - 15 || xor_size > data.len() - 15 - aligned {
+        return Err(LiveAttachmentError::Decode(
+            "invalid image envelope boundaries".into(),
+        ));
+    }
+    Ok(xor_size)
+}
+
+fn trailer_xor_key(encrypted: &[u8], ext: &str, tail_size: usize) -> Option<u8> {
+    let trailer: &[u8] = match ext {
+        "png" => b"\x00\x00\x00\x00IEND\xae\x42\x60\x82",
+        "jpg" | "jpeg" => b"\xff\xd9",
+        _ => return None,
+    };
+    // The zero-XOR decode has already decrypted any AES prefix of the trailer.
+    let encrypted_trailer = encrypted.get(encrypted.len().checked_sub(trailer.len())?..)?;
+    let key = *encrypted_trailer.last()? ^ *trailer.last()?;
+    encrypted_trailer
+        .iter()
+        .zip(trailer)
+        .enumerate()
+        .all(|(i, (a, b))| {
+            let in_tail = trailer.len() - i <= tail_size;
+            *a ^ (if in_tail { key } else { 0 }) == *b
+        })
+        .then_some(key)
+}
+
+fn decode_image_dat(
+    encrypted: &[u8],
+    v2_aes_key: Option<[u8; 16]>,
+    siblings: &[Candidate],
+) -> Result<wx_media::DecodedImage, LiveAttachmentError> {
+    let tail_size = dat_tail_size(encrypted)?;
+    let decode = |data: &[u8], xor_key| {
+        wx_media::decrypt_dat(
+            data,
+            &wx_media::DatDecryptOptions {
+                v2_aes_key,
+                xor_key,
+            },
+        )
+        .map_err(|_| {
+            LiveAttachmentError::Decode("the selected image could not be decoded safely".into())
+        })
+    };
+    let header = decode(encrypted, Some(0))?;
+    if tail_size == 0 {
+        return Ok(header);
+    }
+    let mut key = trailer_xor_key(&header.data, &header.ext, tail_size);
+    if key.is_none() && !matches!(header.ext.as_str(), "png" | "jpg" | "jpeg") {
+        for sibling in siblings.iter().take(8) {
+            let Ok(bytes) = read_file_candidate(sibling) else {
+                continue;
+            };
+            if bytes == encrypted {
+                continue;
+            }
+            let Ok(size) = dat_tail_size(&bytes) else {
+                continue;
+            };
+            if size == 0 {
+                continue;
+            }
+            let Ok(decoded) = decode(&bytes, Some(0)) else {
+                continue;
+            };
+            if let Some(candidate) = trailer_xor_key(&decoded.data, &decoded.ext, size) {
+                if key.is_some_and(|value| value != candidate) {
+                    return Err(LiveAttachmentError::Decode(
+                        "inconsistent image tail keys".into(),
+                    ));
+                }
+                key = Some(candidate);
+            }
+        }
+    }
+    let key = key.ok_or_else(|| {
+        LiveAttachmentError::Decode(
+            "the image tail key could not be verified from this attachment".into(),
+        )
+    })?;
+    decode(encrypted, Some(key))
+}
+
 pub fn materialize_image_attachment(
     account_root: &Path,
     conversation: &str,
@@ -240,7 +340,7 @@ pub fn materialize_image_attachment(
     let source = AttachmentSource::open(account_root)?;
     let candidates = source.resolve_candidates(conversation, &source_md5)?;
     let candidate = candidates
-        .into_iter()
+        .iter()
         .find(|candidate| candidate.attachment_id == attachment_id)
         .ok_or_else(|| {
             LiveAttachmentError::Unavailable(
@@ -260,16 +360,7 @@ pub fn materialize_image_attachment(
     } else {
         None
     };
-    let decoded = wx_media::decrypt_dat(
-        &encrypted,
-        &wx_media::DatDecryptOptions {
-            v2_aes_key,
-            xor_key: None,
-        },
-    )
-    .map_err(|_| {
-        LiveAttachmentError::Decode("the selected WeChat image could not be decoded safely".into())
-    })?;
+    let decoded = decode_image_dat(&encrypted, v2_aes_key, &candidates)?;
     if decoded.data.len() as u64 > MAXIMUM_IMAGE_SOURCE_BYTES {
         return Err(LiveAttachmentError::Decode(
             "decoded image exceeds the fixed materialization limit".into(),
@@ -346,7 +437,7 @@ pub fn materialize_message_attachment(
     let candidates =
         resolve_message_candidates(account_root, source, conversation, kind, &descriptor)?;
     let candidate = candidates
-        .into_iter()
+        .iter()
         .find(|candidate| candidate.attachment_id == attachment_id)
         .ok_or_else(|| {
             LiveAttachmentError::Unavailable(
@@ -373,18 +464,7 @@ pub fn materialize_message_attachment(
             } else {
                 None
             };
-            let decoded = wx_media::decrypt_dat(
-                &encrypted,
-                &wx_media::DatDecryptOptions {
-                    v2_aes_key,
-                    xor_key: None,
-                },
-            )
-            .map_err(|_| {
-                LiveAttachmentError::Decode(
-                    "the selected WeChat image could not be decoded safely".into(),
-                )
-            })?;
+            let decoded = decode_image_dat(&encrypted, v2_aes_key, &candidates)?;
             if decoded.data.len() as u64 > MAXIMUM_IMAGE_SOURCE_BYTES {
                 return Err(LiveAttachmentError::Decode(
                     "decoded image exceeds the fixed materialization limit".into(),
@@ -395,14 +475,14 @@ pub fn materialize_message_attachment(
             (decoded.ext, decoded.data.len() as u64, digest)
         }
         AttachmentKind::Voice => {
-            let CandidateSource::Voice { data } = candidate.source else {
+            let CandidateSource::Voice { data } = &candidate.source else {
                 return Err(LiveAttachmentError::Decode(
                     "the selected voice candidate has an incompatible source".into(),
                 ));
             };
             let (data, format) = match wx_media::transcode_silk_to_ogg_opus(&data) {
                 Ok(decoded) => (decoded.data, decoded.ext.to_string()),
-                Err(_) => (data, "silk".to_string()),
+                Err(_) => (data.clone(), "silk".to_string()),
             };
             if data.len() as u64 > MAXIMUM_DECODED_AUDIO_BYTES {
                 return Err(LiveAttachmentError::Decode(
@@ -1943,14 +2023,7 @@ fn readable_image_file(account_root: &Path, source: &Path, md5: &str) -> Option<
     let v2_aes_key = (wx_media::detect_dat_format(prefix) == Some(wx_media::DatFormat::V2))
         .then(|| wx_media::derive_v2_key_from_dir(account_root).ok())
         .flatten();
-    let decoded = wx_media::decrypt_dat(
-        &encrypted,
-        &wx_media::DatDecryptOptions {
-            v2_aes_key,
-            xor_key: None,
-        },
-    )
-    .ok()?;
+    let decoded = decode_image_dat(&encrypted, v2_aes_key, &[]).ok()?;
     let extension = if decoded.ext.is_empty() {
         "img".to_string()
     } else {

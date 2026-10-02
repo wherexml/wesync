@@ -10,9 +10,9 @@ struct HistoryOverviewView: View {
       if let manifest = model.session?.manifest {
         VStack(alignment: .leading, spacing: 22) {
           VStack(alignment: .leading, spacing: 6) {
-            Text("History overview")
+            Text("聊天记录概览")
               .font(.largeTitle.weight(.semibold))
-            Text("A verified, policy-scoped view of your local WeChat context.")
+            Text("查看已检查、在授权范围内的本机微信记录。")
               .font(.title3)
               .foregroundStyle(.secondary)
           }
@@ -23,49 +23,49 @@ struct HistoryOverviewView: View {
             columns: [GridItem(.adaptive(minimum: 190), spacing: 14)], spacing: 14
           ) {
             MetricCard(
-              title: "Conversations", value: manifest.enabledConversationCount.formatted(),
+              title: "会话", value: manifest.enabledConversationCount.formatted(),
               icon: "bubble.left.and.bubble.right.fill", color: .blue)
             MetricCard(
-              title: "Contacts", value: manifest.exportedContactCount.formatted(),
+              title: "联系人", value: manifest.exportedContactCount.formatted(),
               icon: "person.2.fill", color: .purple)
             MetricCard(
-              title: "Messages", value: manifest.exportedMessageCount.formatted(),
+              title: "消息", value: manifest.exportedMessageCount.formatted(),
               icon: "text.bubble.fill", color: .green)
             MetricCard(
-              title: "Media references", value: manifest.exportedArtifactCount.formatted(),
+              title: "附件引用", value: manifest.exportedArtifactCount.formatted(),
               icon: "photo.on.rectangle.angled", color: .orange)
           }
-          GroupBox("Database coverage") {
+          GroupBox("记录完整程度") {
             HStack(spacing: 32) {
-              CoverageMetric(label: "Total", value: manifest.context.totalDatabaseCount)
+              CoverageMetric(label: "合计", value: manifest.context.totalDatabaseCount)
               CoverageMetric(
-                label: "Fresh", value: manifest.context.freshDatabaseCount, color: .green)
+                label: "最新记录", value: manifest.context.freshDatabaseCount, color: .green)
               CoverageMetric(
-                label: "Unavailable", value: manifest.context.unavailableDatabaseCount,
+                label: "暂不可用", value: manifest.context.unavailableDatabaseCount,
                 color: .orange)
               CoverageMetric(
-                label: "Preserved stale", value: manifest.context.preservedStaleDatabaseCount,
+                label: "此前保留的记录", value: manifest.context.preservedStaleDatabaseCount,
                 color: .yellow)
               Spacer()
             }
             .padding(8)
           }
-          GroupBox("Bundle evidence") {
+          GroupBox("记录文件信息") {
             Grid(alignment: .leading, horizontalSpacing: 28, verticalSpacing: 10) {
               EvidenceRow(
-                label: "Created",
+                label: "创建时间",
                 value: manifest.createdAt.formatted(date: .long, time: .shortened))
               EvidenceRow(
-                label: "Checkpoint", value: shortHistoryID(manifest.context.checkpointRevision))
+                label: "导出进度标记", value: shortHistoryID(manifest.context.checkpointRevision))
               EvidenceRow(
-                label: "Client",
+                label: "来源客户端",
                 value: historyHumanize(manifest.context.clientBuildCompatibility ?? "unknown"))
               EvidenceRow(
-                label: "Scope", value: historyHumanize(manifest.context.archiveScope ?? "unknown"))
+                label: "访问范围", value: historyHumanize(manifest.context.archiveScope ?? "unknown"))
               EvidenceRow(
-                label: "Index",
+                label: "搜索索引",
                 value: model.session?.reusedIndex == true
-                  ? "Verified cache reused" : "Built and verified")
+                  ? "已复用检查通过的索引" : "已建立并检查")
             }
             .padding(8)
             .textSelection(.enabled)
@@ -112,7 +112,7 @@ struct ConversationTimelineView: View {
         Text(conversation.humanLabel)
           .font(.title2.weight(.semibold))
         Text(
-          "\(conversation.participantCount) participants • \(model.session?.conversationStatistics[conversation.conversationID]?.messageCount ?? 0) messages"
+          "\(conversation.participantCount) 位参与者 · \(model.session?.conversationStatistics[conversation.conversationID]?.messageCount ?? 0) 条消息"
         )
         .font(.caption)
         .foregroundStyle(.secondary)
@@ -126,7 +126,7 @@ struct ConversationTimelineView: View {
           Text("\(participant.displayName) — \(historyHumanize(participant.role))")
         }
       } label: {
-        Label("Participants", systemImage: "person.2")
+        Label("参与者", systemImage: "person.2")
       }
       .menuStyle(.borderlessButton)
     }
@@ -140,7 +140,7 @@ struct ConversationTimelineView: View {
       ScrollView {
         LazyVStack(spacing: 10) {
           if model.isSearchContext {
-            Button("Return to latest messages") {
+            Button("返回最新消息") {
               model.returnToLatestMessages()
             }
             .buttonStyle(.bordered)
@@ -152,7 +152,7 @@ struct ConversationTimelineView: View {
               if model.isLoadingTimeline {
                 ProgressView().controlSize(.small)
               } else {
-                Label("Load 100 older messages", systemImage: "arrow.up.circle")
+                Label("加载更早的 100 条消息", systemImage: "arrow.up.circle")
               }
             }
             .buttonStyle(.bordered)
@@ -176,17 +176,17 @@ struct ConversationTimelineView: View {
           }
 
           if model.isLoadingTimeline && model.timelineMessages.isEmpty {
-            ProgressView("Loading messages…")
+            ProgressView("正在加载消息…")
               .padding(40)
           }
           if !model.isLoadingTimeline && model.timelineMessages.isEmpty
             && model.timelineError == nil
           {
             ContentUnavailableView(
-              "No authorized messages",
+              "暂无可查看的消息",
               systemImage: "bubble.left",
               description: Text(
-                "This conversation has no messages inside the bundle's policy window.")
+                "在这份导出记录允许查看的时间范围内，此会话没有消息。")
             )
             .padding(40)
           }
@@ -224,11 +224,11 @@ private struct MessageBubble: View {
             .stroke(highlighted ? Color.accentColor : .clear, lineWidth: 3)
         }
         .contextMenu {
-          Button("Copy Message Text") {
+          Button("复制消息文字") {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(message.displayText, forType: .string)
           }
-          Button("Copy Opaque Message ID") {
+          Button("复制消息标识") {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(message.canonicalID, forType: .string)
           }
@@ -244,7 +244,7 @@ private struct MessageBubble: View {
         .font(.body)
         .textSelection(.enabled)
       if message.payloadSummaryTruncated == true {
-        Label("Summary truncated by policy", systemImage: "scissors")
+        Label("摘要已按访问规则截短", systemImage: "scissors")
           .font(.caption2)
           .foregroundStyle(.secondary)
       }
@@ -282,13 +282,13 @@ private struct MessageBubble: View {
   private var messageMetadata: some View {
     HStack(spacing: 7) {
       if message.createdAt == nil {
-        Text("Unknown time")
+        Text("时间未知")
       }
       if let payloadKind = message.payloadKind {
         Text(historyHumanize(payloadKind))
       }
       if resolvedDirection == "unknown" {
-        Text("• direction unknown")
+        Text("· 收发方向未知")
           .foregroundStyle(.orange)
       }
     }
@@ -331,7 +331,7 @@ private struct RelationshipButton: View {
   private var title: String {
     relationship.resolved
       ? historyHumanize(relationship.kind)
-      : "Unresolved \(historyHumanize(relationship.kind))"
+      : "未能识别：\(historyHumanize(relationship.kind))"
   }
 
   private var icon: String {
@@ -368,9 +368,9 @@ private struct ArtifactReferenceView: View {
       } else if artifact?.detail != nil {
         Image(systemName: "checkmark.shield.fill")
           .foregroundStyle(.green)
-          .help("Digest-verified when exported")
+          .help("导出时已检查文件完整性")
         if canPreview, let artifact {
-          Button("Preview") {
+          Button("预览") {
             model.requestMediaPreview(artifact)
           }
           .buttonStyle(.bordered)
@@ -390,7 +390,7 @@ private struct ArtifactReferenceView: View {
       } catch is CancellationError {
         return
       } catch {
-        loadError = String(describing: error)
+        loadError = historyUserError(error)
         loaded = true
       }
     }
@@ -413,7 +413,7 @@ private struct ArtifactReferenceView: View {
 
   private var artifactTitle: String {
     if let detail = artifact?.detail { return historyHumanize(detail.kind) }
-    if artifact?.error != nil || loadError != nil { return "Unavailable attachment" }
+    if artifact?.error != nil || loadError != nil { return "附件暂不可用" }
     return historyHumanize(reference.role)
   }
 
@@ -421,7 +421,7 @@ private struct ArtifactReferenceView: View {
     if let loadError { return loadError }
     if let error = artifact?.error { return error.message }
     guard let detail = artifact?.detail else {
-      return loaded ? "Artifact metadata is unavailable" : "Loading verified metadata…"
+      return loaded ? "无法读取附件信息" : "正在读取附件信息…"
     }
     let file = detail.decoded ?? detail.source
     let size = file.map {
@@ -430,7 +430,7 @@ private struct ArtifactReferenceView: View {
     }
     return [
       historyHumanize(detail.availability),
-      "Decode: \(historyHumanize(detail.decodeState))",
+      "解析状态：\(historyHumanize(detail.decodeState))",
       file?.format.uppercased(),
       size,
     ]
@@ -459,14 +459,14 @@ struct ContactDetailView: View {
             HStack {
               Text(
                 contact.localProfileAvailable
-                  ? "Local profile available" : "Derived from conversations")
+                  ? "本机有联系人资料" : "资料来自会话记录")
               FreshnessBadge(value: contact.sourceDatabaseFreshness)
             }
             .font(.callout)
             .foregroundStyle(.secondary)
           }
         }
-        GroupBox("Shared conversations") {
+        GroupBox("共同会话") {
           VStack(spacing: 0) {
             ForEach(contact.conversationProfiles) { profile in
               Button {
@@ -478,7 +478,7 @@ struct ContactDetailView: View {
                   VStack(alignment: .leading) {
                     Text(profile.conversationLabel)
                     Text(
-                      "Known as \(profile.displayName) • \(historyHumanize(profile.role))"
+                      "会话中显示为 \(profile.displayName) · \(historyHumanize(profile.role))"
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -497,8 +497,8 @@ struct ContactDetailView: View {
           }
           .padding(.horizontal, 8)
         }
-        DisclosureGroup("Technical identity") {
-          LabeledContent("Opaque participant ID", value: contact.participantID)
+        DisclosureGroup("内部标识") {
+          LabeledContent("参与者标识", value: contact.participantID)
             .textSelection(.enabled)
             .padding(.top, 8)
         }
@@ -525,7 +525,7 @@ struct CoverageBanner: View {
       VStack(alignment: .leading, spacing: 3) {
         Text(
           context.sourceCoverageComplete
-            ? "Source coverage complete" : "History has partial source coverage"
+            ? "记录来源完整" : "部分记录来源暂不可用"
         )
         .font(.callout.weight(.semibold))
         if !compact || !context.sourceCoverageComplete {
@@ -537,7 +537,7 @@ struct CoverageBanner: View {
       }
       Spacer()
       if let showDetails {
-        Button("Details", action: showDetails)
+        Button("详情", action: showDetails)
           .buttonStyle(.borderless)
       }
     }
@@ -556,27 +556,27 @@ struct CoverageDetailsView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       HStack {
-        Text("Source coverage")
+        Text("记录完整程度")
           .font(.title2.weight(.semibold))
         Spacer()
-        Button("Done") { dismiss() }
+        Button("完成") { dismiss() }
           .keyboardShortcut(.defaultAction)
       }
       CoverageBanner(context: context)
-      GroupBox("Databases") {
+      GroupBox("数据库") {
         Grid(alignment: .leading, horizontalSpacing: 28, verticalSpacing: 10) {
-          EvidenceRow(label: "Total", value: context.totalDatabaseCount?.formatted() ?? "Unknown")
-          EvidenceRow(label: "Fresh", value: context.freshDatabaseCount?.formatted() ?? "Unknown")
+          EvidenceRow(label: "合计", value: context.totalDatabaseCount?.formatted() ?? "未知")
+          EvidenceRow(label: "最新记录", value: context.freshDatabaseCount?.formatted() ?? "未知")
           EvidenceRow(
-            label: "Unavailable", value: context.unavailableDatabaseCount?.formatted() ?? "Unknown")
+            label: "暂不可用", value: context.unavailableDatabaseCount?.formatted() ?? "未知")
           EvidenceRow(
-            label: "Preserved stale",
-            value: context.preservedStaleDatabaseCount?.formatted() ?? "Unknown")
+            label: "此前保留的记录",
+            value: context.preservedStaleDatabaseCount?.formatted() ?? "未知")
         }
         .padding(8)
       }
       if !context.limitationCodes.isEmpty {
-        GroupBox("Limitations") {
+        GroupBox("当前限制") {
           VStack(alignment: .leading, spacing: 8) {
             ForEach(context.limitationCodes, id: \.self) { code in
               Label(historyHumanize(code), systemImage: "exclamationmark.circle")
@@ -587,7 +587,7 @@ struct CoverageDetailsView: View {
         }
       }
       Text(
-        "When a database is unavailable, missing records are not evidence that a message, contact, or attachment was deleted or never existed."
+        "部分数据库不可用时，可能无法显示其中的消息、联系人或附件。这不代表它们已被删除或从未存在。"
       )
       .font(.footnote)
       .foregroundStyle(.secondary)
@@ -744,11 +744,5 @@ func shortHistoryID(_ value: String) -> String {
 }
 
 func historyHumanize(_ value: String) -> String {
-  guard !value.isEmpty else { return value }
-  let spaced = value.replacingOccurrences(
-    of: "([a-z0-9])([A-Z])",
-    with: "$1 $2",
-    options: .regularExpression
-  )
-  return spaced.replacingOccurrences(of: "_", with: " ").capitalized
+  historyChineseStatus(value)
 }

@@ -1,0 +1,21 @@
+{
+  "source_paths_preserved": true,
+  "product_size": [
+    512,
+    512
+  ],
+  "transparent_outer_corner": true,
+  "white_tile": true,
+  "menu_size": [
+    44,
+    44
+  ],
+  "menu_transparent_corner": true,
+  "menu_black_alpha_template": true,
+  "iconset_files": 10,
+  "icns_decode": "PASS",
+  "packaging_shell_syntax": "PASS",
+  "diff_whitespace": "PASS",
+  "installed_restart_acceptance": "BLOCKED: installed app ad-hoc signed; no valid stable signing identity. No installation performed.",
+  "preview_note": "Source compositing only; not a screenshot of installed app or native menu bar."
+}

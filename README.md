@@ -1,3 +1,7 @@
+# chat-sync（私有开发仓库）
+
+当前仓库：`wherexml/chat-sync`，初始可见性为 Private。基于 GreenBubbles，保留上游历史及许可；应用名称与签名身份保持不变。仓库维护约定见 [GitHub 仓库说明](docs/REPOSITORY.md)。
+
 <p align="center">
   <img src="assets/greenbubbles-icon.svg" width="132" alt="GreenBubbles icon">
 </p>
@@ -290,3 +294,14 @@ MIT — see [LICENSE](LICENSE). Binary releases include
 
 GreenBubbles is an independent project, not affiliated with or endorsed by
 Tencent. WeChat and other product names are trademarks of their respective owners.
+
+## Local presentation enhancements
+
+See [local presentation build and offline acceptance](docs/PRESENTATION_UPGRADE.md) for image previews, quote cards, imported avatars, repeatable synthetic checks, and rollback.
+
+本机聊天 UI 升级（build 4）：个人／群聊分页、真实缓存头像、自己消息靠右、紧凑引用与图片预览；移除消息类型页脚，支持当前会话搜索。修复空压缩字段导致引用缺失及图片 DAT 尾段解密问题。实现、复现步骤和验证边界见 [PRESENTATION_UPGRADE.md](docs/PRESENTATION_UPGRADE.md)。
+
+### Local conversation organization
+In the native browser, right-click a person or group and choose **移到其他**. In **其他**, choose **移回个人** or **移回群聊**; **恢复自动分类** removes the manual choice. Manual choices persist across refresh/relaunch, are scoped to the selected source, and do not modify WeChat. Personal remains the startup default.
+
+本地界面更新：支持 PDF 文档预览、翻页和系统应用打开；欢迎页及后续流程采用中文。范围、复测方法与正式安装限制见 [PDF 预览](docs/PDF_PREVIEW.md) 和 [中文界面](docs/CHINESE_UI.md)。

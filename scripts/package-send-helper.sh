@@ -145,6 +145,10 @@ done
 rm -f "$icon_base"
 rm -rf "$iconset"
 
+echo "==> generating the menu bar template"
+/usr/bin/sips -s format png -z 44 44 assets/greenbubbles-menubar.svg \
+  --out "$app_bundle/Contents/Resources/GreenBubbles-black.png" >/dev/null
+
 echo "==> recording the build provenance"
 git_commit=$(git rev-parse HEAD)
 cat >"$app_bundle/Contents/Resources/build-provenance.json" <<PROVENANCE

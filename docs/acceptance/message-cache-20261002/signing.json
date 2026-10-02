@@ -1,0 +1,6 @@
+{
+  "build": "10",
+  "sameSigningRequirement": true,
+  "queryAndSendBinariesUnchanged": true,
+  "signature": "PASS"
+}

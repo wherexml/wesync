@@ -22,9 +22,9 @@ private enum SnapshotConvenienceMode: String, CaseIterable, Identifiable {
 
   var title: String {
     switch self {
-    case .keychain: "macOS Keychain"
-    case .hiddenFile: "Owner-only hidden file"
-    case .none: "None"
+    case .keychain: "本机钥匙串"
+    case .hiddenFile: "仅本人可读的隐藏文件"
+    case .none: "不启用"
     }
   }
 }
@@ -69,17 +69,17 @@ struct HistorySnapshotCreationSheet: View {
           setupView
         case .generatingRecoveryKit:
           progressView(
-            title: "Creating portable recovery words…",
+            title: "正在生成恢复词…",
             detail:
-              "The CLI is generating a checksummed 24-word BIP-39 kit in the selected owner-only file."
+              "正在生成 24 个恢复词，并保存到你选择的私有文件中。"
           )
         case .confirmRecoveryWords:
           recoveryConfirmationView
         case .creatingSnapshot:
           progressView(
-            title: "Creating independently encrypted snapshot…",
+            title: "正在创建加密备份…",
             detail:
-              "SQLite is copying logical pages directly into SQLCipher databases protected by a new random key. No plaintext database staging file is created."
+              "正在直接复制并加密聊天记录，不会生成明文数据库临时文件。"
           )
         case .completed:
           completionView
@@ -113,10 +113,10 @@ struct HistorySnapshotCreationSheet: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: 5) {
-      Text("Create a recoverable snapshot")
+      Text("创建可恢复的加密备份")
         .font(.title2.weight(.semibold))
       Text(
-        "Convert WeChat SQLite directly into a new encrypted generation whose recovery does not depend on WeChat or this Mac."
+        "将微信记录保存为独立的加密备份。以后即使换电脑或无法登录微信，也可用恢复词打开。"
       )
       .foregroundStyle(.secondary)
     }
@@ -125,44 +125,44 @@ struct HistorySnapshotCreationSheet: View {
   private var setupView: some View {
     VStack(spacing: 16) {
       Form {
-        Section("Local conversion tool") {
+        Section("本机备份工具") {
           pathField(
-            title: "CLI",
+            title: "读取工具",
             text: $model.liveExecutablePath,
-            actionTitle: "Choose…",
+            actionTitle: "选择…",
             action: chooseExecutable
           )
         }
 
-        Section("Source SQLite") {
-          Picker("Source access", selection: $sourceAccess) {
+        Section("原始记录") {
+          Picker("记录类型", selection: $sourceAccess) {
             ForEach(HistorySnapshotSourceAccess.allCases, id: \.rawValue) { mode in
               Text(mode.displayName).tag(mode)
             }
           }
           pathField(
-            title: "Source directory",
+            title: "原始记录文件夹",
             text: $model.directSourcePath,
-            actionTitle: "Choose…",
+            actionTitle: "选择…",
             action: chooseSource
           )
-          Toggle("Source is a complete stable acquisition capture", isOn: $stableCapture)
+          Toggle("选择的是已完整采集、不会再变化的副本", isOn: $stableCapture)
           Text(
             stableCapture
-              ? "Uses snapshot create-capture and verifies the acquisition manifest and captured hashes before and after conversion."
-              : "Uses bounded read-only access to each database in the selected live account root. Each database is individually consistent; multiple WeChat databases are not one global transaction."
+              ? "备份前后都会核对采集清单和文件完整性。"
+              : "以只读方式逐个读取数据库。各数据库内部保持一致，但可能对应略有不同的时间点。"
           )
           .font(.caption)
           .foregroundStyle(.secondary)
           if sourceAccess == .encryptedWeChat {
-            SecureField("WeChat database key", text: $sourceKey)
+            SecureField("微信数据库密钥", text: $sourceKey)
               .textContentType(.password)
-            Text("The key is sent only through standard input and is never stored by the app.")
+            Text("密钥仅通过本机安全输入通道使用，此备份操作不会保存密钥。")
               .font(.caption)
               .foregroundStyle(.secondary)
           } else {
             Label(
-              "No source key is sent. Select this only for an explicitly plaintext SQLite source.",
+              "无需源密钥。仅在确认数据库已经解密时使用此选项。",
               systemImage: "exclamationmark.shield"
             )
             .font(.caption)
@@ -170,67 +170,67 @@ struct HistorySnapshotCreationSheet: View {
           }
         }
 
-        Section("New durable files") {
+        Section("备份保存位置") {
           pathField(
-            title: "New snapshot directory",
+            title: "新备份文件夹",
             text: $outputPath,
-            actionTitle: "Choose…",
+            actionTitle: "选择…",
             action: chooseOutput
           )
           pathField(
-            title: "New recovery-kit file",
+            title: "新恢复词文件",
             text: $recoveryKitPath,
-            actionTitle: "Choose…",
+            actionTitle: "选择…",
             action: chooseRecoveryKitOutput
           )
           Label(
-            "The recovery-kit file is created before conversion and is never deleted on cancellation or failure. Keep a second copy offline or in a password manager independent from the snapshot.",
+            "先保存恢复词，再开始备份。即使取消或失败，恢复词文件也会保留。请另外备份一份，避免与聊天记录一起丢失。",
             systemImage: "key.viewfinder"
           )
           .font(.caption)
           .foregroundStyle(.secondary)
         }
 
-        Section("Optional convenience unlock") {
-          Picker("Remember on this Mac", selection: $convenienceMode) {
+        Section("快捷解锁（可选）") {
+          Picker("在本机保存解锁方式", selection: $convenienceMode) {
             ForEach(SnapshotConvenienceMode.allCases) { mode in
               Text(mode.title).tag(mode)
             }
           }
           if convenienceMode == .keychain {
             Text(
-              "Recommended for routine access. Keychain receives only a separate random local wrapper credential, marked When Unlocked / This Device Only. The 24 words remain mandatory and portable."
+              "适合日常使用。快捷凭据只在这台电脑解锁后可用。仍须另存 24 个恢复词，供换机或丢失凭据时恢复。"
             )
             .font(.caption)
             .foregroundStyle(.secondary)
           } else if convenienceMode == .hiddenFile {
             pathField(
-              title: "New hidden credential file",
+              title: "新建隐藏解锁文件",
               text: $hiddenCredentialPath,
-              actionTitle: "Choose…",
+              actionTitle: "选择…",
               action: chooseHiddenCredentialOutput
             )
             Text(
-              "The dot-prefixed mode-0600 file contains a separate random wrapper credential—not the database key or recovery words. Deleting it only removes convenience access."
+              "隐藏文件仅本人可读，用于快捷解锁。删除它不会删除备份，之后仍可用恢复词打开。"
             )
             .font(.caption)
             .foregroundStyle(.secondary)
           } else {
-            Text("Routine unlock will use the passphrase, if enabled, or the recovery-kit file.")
+            Text("以后使用备份密码（如已设置）或恢复词文件打开。")
               .font(.caption)
               .foregroundStyle(.secondary)
           }
         }
 
-        Section("Optional memorized passphrase") {
-          Toggle("Add an Argon2id passphrase protector", isOn: $addsPassphrase)
+        Section("备份密码（可选）") {
+          Toggle("另外设置一个备份密码", isOn: $addsPassphrase)
           if addsPassphrase {
-            SecureField("Snapshot passphrase", text: $snapshotPassphrase)
+            SecureField("备份解锁密码", text: $snapshotPassphrase)
               .textContentType(.newPassword)
-            SecureField("Confirm snapshot passphrase", text: $snapshotPassphraseConfirmation)
+            SecureField("再次输入备份密码", text: $snapshotPassphraseConfirmation)
               .textContentType(.newPassword)
             Text(
-              "The passphrase is processed with Argon2id (64 MiB, three passes), sent only through standard input, never stored, and never replaces the mandatory 24-word recovery path."
+              "密码经过加密派生处理，不会保存到普通设置。即使设置了密码，也必须保管好 24 个恢复词。"
             )
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -242,13 +242,13 @@ struct HistorySnapshotCreationSheet: View {
       inlineError
 
       HStack {
-        Button("Cancel") {
+        Button("取消") {
           clearDisplayedSecrets()
           dismiss()
         }
         .keyboardShortcut(.cancelAction)
         Spacer()
-        Button("Create Recovery Words", action: startRecoveryKitCreation)
+        Button("生成恢复词", action: startRecoveryKitCreation)
           .buttonStyle(.borderedProminent)
           .keyboardShortcut(.defaultAction)
       }
@@ -260,14 +260,14 @@ struct HistorySnapshotCreationSheet: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 18) {
           Label(
-            "Write down these 24 words in order before conversion starts",
+            "开始备份前，请按顺序保存这 24 个恢复词",
             systemImage: "exclamationmark.triangle.fill"
           )
           .font(.title3.weight(.semibold))
           .foregroundStyle(.orange)
 
           Text(
-            "They are GreenBubbles recovery words, not a cryptocurrency wallet seed. Never reuse a wallet phrase here and never import this phrase into a wallet. The same words are already saved in the private recovery-kit file shown below."
+            "这些恢复词仅用于本应用的聊天备份，不可用作数字货币钱包助记词。它们已经保存到下方的私有文件中，请再另存一份。"
           )
           .foregroundStyle(.secondary)
 
@@ -299,16 +299,16 @@ struct HistorySnapshotCreationSheet: View {
           }
 
           Divider()
-          Text("Confirm four randomly selected positions")
+          Text("填写以下四个位置的恢复词，确认已正确保存")
             .font(.headline)
           if let challenge {
             HStack(alignment: .top, spacing: 12) {
               ForEach(challenge.zeroBasedPositions, id: \.self) { position in
                 VStack(alignment: .leading, spacing: 5) {
-                  Text("Word \(position + 1)")
+                  Text("第 \(position + 1) 个词")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                  TextField("word", text: challengeBinding(position))
+                  TextField("恢复词", text: challengeBinding(position))
                     .textFieldStyle(.roundedBorder)
                     .frame(minWidth: 120)
                 }
@@ -317,7 +317,7 @@ struct HistorySnapshotCreationSheet: View {
           }
 
           Toggle(
-            "I stored an independent copy of all 24 words and understand that Keychain or a hidden file is only a convenience unlock.",
+            "我已另存完整的 24 个恢复词，并了解本机快捷解锁不能代替恢复词备份。",
             isOn: $confirmsIndependentCopy
           )
           inlineError
@@ -325,13 +325,13 @@ struct HistorySnapshotCreationSheet: View {
       }
 
       HStack {
-        Button("Cancel — Keep Recovery File") {
+        Button("取消并保留恢复词文件") {
           clearDisplayedSecrets()
           dismiss()
         }
         .keyboardShortcut(.cancelAction)
         Spacer()
-        Button("Confirm Words and Create Snapshot", action: startSnapshotCreation)
+        Button("确认恢复词并创建备份", action: startSnapshotCreation)
           .buttonStyle(.borderedProminent)
           .keyboardShortcut(.defaultAction)
       }
@@ -351,13 +351,13 @@ struct HistorySnapshotCreationSheet: View {
         .frame(maxWidth: 620)
       if phase == .creatingSnapshot {
         Label(
-          "The recovery-kit file already exists and will be kept if this operation is stopped.",
+          "恢复词文件已保存，停止备份也不会删除它。",
           systemImage: "checkmark.shield"
         )
         .font(.callout)
         .foregroundStyle(.green)
       }
-      Button(phase == .creatingSnapshot ? "Stop Conversion" : "Cancel") {
+      Button(phase == .creatingSnapshot ? "停止备份" : "取消") {
         operationTask?.cancel()
       }
       .keyboardShortcut(.cancelAction)
@@ -368,27 +368,27 @@ struct HistorySnapshotCreationSheet: View {
 
   private var completionView: some View {
     VStack(alignment: .leading, spacing: 18) {
-      Label("Recoverable snapshot created", systemImage: "checkmark.seal.fill")
+      Label("加密备份已创建", systemImage: "checkmark.seal.fill")
         .font(.title2.weight(.semibold))
         .foregroundStyle(.green)
       if let result {
-        GroupBox("Verified result") {
+        GroupBox("检查结果") {
           VStack(alignment: .leading, spacing: 9) {
-            LabeledContent("Databases", value: result.databaseCount.formatted())
+            LabeledContent("数据库", value: result.databaseCount.formatted())
             LabeledContent(
-              "Recovery without WeChat key", value: result.recoveryVerified ? "Verified" : "No")
-            LabeledContent("Independent encryption", value: "SQLCipher under a new random key")
-            LabeledContent("Portable recovery", value: "24-word BIP-39 kit")
-            LabeledContent("Recovery-kit file", value: recoveryKitPath)
-            LabeledContent("Local convenience", value: completionConvenienceDescription)
+              "无需微信原密钥即可恢复", value: result.recoveryVerified ? "已验证" : "否")
+            LabeledContent("独立加密", value: "使用全新的独立密钥加密")
+            LabeledContent("换机恢复", value: "24 个恢复词")
+            LabeledContent("恢复词文件", value: recoveryKitPath)
+            LabeledContent("本机快捷解锁", value: completionConvenienceDescription)
             LabeledContent(
-              "Passphrase protector", value: result.hasPassphrase ? "Argon2id enabled" : "Not added"
+              "备份密码", value: result.hasPassphrase ? "已设置" : "未设置"
             )
           }
           .padding(6)
         }
         Text(
-          "The recovery words are no longer displayed. Keep the recovery-kit file and your independent copy; either can recover the snapshot after losing WeChat and its keys."
+          "恢复词已从界面隐藏。请妥善保管恢复词文件及其备份，以便在微信或原密钥丢失后找回记录。"
         )
         .foregroundStyle(.secondary)
       }
@@ -400,7 +400,7 @@ struct HistorySnapshotCreationSheet: View {
       Spacer()
       HStack {
         Spacer()
-        Button("Done") { dismiss() }
+        Button("完成") { dismiss() }
           .buttonStyle(.borderedProminent)
           .keyboardShortcut(.defaultAction)
       }
@@ -409,7 +409,7 @@ struct HistorySnapshotCreationSheet: View {
 
   private var failureView: some View {
     VStack(alignment: .leading, spacing: 18) {
-      Label("Snapshot creation did not complete", systemImage: "xmark.octagon.fill")
+      Label("备份未完成", systemImage: "xmark.octagon.fill")
         .font(.title2.weight(.semibold))
         .foregroundStyle(.red)
       if let errorMessage {
@@ -418,13 +418,13 @@ struct HistorySnapshotCreationSheet: View {
       }
       GroupBox {
         VStack(alignment: .leading, spacing: 8) {
-          Label("The recovery-kit file was not deleted", systemImage: "key.viewfinder")
+          Label("恢复词文件已保留", systemImage: "key.viewfinder")
             .foregroundStyle(.green)
           Text(recoveryKitPath)
             .font(.caption.monospaced())
             .textSelection(.enabled)
           Text(
-            "Entered source keys, passphrases, displayed words, and confirmation responses were cleared from the wizard. Choose a new output path before retrying."
+            "本次输入的密钥、密码和恢复词已从向导中清除。请更换保存位置后重试。"
           )
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -434,7 +434,7 @@ struct HistorySnapshotCreationSheet: View {
       Spacer()
       HStack {
         Spacer()
-        Button("Close") { dismiss() }
+        Button("关闭") { dismiss() }
           .buttonStyle(.borderedProminent)
           .keyboardShortcut(.defaultAction)
       }
@@ -459,10 +459,10 @@ struct HistorySnapshotCreationSheet: View {
     switch convenienceMode {
     case .keychain:
       keychainStored
-        ? "macOS Keychain (device-only wrapper credential)"
-        : "Keychain unavailable; use recovery words or passphrase"
-    case .hiddenFile: "Owner-only hidden credential file"
-    case .none: "None"
+        ? "本机钥匙串（仅此电脑可用）"
+        : "钥匙串不可用，请使用恢复词或备份密码"
+    case .hiddenFile: "仅本人可读的隐藏解锁文件"
+    case .none: "不启用"
     }
   }
 
@@ -499,7 +499,7 @@ struct HistorySnapshotCreationSheet: View {
       }
     } catch {
       errorMessage =
-        "Could not prepare owner-only default folders. Choose private locations manually."
+        "无法创建私有的默认文件夹，请手动选择仅本人可访问的位置。"
     }
   }
 
@@ -523,7 +523,7 @@ struct HistorySnapshotCreationSheet: View {
         phase = .confirmRecoveryWords
       } catch is CancellationError {
         errorMessage =
-          "Recovery-word creation was cancelled. If the selected file now exists, it was intentionally kept; choose a new path before trying again."
+          "已取消生成恢复词。已生成的文件会保留，请选择新的文件位置后重试。"
         phase = .setup
       } catch {
         errorMessage = localizedSnapshotError(error)
@@ -535,15 +535,15 @@ struct HistorySnapshotCreationSheet: View {
 
   private func startSnapshotCreation() {
     guard let recoveryKit, let challenge else {
-      errorMessage = "Generate and confirm a recovery kit first."
+      errorMessage = "请先生成恢复词并完成确认。"
       return
     }
     guard confirmsIndependentCopy else {
-      errorMessage = "Confirm that you stored an independent copy of all 24 words."
+      errorMessage = "请确认已在其他安全位置保存全部 24 个恢复词。"
       return
     }
     guard challenge.accepts(responses: challengeResponses, words: recoveryKit.words) else {
-      errorMessage = "One or more confirmation words do not match their numbered positions."
+      errorMessage = "填写的恢复词与对应位置不一致，请检查后重试。"
       return
     }
 
@@ -619,7 +619,7 @@ struct HistorySnapshotCreationSheet: View {
             savedToKeychain = true
           } catch {
             warning =
-              "The snapshot is complete, but macOS Keychain could not save its convenience credential. The 24-word recovery kit\(created.hasPassphrase ? " and Argon2id passphrase remain" : " remains") sufficient."
+              "备份已完成，但钥匙串未能保存快捷解锁凭据。仍可使用 24 个恢复词\(created.hasPassphrase ? "或备份密码" : "")打开。"
           }
         }
 
@@ -639,7 +639,7 @@ struct HistorySnapshotCreationSheet: View {
           try? FileManager.default.removeItem(at: hiddenURL)
         }
         errorMessage =
-          "Snapshot conversion was stopped. Any unpublished private staging generation was discarded by the CLI."
+          "备份已停止，未完成的临时数据已清理。"
         phase = .failed
       } catch {
         if createdHiddenCredential && !snapshotPublished {
@@ -658,7 +658,7 @@ struct HistorySnapshotCreationSheet: View {
     let output = trimmed(outputPath)
     let kit = trimmed(recoveryKitPath)
     guard !executable.isEmpty, !source.isEmpty, !output.isEmpty, !kit.isEmpty else {
-      errorMessage = "Choose the CLI, source, new snapshot directory, and new recovery-kit file."
+      errorMessage = "请选择读取工具、原始记录、新备份文件夹和恢复词文件位置。"
       return false
     }
     let pathSet = Set(
@@ -666,7 +666,7 @@ struct HistorySnapshotCreationSheet: View {
         + (convenienceMode == .hiddenFile ? [trimmed(hiddenCredentialPath)] : []))
     let expectedPathCount = convenienceMode == .hiddenFile ? 4 : 3
     guard pathSet.count == expectedPathCount else {
-      errorMessage = "Source, snapshot, recovery-kit, and convenience paths must be distinct."
+      errorMessage = "原始记录、备份、恢复词和解锁文件必须使用不同的保存位置。"
       return false
     }
     if sourceAccess == .encryptedWeChat {
@@ -674,12 +674,12 @@ struct HistorySnapshotCreationSheet: View {
       let isRaw = key.count == 32
       let isHex = key.count == 64 && key.allSatisfy(isWizardHexadecimal)
       guard isRaw || isHex else {
-        errorMessage = "Enter the 32-byte or 64-hex-character WeChat database key."
+        errorMessage = "请输入 32 字节或 64 位十六进制格式的微信数据库密钥。"
         return false
       }
     }
     if convenienceMode == .hiddenFile, trimmed(hiddenCredentialPath).isEmpty {
-      errorMessage = "Choose a new owner-only hidden credential file."
+      errorMessage = "请选择新的私有隐藏解锁文件位置。"
       return false
     }
     if addsPassphrase {
@@ -689,7 +689,7 @@ struct HistorySnapshotCreationSheet: View {
         !bytes.contains(13)
       else {
         errorMessage =
-          "Passphrases must match and contain 12–1,024 UTF-8 bytes without line breaks."
+          "两次密码须一致，长度为 12–1,024 字节，不能包含换行。"
         return false
       }
     }
@@ -717,8 +717,8 @@ struct HistorySnapshotCreationSheet: View {
 
   private func chooseExecutable() {
     let panel = NSOpenPanel()
-    panel.title = "Choose greenbubbles"
-    panel.prompt = "Choose CLI"
+    panel.title = "选择本机读取工具"
+    panel.prompt = "选择工具"
     panel.canChooseFiles = true
     panel.canChooseDirectories = false
     panel.allowsMultipleSelection = false
@@ -730,8 +730,8 @@ struct HistorySnapshotCreationSheet: View {
 
   private func chooseSource() {
     let panel = NSOpenPanel()
-    panel.title = "Choose a WeChat database root or stable acquisition capture"
-    panel.prompt = "Choose Source"
+    panel.title = "选择微信记录文件夹或完整采集副本"
+    panel.prompt = "选择记录来源"
     panel.canChooseFiles = false
     panel.canChooseDirectories = true
     panel.allowsMultipleSelection = false
@@ -743,24 +743,24 @@ struct HistorySnapshotCreationSheet: View {
 
   private func chooseOutput() {
     chooseNewPath(
-      title: "Choose a new recoverable snapshot directory",
-      prompt: "Choose Snapshot",
+      title: "选择新备份的保存文件夹",
+      prompt: "选择备份位置",
       currentPath: outputPath
     ) { outputPath = $0 }
   }
 
   private func chooseRecoveryKitOutput() {
     chooseNewPath(
-      title: "Choose a new private recovery-kit file",
-      prompt: "Choose Recovery File",
+      title: "选择新恢复词文件的保存位置",
+      prompt: "选择恢复词文件",
       currentPath: recoveryKitPath
     ) { recoveryKitPath = $0 }
   }
 
   private func chooseHiddenCredentialOutput() {
     chooseNewPath(
-      title: "Choose a new owner-only hidden convenience file",
-      prompt: "Choose Hidden File",
+      title: "选择新隐藏解锁文件的保存位置",
+      prompt: "选择隐藏文件",
       currentPath: hiddenCredentialPath,
       showsHiddenFiles: true
     ) { hiddenCredentialPath = $0 }
@@ -785,8 +785,7 @@ struct HistorySnapshotCreationSheet: View {
   }
 
   private func localizedSnapshotError(_ error: Error) -> String {
-    (error as? LocalizedError)?.errorDescription
-      ?? "Snapshot creation failed without exposing command output or secret material."
+    historyUserError(error)
   }
 
   private func trimmed(_ value: String) -> String {

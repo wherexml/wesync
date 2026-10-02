@@ -1,0 +1,12 @@
+{
+  "tool": "macOS sips and iconutil; exact SVG rasterization, no AI redraw",
+  "sourceArtwork": "User-provided 01-twin-bots.svg, preserved as greenbubbles-twin-bots.svg",
+  "product": "Original green paths on a white rounded square, transparent outer corners",
+  "menuBar": "Black alpha template, transparent background and eyes; 22pt at 1x and 2x",
+  "regenerate": "python3 scripts/generate-brand-assets.py",
+  "sources": {
+    "greenbubbles-twin-bots.svg": "d3453f2197c90a67998342717ac2faa9ca0da07c79db3f1dd6d7ed92c3428277",
+    "greenbubbles-icon.svg": "3a08583b2ac4338267727787a155cede769d7f0860fa4d206424ee2c6e3e9f36",
+    "greenbubbles-menubar.svg": "96216f32f2a3ffe49b4165448dcad980367af42ce595164fa9fa5de728d114d9"
+  }
+}

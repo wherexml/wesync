@@ -34,14 +34,14 @@ struct LiveMediaAccessView: View {
   private var header: some View {
     HStack {
       VStack(alignment: .leading, spacing: 3) {
-        Text(media == nil ? "Verify and preview media" : "Verified media preview")
+        Text(media == nil ? "检查并预览附件" : "附件预览")
           .font(.title2.weight(.semibold))
-        Text("GreenBubbles rechecks policy, file identity, byte count, and SHA-256 before display.")
+        Text("显示附件前，会重新检查访问权限、文件大小和内容完整性。")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
       Spacer()
-      Button("Done") { cancelAndDismiss() }
+      Button("完成") { cancelAndDismiss() }
         .keyboardShortcut(.cancelAction)
     }
     .padding(18)
@@ -51,7 +51,7 @@ struct LiveMediaAccessView: View {
   private var accessForm: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 18) {
-        GroupBox("Artifact") {
+        GroupBox("附件") {
           HStack(spacing: 12) {
             Image(systemName: artifactIcon)
               .font(.title2)
@@ -70,32 +70,32 @@ struct LiveMediaAccessView: View {
           .padding(8)
         }
 
-        GroupBox("Local GreenBubbles access") {
+        GroupBox("本机访问设置") {
           VStack(spacing: 10) {
             LivePathRow(
-              label: "CLI", text: $model.liveExecutablePath,
+              label: "读取工具", text: $model.liveExecutablePath,
               choose: model.chooseLiveExecutable)
             LivePathRow(
-              label: "Replica", text: $model.liveReplicaPath,
+              label: "记录副本", text: $model.liveReplicaPath,
               choose: model.chooseLiveReplica)
             LivePathRow(
-              label: "Policy", text: $model.livePolicyPath,
+              label: "访问规则文件", text: $model.livePolicyPath,
               choose: model.chooseLivePolicy)
             LivePathRow(
-              label: "Audit log", text: $model.liveAuditPath,
+              label: "操作记录文件", text: $model.liveAuditPath,
               choose: model.chooseLiveAudit)
           }
           .padding(8)
         }
 
-        GroupBox("One-time replica key") {
+        GroupBox("本次使用的副本密钥") {
           VStack(alignment: .leading, spacing: 8) {
-            SecureField("64 hexadecimal characters", text: $replicaKey)
+            SecureField("64 位十六进制字符", text: $replicaKey)
               .textFieldStyle(.roundedBorder)
               .privacySensitive()
               .disabled(isResolving)
             Label(
-              "The key is sent only to greenbubbles over standard input. It is cleared from this form before the request and is not saved in settings, arguments, requests, logs, or previews.",
+              "密钥仅在本机传给读取工具，使用前会从表单清除，不保存在普通设置、命令参数、日志或预览文件中。",
               systemImage: "key.horizontal"
             )
             .font(.caption)
@@ -113,7 +113,7 @@ struct LiveMediaAccessView: View {
                 Text(progress.fraction, format: .percent.precision(.fractionLength(1)))
                   .monospacedDigit()
               } else {
-                Text("60-second timeout")
+                Text("最长等待 60 秒")
                   .foregroundStyle(.secondary)
               }
             }
@@ -143,19 +143,19 @@ struct LiveMediaAccessView: View {
 
         HStack {
           Label(
-            "No WeChat database key or key-acquisition tool is used.", systemImage: "lock.shield"
+            "此操作不使用微信原数据库密钥，也不运行密钥获取工具。", systemImage: "lock.shield"
           )
           .font(.caption)
           .foregroundStyle(.secondary)
           Spacer()
-          Button("Cancel") { cancelAndDismiss() }
+          Button("取消") { cancelAndDismiss() }
           Button {
             resolve()
           } label: {
             if isResolving {
               ProgressView().controlSize(.small)
             } else {
-              Label("Verify & Preview", systemImage: "checkmark.shield")
+              Label("检查并预览", systemImage: "checkmark.shield")
             }
           }
           .buttonStyle(.borderedProminent)
@@ -174,7 +174,7 @@ struct LiveMediaAccessView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       Divider()
       HStack(spacing: 12) {
-        Label("Private verified copy", systemImage: "checkmark.shield.fill")
+        Label("已检查的私有副本", systemImage: "checkmark.shield.fill")
           .foregroundStyle(.green)
         Text(historyHumanize(media.kind))
         Text("•")
@@ -184,10 +184,10 @@ struct LiveMediaAccessView: View {
           ByteCountFormatter.string(
             fromByteCount: Int64(clamping: media.byteCount), countStyle: .file))
         Spacer()
-        Button("Reveal Preview Copy") {
+        Button("在访达中显示预览文件") {
           NSWorkspace.shared.activateFileViewerSelecting([media.previewURL])
         }
-        Button("Open in Default App") {
+        Button("用系统应用打开") {
           NSWorkspace.shared.open(media.previewURL)
         }
       }
@@ -228,7 +228,7 @@ struct LiveMediaAccessView: View {
         isResolving = false
         resolutionTask = nil
       } catch {
-        errorMessage = String(describing: error)
+        errorMessage = historyUserError(error)
         isResolving = false
         resolutionTask = nil
       }
@@ -254,7 +254,7 @@ struct LiveMediaAccessView: View {
   }
 
   private var artifactSummary: String {
-    guard let detail = request.artifact.detail else { return "Metadata unavailable" }
+    guard let detail = request.artifact.detail else { return "附件信息不可用" }
     let file = detail.decoded ?? detail.source
     return [
       historyHumanize(detail.availability),
@@ -268,9 +268,9 @@ struct LiveMediaAccessView: View {
 
   private func progressTitle(_ progress: HistoryMediaResolutionProgress) -> String {
     switch progress.phase {
-    case .requestingAuthorization: "Requesting policy-scoped access"
-    case .verifyingAndCopying: "Verifying and copying media"
-    case .ready: "Preview ready"
+    case .requestingAuthorization: "正在检查访问权限"
+    case .verifyingAndCopying: "正在检查并复制附件"
+    case .ready: "预览已就绪"
     }
   }
 }
@@ -288,7 +288,7 @@ private struct LivePathRow: View {
       TextField(label, text: $text)
         .textFieldStyle(.roundedBorder)
         .privacySensitive()
-      Button("Choose…", action: choose)
+      Button("选择…", action: choose)
     }
   }
 }

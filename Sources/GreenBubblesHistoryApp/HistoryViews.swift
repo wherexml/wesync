@@ -29,6 +29,17 @@ struct HistoryRootView: View {
       }
     }
     .task {
+      #if DEBUG
+        if [
+          "me.greenbubbles.PresentationPreview", "me.greenbubbles.PolishPreview",
+          "me.greenbubbles.ChinesePreview",
+        ].contains(Bundle.main.bundleIdentifier ?? ""),
+          Bundle.main.object(forInfoDictionaryKey: "GBOfflineAcceptance") as? Bool == true
+        {
+          await runOfflinePresentationAcceptance(model: model)
+          return
+        }
+      #endif
       model.openStartupBundleIfNeeded()
     }
     .dropDestination(for: URL.self) { urls, _ in
@@ -58,19 +69,14 @@ private struct HistoryWelcomeView: View {
   var body: some View {
     VStack(spacing: 24) {
       Spacer()
-      ZStack {
-        Circle()
-          .fill(.green.gradient.opacity(0.18))
-          .frame(width: 112, height: 112)
-        Image(systemName: "bubble.left.and.text.bubble.right.fill")
-          .font(.system(size: 46, weight: .medium))
-          .foregroundStyle(.green)
-      }
+      Image(nsImage: HistoryApplicationDelegate.menuIcon)
+        .resizable().scaledToFit().frame(width: 112, height: 112)
+        .foregroundStyle(.primary).accessibilityLabel("GreenBubbles")
       VStack(spacing: 8) {
-        Text("Browse your GreenBubbles history")
+        Text("查看你的微信聊天记录")
           .font(.largeTitle.weight(.semibold))
         Text(
-          "Query live WeChat databases read-only, browse an independently recoverable snapshot, or open an exported history bundle."
+          "查看本机微信记录、打开加密备份，或浏览已导出的聊天记录。"
         )
         .font(.title3)
         .foregroundStyle(.secondary)
@@ -78,7 +84,7 @@ private struct HistoryWelcomeView: View {
         .frame(maxWidth: 660)
       }
       Button(action: browseDirect) {
-        Label("Browse Live or Snapshot…", systemImage: "externaldrive.badge.magnifyingglass")
+        Label("连接微信记录或备份…", systemImage: "externaldrive.badge.magnifyingglass")
           .padding(.horizontal, 10)
           .padding(.vertical, 4)
       }
@@ -86,12 +92,12 @@ private struct HistoryWelcomeView: View {
       .controlSize(.large)
 
       Button(action: createSnapshot) {
-        Label("Create Recoverable Snapshot…", systemImage: "externaldrive.badge.plus")
+        Label("创建可恢复的加密备份…", systemImage: "externaldrive.badge.plus")
       }
       .buttonStyle(.bordered)
 
       Button(action: openBundle) {
-        Label("Open Exported History Bundle…", systemImage: "folder.badge.plus")
+        Label("打开已导出的聊天记录…", systemImage: "folder.badge.plus")
       }
       .buttonStyle(.bordered)
 
@@ -106,12 +112,12 @@ private struct HistoryWelcomeView: View {
       }
 
       HStack(spacing: 24) {
-        WelcomePromise(icon: "lock.shield", text: "Read-only and local")
-        WelcomePromise(icon: "list.number", text: "Bounded JSON pages")
-        WelcomePromise(icon: "externaldrive.badge.checkmark", text: "No restoration required")
+        WelcomePromise(icon: "lock.shield", text: "仅在本机读取，不修改原记录")
+        WelcomePromise(icon: "list.number", text: "按需加载，浏览更轻快")
+        WelcomePromise(icon: "externaldrive.badge.checkmark", text: "直接查看，无需先恢复全部数据")
       }
       Spacer()
-      Text("Exported five-file bundle directories can also be dragged into this window.")
+      Text("也可以将已导出的聊天记录文件夹直接拖入此窗口。")
         .font(.footnote)
         .foregroundStyle(.tertiary)
         .padding(.bottom, 24)
@@ -141,16 +147,16 @@ private struct HistoryLoadingView: View {
         .progressViewStyle(.linear)
         .frame(width: 480)
       VStack(spacing: 7) {
-        Text(progress.map(phaseTitle) ?? "Preparing history bundle…")
+        Text(progress.map(phaseTitle) ?? "正在准备聊天记录…")
           .font(.title2.weight(.semibold))
         if let progress {
           HStack(spacing: 8) {
             Text(
-              "Overall \(progress.overallFraction.formatted(.percent.precision(.fractionLength(1))))"
+              "总进度 \(progress.overallFraction.formatted(.percent.precision(.fractionLength(1))))"
             )
             Text("•")
             Text(
-              "This phase \(progress.phaseFraction.formatted(.percent.precision(.fractionLength(1))))"
+              "当前步骤 \(progress.phaseFraction.formatted(.percent.precision(.fractionLength(1))))"
             )
           }
           .font(.system(.title3, design: .rounded, weight: .medium))
@@ -169,7 +175,7 @@ private struct HistoryLoadingView: View {
           }
           if progress.usingCachedIndex {
             Label(
-              "Revalidating source files; the verified search index will be reused",
+              "正在重新检查文件，检查通过后将复用已有搜索索引",
               systemImage: "bolt.fill"
             )
             .font(.footnote)
@@ -178,14 +184,14 @@ private struct HistoryLoadingView: View {
         }
       }
       Label(
-        "GreenBubbles verifies permissions, schemas, hashes, record counts, and references before showing content.",
+        "显示内容前，会检查文件权限、完整性和记录数量，确保数据可读取。",
         systemImage: "checkmark.shield"
       )
       .font(.footnote)
       .foregroundStyle(.secondary)
       .frame(maxWidth: 560)
       .multilineTextAlignment(.center)
-      Button("Cancel", action: cancel)
+      Button("取消", action: cancel)
         .keyboardShortcut(.cancelAction)
     }
     .padding(40)
@@ -193,36 +199,36 @@ private struct HistoryLoadingView: View {
 
   private func phaseTitle(_ progress: HistoryLoadProgress) -> String {
     switch progress.phase {
-    case .validatingManifest: "Validating bundle manifest"
-    case .verifyingConversations: "Verifying conversations"
-    case .verifyingContacts: "Verifying contacts"
-    case .indexingMessages: progress.usingCachedIndex ? "Verifying messages" : "Indexing messages"
-    case .indexingArtifacts: progress.usingCachedIndex ? "Verifying media" : "Indexing media"
-    case .finalizingIndex: "Finalizing private search index"
-    case .ready: "History is ready"
+    case .validatingManifest: "正在检查记录文件清单"
+    case .verifyingConversations: "正在检查会话"
+    case .verifyingContacts: "正在检查联系人"
+    case .indexingMessages: progress.usingCachedIndex ? "正在检查消息" : "正在建立消息搜索索引"
+    case .indexingArtifacts: progress.usingCachedIndex ? "正在检查附件" : "正在建立附件索引"
+    case .finalizingIndex: "正在完成本机搜索索引"
+    case .ready: "聊天记录已就绪"
     }
   }
 
   private func progressDetail(_ progress: HistoryLoadProgress) -> String {
     if progress.phase == .finalizingIndex {
-      return "Checking SQLite and search-index integrity before atomic publication"
+      return "正在检查数据库和搜索索引是否完整"
     }
     if progress.phase == .validatingManifest {
-      return "Validating the bundle inventory, checkpoint, policy, and file evidence"
+      return "正在检查文件清单、导出进度、访问范围和文件完整性"
     }
     let bytes = ByteCountFormatter.string(
       fromByteCount: Int64(clamping: progress.completedBytes), countStyle: .file)
     let totalBytes = ByteCountFormatter.string(
       fromByteCount: Int64(clamping: progress.totalBytes), countStyle: .file)
-    let role = progress.fileRole.map(historyHumanize) ?? "Current file"
+    let role = progress.fileRole.map(historyHumanize) ?? "当前文件"
     return
-      "\(role): \(progress.completedRecords.formatted()) / \(progress.totalRecords.formatted()) records  •  \(bytes) / \(totalBytes)"
+      "\(historyChineseStatus(role))：\(progress.completedRecords.formatted()) / \(progress.totalRecords.formatted()) 条 · \(bytes) / \(totalBytes)"
   }
 
   private func bundleDetail(_ progress: HistoryLoadProgress) -> String {
     let bytes = ByteCountFormatter.string(
       fromByteCount: Int64(clamping: progress.bundleByteCount), countStyle: .file)
-    return "Bundle data: \(bytes) across \(progress.bundleRecordCount.formatted()) records"
+    return "记录大小：\(bytes)，共 \(progress.bundleRecordCount.formatted()) 条"
   }
 }
 
@@ -253,23 +259,23 @@ private struct HistoryLibraryView: View {
 
   private var sidebar: some View {
     List(selection: $model.selectedSection) {
-      Section("Library") {
+      Section("记录库") {
         ForEach(HistorySection.allCases) { section in
           Label(section.title, systemImage: section.systemImage)
             .tag(section)
         }
       }
       if let session = model.session {
-        Section("Source") {
-          LabeledContent("Chats", value: session.conversations.count.formatted())
-          LabeledContent("Messages", value: session.manifest.exportedMessageCount.formatted())
+        Section("记录来源") {
+          LabeledContent("聊天", value: session.conversations.count.formatted())
+          LabeledContent("消息", value: session.manifest.exportedMessageCount.formatted())
           HStack {
             Circle()
               .fill(session.manifest.context.sourceCoverageComplete ? .green : .orange)
               .frame(width: 7, height: 7)
             Text(
               session.manifest.context.sourceCoverageComplete
-                ? "Complete coverage" : "Partial coverage"
+                ? "记录完整" : "部分记录可用"
             )
             .font(.caption)
           }
@@ -281,7 +287,7 @@ private struct HistoryLibraryView: View {
       Button {
         model.chooseBundle()
       } label: {
-        Label("Open Another…", systemImage: "folder")
+        Label("打开其他记录…", systemImage: "folder")
       }
       .buttonStyle(.plain)
       .foregroundStyle(.secondary)
@@ -316,8 +322,8 @@ private struct HistoryLibraryView: View {
       } else {
         DetailPlaceholder(
           icon: "bubble.left.and.bubble.right",
-          title: "Choose a chat",
-          detail: "Select a conversation to browse its normalized history."
+          title: "选择一个聊天",
+          detail: "从左侧选择聊天，查看消息记录。"
         )
       }
     case .contacts:
@@ -326,15 +332,15 @@ private struct HistoryLibraryView: View {
       } else {
         DetailPlaceholder(
           icon: "person.crop.circle",
-          title: "Choose a contact",
-          detail: "Select a person to see their names, roles, and shared chats."
+          title: "选择一个联系人",
+          detail: "选择联系人，查看备注、身份和共同会话。"
         )
       }
     case .search:
       DetailPlaceholder(
         icon: "text.magnifyingglass",
-        title: "Search all authorized messages",
-        detail: "Choose a result to open it with surrounding conversation context."
+        title: "搜索可访问的消息",
+        detail: "点击搜索结果，即可查看消息及前后对话。"
       )
     }
   }
@@ -346,25 +352,25 @@ private struct OverviewContents: View {
   var body: some View {
     List {
       if let manifest = model.session?.manifest {
-        Section("Bundle") {
-          Label("Verified and indexed", systemImage: "checkmark.seal.fill")
+        Section("记录文件夹") {
+          Label("已检查并建立索引", systemImage: "checkmark.seal.fill")
             .foregroundStyle(.green)
           LabeledContent(
-            "Created",
+            "创建时间",
             value: manifest.createdAt.formatted(date: .abbreviated, time: .shortened))
           LabeledContent(
-            "Destination", value: manifest.destination == "local" ? "Local" : "Remote model")
-          LabeledContent("Checkpoint", value: shortHistoryID(manifest.context.checkpointRevision))
+            "使用范围", value: manifest.destination == "local" ? "本机" : "远程模型")
+          LabeledContent("导出进度标记", value: shortHistoryID(manifest.context.checkpointRevision))
         }
-        Section("Data") {
-          LabeledContent("Conversations", value: manifest.enabledConversationCount.formatted())
-          LabeledContent("Contacts", value: manifest.exportedContactCount.formatted())
-          LabeledContent("Messages", value: manifest.exportedMessageCount.formatted())
-          LabeledContent("Media records", value: manifest.exportedArtifactCount.formatted())
+        Section("数据") {
+          LabeledContent("会话", value: manifest.enabledConversationCount.formatted())
+          LabeledContent("联系人", value: manifest.exportedContactCount.formatted())
+          LabeledContent("消息", value: manifest.exportedMessageCount.formatted())
+          LabeledContent("附件记录", value: manifest.exportedArtifactCount.formatted())
         }
       }
     }
-    .navigationTitle("Overview")
+    .navigationTitle("概览")
   }
 }
 
@@ -373,7 +379,7 @@ private struct ConversationListView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      HistoryFilterField(text: $model.conversationFilter, prompt: "Filter chats")
+      HistoryFilterField(text: $model.conversationFilter, prompt: "搜索会话")
       List(selection: $model.selectedConversationID) {
         ForEach(model.filteredConversations) { conversation in
           ConversationRow(
@@ -389,7 +395,7 @@ private struct ConversationListView: View {
         }
       }
     }
-    .navigationTitle("Chats")
+    .navigationTitle("聊天")
     .onChange(of: model.selectedConversationID) { _, value in
       if let value { model.selectConversation(value) }
     }
@@ -422,13 +428,13 @@ private struct ConversationRow: View {
           }
         }
         HStack(spacing: 6) {
-          Text("\(statistics?.messageCount ?? 0) messages")
+          Text("\(statistics?.messageCount ?? 0) 条消息")
           Text("•")
-          Text("\(conversation.participantCount) people")
+          Text("\(conversation.participantCount) 人")
           if historyIsStale(conversation.sourceDatabaseFreshness) {
             Image(systemName: "clock.badge.exclamationmark")
               .foregroundStyle(.orange)
-              .help("Contains records preserved from an unavailable database")
+              .help("包含此前保留的记录，其原数据库目前不可用")
           }
         }
         .font(.caption)
@@ -458,7 +464,7 @@ private struct ContactListView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      HistoryFilterField(text: $model.contactFilter, prompt: "Filter contacts")
+      HistoryFilterField(text: $model.contactFilter, prompt: "搜索联系人")
       List(selection: $model.selectedContactID) {
         ForEach(model.filteredContacts) { contact in
           HStack(spacing: 10) {
@@ -466,7 +472,7 @@ private struct ContactListView: View {
             VStack(alignment: .leading, spacing: 3) {
               Text(contact.displayName)
                 .lineLimit(1)
-              Text("\(contact.enabledConversationIDs.count) shared chats")
+              Text("\(contact.enabledConversationIDs.count) 个共同会话")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
@@ -485,7 +491,7 @@ private struct ContactListView: View {
         }
       }
     }
-    .navigationTitle("Contacts")
+    .navigationTitle("联系人")
     .onChange(of: model.selectedContactID) { _, value in
       if let value { model.selectContact(value) }
     }
@@ -497,13 +503,13 @@ private struct SearchResultsView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      HistoryFilterField(text: $model.searchQuery, prompt: "Search message text")
+      HistoryFilterField(text: $model.searchQuery, prompt: "搜索消息内容")
       if model.isSearching {
         ProgressView()
           .controlSize(.small)
           .padding(.top, 8)
       } else if model.searchResults.count == 150 {
-        Text("Showing the first 150 ranked matches. Refine the query to narrow the result set.")
+        Text("当前显示最相关的前 150 条结果。可输入更具体的关键词缩小范围。")
           .font(.caption)
           .foregroundStyle(.secondary)
           .padding(.horizontal, 10)
@@ -547,15 +553,15 @@ private struct SearchResultsView: View {
       .overlay {
         if model.searchQuery.isEmpty {
           ContentUnavailableView(
-            "Search history",
+            "搜索聊天记录",
             systemImage: "text.magnifyingglass",
-            description: Text("Search normalized text, sender names, and conversation labels."))
+            description: Text("可以搜索消息内容、发送者姓名或会话名称。"))
         } else if !model.isSearching && model.searchResults.isEmpty && model.searchError == nil {
           ContentUnavailableView.search(text: model.searchQuery)
         }
       }
     }
-    .navigationTitle("Search")
+    .navigationTitle("搜索")
     .task(id: model.searchQuery) {
       await model.performSearch()
     }

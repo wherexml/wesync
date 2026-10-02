@@ -105,3 +105,7 @@ which parts, if any, an AI gets to see. Start with the
 [`archive/`](archive/) keeps old plans, feasibility studies, and development
 notes for the record. They may be out of date; read
 [its README](archive/README.md) before relying on anything there.
+
+- [消息浏览缓存](MESSAGE_CACHE.md)：内存缓存容量、历史页保留、刷新行为及可重复验收。
+
+- [私有 GitHub 仓库维护](REPOSITORY.md)：远端、隐私边界和 CI 验证。

@@ -11,93 +11,93 @@ struct HistoryDirectConnectionSheet: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       VStack(alignment: .leading, spacing: 5) {
-        Text("Browse SQLite history directly")
+        Text("连接微信记录或备份")
           .font(.title2.weight(.semibold))
         Text(
-          "GreenBubbles runs bounded, read-only queries and returns only the current JSON page. It does not restore the full message archive."
+          "只读取你正在查看的记录，不修改原数据，也无需先恢复全部聊天记录。"
         )
         .foregroundStyle(.secondary)
       }
 
       Form {
-        Section("Local query tool") {
+        Section("本机读取工具") {
           pathField(
-            title: "CLI",
+            title: "读取工具",
             text: $model.liveExecutablePath,
-            actionTitle: "Choose…",
+            actionTitle: "选择…",
             action: chooseExecutable
           )
         }
 
-        Section("SQLite source") {
-          Picker("Access", selection: $model.directAccessMode) {
+        Section("聊天记录来源") {
+          Picker("打开方式", selection: $model.directAccessMode) {
             ForEach(HistoryDirectAccessMode.allCases, id: \.rawValue) { mode in
               Text(mode.displayName).tag(mode)
             }
           }
           pathField(
-            title: "Directory",
+            title: "记录文件夹",
             text: $model.directSourcePath,
-            actionTitle: "Choose…",
+            actionTitle: "选择…",
             action: chooseSource
           )
         }
 
-        Section("Authorization") {
+        Section("访问凭据") {
           if model.directAccessMode == .decrypted {
             Label(
-              "No key is sent. Use this only for an explicitly decrypted SQLite source.",
+              "此方式无需密钥，仅适用于已经解密的数据库文件。",
               systemImage: "exclamationmark.shield"
             )
             .foregroundStyle(.orange)
           } else if model.directAccessMode == .snapshotKeychain {
             Label(
-              "The app will retrieve this snapshot's random local unlock credential from macOS Keychain for this session.",
+              "使用本机钥匙串中已保存的凭据打开这份备份。",
               systemImage: "key.fill"
             )
             Text(
-              "Keychain stores only the independent convenience credential—not the snapshot database key, WeChat key, or 24 recovery words. A private temporary file is created only while this history source is open."
+              "钥匙串保存的是这份备份的快捷解锁凭据。打开期间会使用仅本人可读的临时文件，关闭后清理。"
             )
             .font(.caption)
             .foregroundStyle(.secondary)
             Label(
-              "If this Mac or Keychain entry is lost, the separately stored 24 recovery words still recover the snapshot.",
+              "即使电脑丢失或钥匙串条目被删除，也可以用另外保存的 24 个恢复词找回备份。",
               systemImage: "externaldrive.badge.checkmark"
             )
             .font(.caption)
             .foregroundStyle(.green)
           } else if model.directAccessMode == .snapshotLocalCredential {
             pathField(
-              title: "Local unlock",
+              title: "本机解锁文件",
               text: $model.directLocalCredentialPath,
-              actionTitle: "Choose…",
+              actionTitle: "选择…",
               action: chooseLocalCredential
             )
             Text(
-              "This owner-only local file wraps the snapshot key without containing either that key or the 24 recovery words. Its path—not its contents—may be remembered by the app."
+              "选择之前保存的快捷解锁文件。应用只记住文件位置，不将内容写入普通设置。"
             )
             .font(.caption)
             .foregroundStyle(.secondary)
             Label(
-              "This file is convenient access, not a backup. If it is deleted, reopen the snapshot with the separately stored recovery words.",
+              "快捷解锁文件被删除后，仍可使用另行保存的恢复词打开备份。请不要用它代替备份。",
               systemImage: "externaldrive.badge.exclamationmark"
             )
             .font(.caption)
             .foregroundStyle(.orange)
           } else if model.directAccessMode == .snapshotRecoveryKit {
             pathField(
-              title: "Recovery kit",
+              title: "恢复词文件",
               text: $model.directRecoveryKitPath,
-              actionTitle: "Choose…",
+              actionTitle: "选择…",
               action: chooseRecoveryKit
             )
             Text(
-              "The owner-only file is read locally by the CLI. Its 24 words unwrap the snapshot key; the words and key are never placed in process arguments or app preferences."
+              "恢复词文件只在本机读取，用其中的 24 个恢复词解锁备份。恢复词不会写入命令参数或普通设置。"
             )
             .font(.caption)
             .foregroundStyle(.secondary)
             Label(
-              "Keep another copy of the 24 words somewhere independent. This local file is convenient access, not the only backup.",
+              "请在其他安全位置另存一份恢复词，不要只保留本机这一份。",
               systemImage: "exclamationmark.triangle"
             )
             .font(.caption)
@@ -112,6 +112,13 @@ struct HistoryDirectConnectionSheet: View {
         }
       }
       .formStyle(.grouped)
+      Toggle("记住此连接，下次启动自动打开", isOn: $model.rememberDirectConnection)
+      Text("连接成功后，凭据只保存在本机钥匙串中，不写入普通配置文件。")
+        .font(.caption).foregroundStyle(.secondary)
+      Button("忘记已保存的连接") { model.forgetRememberedConnection() }
+      if let notice = model.connectionPersistenceNotice {
+        Text(notice).font(.caption).foregroundStyle(.orange)
+      }
 
       if let validationError {
         Label(validationError, systemImage: "exclamationmark.triangle.fill")
@@ -121,7 +128,7 @@ struct HistoryDirectConnectionSheet: View {
 
       GroupBox {
         Label(
-          "Recoverable snapshots are encrypted directly under an independent recovery key. The live WeChat key is neither copied into the snapshot nor required to verify or query it later.",
+          "加密备份有独立的恢复凭据。以后查看备份时，不需要原来的微信数据库密钥。",
           systemImage: "key.horizontal.fill"
         )
         .font(.callout)
@@ -129,10 +136,10 @@ struct HistoryDirectConnectionSheet: View {
       }
 
       HStack {
-        Button("Cancel") { dismiss() }
+        Button("取消") { dismiss() }
           .keyboardShortcut(.cancelAction)
         Spacer()
-        Button("Connect", action: connect)
+        Button("连接并查看", action: connect)
           .buttonStyle(.borderedProminent)
           .keyboardShortcut(.defaultAction)
       }
@@ -150,12 +157,12 @@ struct HistoryDirectConnectionSheet: View {
 
   private var secretTitle: String {
     switch model.directAccessMode {
-    case .liveEncrypted: "WeChat database key"
+    case .liveEncrypted: "微信数据库密钥"
     case .snapshotKeychain: ""
     case .snapshotLocalCredential: ""
-    case .snapshotPassphrase: "Snapshot passphrase"
+    case .snapshotPassphrase: "备份解锁密码"
     case .snapshotRecoveryKit: ""
-    case .snapshotEncrypted: "Independent snapshot recovery key"
+    case .snapshotEncrypted: "旧版备份恢复密钥"
     case .decrypted: ""
     }
   }
@@ -163,17 +170,17 @@ struct HistoryDirectConnectionSheet: View {
   private var secretExplanation: String {
     switch model.directAccessMode {
     case .liveEncrypted:
-      "Accepted only through standard input for this connection; it is never placed in process arguments."
+      "密钥仅通过本机安全输入通道传给读取工具，不放入命令参数。"
     case .snapshotKeychain:
       ""
     case .snapshotLocalCredential:
       ""
     case .snapshotPassphrase:
-      "Derived with Argon2id (64 MiB, three passes) and accepted only through standard input. It is retained only in memory while this source is open."
+      "使用备份创建时设置的密码。勾选下方“记住此连接”后，可保存在本机钥匙串中。"
     case .snapshotRecoveryKit:
       ""
     case .snapshotEncrypted:
-      "Legacy compatibility only. Use the 32-byte snapshot key or its 64-character hexadecimal form—not the WeChat key."
+      "仅用于旧版备份。请输入备份自己的 32 字节密钥，或 64 位十六进制密钥。"
     case .decrypted:
       ""
     }
@@ -194,8 +201,8 @@ struct HistoryDirectConnectionSheet: View {
 
   private func chooseExecutable() {
     let panel = NSOpenPanel()
-    panel.title = "Choose greenbubbles"
-    panel.prompt = "Choose CLI"
+    panel.title = "选择本机读取工具"
+    panel.prompt = "选择工具"
     panel.canChooseFiles = true
     panel.canChooseDirectories = false
     panel.allowsMultipleSelection = false
@@ -207,8 +214,8 @@ struct HistoryDirectConnectionSheet: View {
 
   private func chooseSource() {
     let panel = NSOpenPanel()
-    panel.title = "Choose a live account root or recoverable snapshot"
-    panel.prompt = "Choose Source"
+    panel.title = "选择微信记录文件夹或加密备份"
+    panel.prompt = "选择记录来源"
     panel.canChooseFiles = false
     panel.canChooseDirectories = true
     panel.allowsMultipleSelection = false
@@ -220,8 +227,8 @@ struct HistoryDirectConnectionSheet: View {
 
   private func chooseRecoveryKit() {
     let panel = NSOpenPanel()
-    panel.title = "Choose a private 24-word snapshot recovery kit"
-    panel.prompt = "Choose Recovery Kit"
+    panel.title = "选择包含 24 个恢复词的私有文件"
+    panel.prompt = "选择恢复词文件"
     panel.canChooseFiles = true
     panel.canChooseDirectories = false
     panel.allowsMultipleSelection = false
@@ -233,8 +240,8 @@ struct HistoryDirectConnectionSheet: View {
 
   private func chooseLocalCredential() {
     let panel = NSOpenPanel()
-    panel.title = "Choose a private local snapshot unlock credential"
-    panel.prompt = "Choose Local Unlock"
+    panel.title = "选择本机备份解锁文件"
+    panel.prompt = "选择解锁文件"
     panel.canChooseFiles = true
     panel.canChooseDirectories = false
     panel.allowsMultipleSelection = false
@@ -248,7 +255,7 @@ struct HistoryDirectConnectionSheet: View {
     let executablePath = model.liveExecutablePath.trimmingCharacters(in: .whitespacesAndNewlines)
     let sourcePath = model.directSourcePath.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !executablePath.isEmpty, !sourcePath.isEmpty else {
-      validationError = "Choose both the local CLI and the SQLite source directory."
+      validationError = "请先选择本机读取工具和聊天记录文件夹。"
       return
     }
     let recoveryKitPath = model.directRecoveryKitPath.trimmingCharacters(
@@ -258,11 +265,11 @@ struct HistoryDirectConnectionSheet: View {
       in: .whitespacesAndNewlines
     )
     if model.directAccessMode == .snapshotLocalCredential, localCredentialPath.isEmpty {
-      validationError = "Choose the private local unlock file for this snapshot."
+      validationError = "请选择这份备份对应的本机解锁文件。"
       return
     }
     if model.directAccessMode == .snapshotRecoveryKit, recoveryKitPath.isEmpty {
-      validationError = "Choose the private recovery-kit file for this snapshot."
+      validationError = "请选择这份备份对应的恢复词文件。"
       return
     }
     if model.directAccessMode == .snapshotPassphrase {
@@ -272,14 +279,14 @@ struct HistoryDirectConnectionSheet: View {
         !passphraseBytes.contains(13)
       else {
         validationError =
-          "Enter the snapshot passphrase (12–1,024 UTF-8 bytes, without line breaks)."
+          "请输入备份密码，长度需为 12–1,024 字节，且不能包含换行。"
         return
       }
     }
     if model.directAccessMode == .liveEncrypted || model.directAccessMode == .snapshotEncrypted,
       secret.isEmpty
     {
-      validationError = "Enter the key for the selected encrypted source."
+      validationError = "请输入这份加密记录对应的密钥。"
       return
     }
     var key =
@@ -313,20 +320,20 @@ struct HistoryDirectConnectingView: View {
     VStack(spacing: 18) {
       ProgressView()
         .controlSize(.large)
-      Text("Opening SQLite history…")
+      Text("正在打开聊天记录…")
         .font(.title2.weight(.semibold))
       Text(
-        "Authenticating the source, measuring its SQLite files, and loading the first bounded conversation page."
+        "正在验证访问权限、检查记录文件并加载会话列表。"
       )
       .foregroundStyle(.secondary)
       .multilineTextAlignment(.center)
       .frame(maxWidth: 560)
       Label(
-        "No database restoration or bulk JSON conversion is running", systemImage: "bolt.shield"
+        "直接读取本机记录，无需恢复整个数据库", systemImage: "bolt.shield"
       )
       .font(.callout)
       .foregroundStyle(.green)
-      Button("Cancel", action: cancel)
+      Button("取消", action: cancel)
         .keyboardShortcut(.cancelAction)
     }
     .padding(40)
@@ -337,46 +344,77 @@ struct HistoryDirectLibraryView: View {
   @Bindable var model: HistoryBrowserModel
 
   var body: some View {
-    NavigationSplitView {
-      sidebar
-        .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 280)
-    } content: {
-      content
-        .navigationSplitViewColumnWidth(min: 300, ideal: 380, max: 500)
-    } detail: {
-      detail
+    HSplitView {
+      VStack(spacing: 0) {
+        HStack {
+          Text("聊天").font(.title2.weight(.semibold))
+          Spacer()
+          Menu {
+            Button("连接设置…") { model.presentDirectConnection() }
+            Button("搜索全部消息") {
+              model.directSearchConversationID = nil
+              model.directSection = .search
+            }
+            Button("返回聊天") { model.directSection = .chats }
+            Button("查看来源信息") { model.directSection = .overview }
+            Button("忘记已保存的连接") { model.forgetRememberedConnection() }
+          } label: {
+            Image(systemName: "ellipsis.circle")
+          }
+          .menuStyle(.borderlessButton).frame(width: 24)
+        }.padding(16)
+        if let notice = model.connectionPersistenceNotice {
+          Text(notice).font(.caption).foregroundStyle(.orange).padding(.horizontal)
+        }
+        HistoryDirectConversationList(model: model)
+      }.frame(minWidth: 280, idealWidth: 320, maxWidth: 380)
+      Group {
+        if model.directSection == .overview {
+          HistoryDirectOverviewContents(model: model)
+        } else if model.directSection == .search {
+          HistoryDirectSearchView(model: model)
+        } else {
+          detail
+        }
+      }.frame(minWidth: 580, maxWidth: .infinity, maxHeight: .infinity)
     }
   }
 
   private var sidebar: some View {
     List(selection: $model.directSection) {
-      Section("Direct source") {
+      Section("当前记录来源") {
         ForEach(HistoryDirectSection.allCases) { section in
           Label(section.title, systemImage: section.systemImage)
             .tag(section)
         }
       }
       if let status = model.directStatus {
-        Section("Storage") {
-          LabeledContent("Databases", value: status.databaseCount.formatted())
-          LabeledContent("SQLite files", value: directByteCount(status.databaseBytes))
+        Section("存储占用") {
+          LabeledContent("数据库", value: status.databaseCount.formatted())
+          LabeledContent("数据库文件", value: directByteCount(status.databaseBytes))
           LabeledContent("WAL", value: directByteCount(status.writeAheadLogBytes))
-          LabeledContent("Total", value: directByteCount(status.totalSqliteStorageBytes))
+          LabeledContent("合计", value: directByteCount(status.totalSqliteStorageBytes))
         }
       }
     }
     .listStyle(.sidebar)
     .safeAreaInset(edge: .bottom) {
-      Button {
-        model.presentDirectConnection()
-      } label: {
-        Label("Open Another…", systemImage: "externaldrive")
-      }
-      .buttonStyle(.plain)
-      .foregroundStyle(.secondary)
-      .padding(12)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .background(.bar)
+      VStack(alignment: .leading, spacing: 8) {
+        if let notice = model.connectionPersistenceNotice {
+          Text(notice).font(.caption).foregroundStyle(.orange)
+        }
+        Button("忘记已保存的连接") { model.forgetRememberedConnection() }
+        Button {
+          model.presentDirectConnection()
+        } label: {
+          Label("打开其他记录…", systemImage: "externaldrive")
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.bar)
+      }.padding(8)
     }
   }
 
@@ -403,15 +441,15 @@ struct HistoryDirectLibraryView: View {
       } else {
         HistoryDirectPlaceholder(
           icon: "bubble.left.and.bubble.right",
-          title: "Choose a chat",
-          detail: "Only its current bounded page will be requested from SQLite."
+          title: "选择一个聊天",
+          detail: "从左侧选择聊天，按需查看消息。"
         )
       }
     case .search:
       HistoryDirectPlaceholder(
         icon: "text.magnifyingglass",
-        title: "Bounded native search",
-        detail: "Select a result to request that exact message by its opaque identifier."
+        title: "搜索本机记录",
+        detail: "点击搜索结果，查看对应消息。"
       )
     }
   }
@@ -423,30 +461,30 @@ private struct HistoryDirectOverviewContents: View {
   var body: some View {
     List {
       if let configuration = model.directConfiguration, let status = model.directStatus {
-        Section("Access") {
+        Section("打开方式") {
           Label(
             configuration.accessMode.displayName, systemImage: accessIcon(configuration.accessMode))
-          LabeledContent("Source identity", value: String(status.source.identity.prefix(16)))
+          LabeledContent("来源标识", value: String(status.source.identity.prefix(16)))
           LabeledContent(
-            "Observed",
+            "检查时间",
             value: Date(
               timeIntervalSince1970: Double(status.observedAtUnixMilliseconds) / 1_000
             ).formatted(date: .abbreviated, time: .shortened)
           )
         }
-        Section("Bounded state") {
-          LabeledContent("Loaded chats", value: model.directConversations.count.formatted())
+        Section("加载状态") {
+          LabeledContent("已加载会话", value: model.directConversations.count.formatted())
           LabeledContent(
-            "More chats",
-            value: model.directConversationCursor == nil ? "No" : "Available"
+            "更多会话",
+            value: model.directConversationCursor == nil ? "否" : "可加载"
           )
-          Label("Read-only SQLite statements", systemImage: "lock.open.display")
+          Label("仅以只读方式查询数据库", systemImage: "lock.open.display")
             .foregroundStyle(.green)
         }
       }
       HistoryDirectWarnings(warnings: model.directConversationWarnings)
     }
-    .navigationTitle("Overview")
+    .navigationTitle("概览")
   }
 
   private func accessIcon(_ mode: HistoryDirectAccessMode) -> String {
@@ -469,27 +507,27 @@ private struct HistoryDirectOverviewDetail: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
         VStack(alignment: .leading, spacing: 6) {
-          Text("Direct SQLite source")
+          Text("直接读取本机记录")
             .font(.largeTitle.weight(.semibold))
           Text(
-            "The database remains the canonical store. GreenBubbles requests small JSON pages and discards them as you close the source."
+            "原数据库保持不变。应用按需读取少量记录，关闭来源后释放已加载的数据。"
           )
           .font(.title3)
           .foregroundStyle(.secondary)
         }
 
         if let consistency = model.directConversationConsistency {
-          GroupBox("Current query consistency") {
+          GroupBox("本次读取状态") {
             VStack(alignment: .leading, spacing: 8) {
-              LabeledContent("Guarantee", value: directHumanize(consistency.guarantee))
-              LabeledContent("Databases read", value: consistency.databaseCount.formatted())
+              LabeledContent("一致性保障", value: directHumanize(consistency.guarantee))
+              LabeledContent("已读取数据库", value: consistency.databaseCount.formatted())
               LabeledContent(
-                "Cross-database atomic",
-                value: consistency.crossDatabaseAtomic ? "Yes" : "No"
+                "跨数据库同步读取",
+                value: consistency.crossDatabaseAtomic ? "是" : "否"
               )
               if !consistency.crossDatabaseAtomic {
                 Label(
-                  "WeChat databases are independent SQLite files; this page is not a single transaction across all of them.",
+                  "微信记录分散在多个独立数据库中，因此本页各部分可能不是完全同一时刻的数据。",
                   systemImage: "info.circle"
                 )
                 .font(.callout)
@@ -501,22 +539,22 @@ private struct HistoryDirectOverviewDetail: View {
         }
 
         if let status = model.directStatus {
-          GroupBox("Measured SQLite storage") {
+          GroupBox("数据库存储占用") {
             VStack(alignment: .leading, spacing: 8) {
-              LabeledContent("Database files", value: directByteCount(status.databaseBytes))
-              LabeledContent("Write-ahead logs", value: directByteCount(status.writeAheadLogBytes))
-              LabeledContent("Shared memory", value: directByteCount(status.sharedMemoryBytes))
+              LabeledContent("数据库文件", value: directByteCount(status.databaseBytes))
+              LabeledContent("待写入日志", value: directByteCount(status.writeAheadLogBytes))
+              LabeledContent("共享内存文件", value: directByteCount(status.sharedMemoryBytes))
               LabeledContent(
-                "Rollback journals",
+                "恢复日志",
                 value: directByteCount(status.rollbackJournalBytes)
               )
               Divider()
               LabeledContent(
-                "Total on disk",
+                "磁盘占用合计",
                 value: directByteCount(status.totalSqliteStorageBytes)
               )
               Text(
-                "These are the source database and SQLite sidecar bytes only; no JSONL, staging database, or decoded-media expansion is included."
+                "这里只统计源数据库及其辅助文件，不包含导出记录、临时副本或解码后的附件。"
               )
               .font(.caption)
               .foregroundStyle(.secondary)
@@ -524,7 +562,7 @@ private struct HistoryDirectOverviewDetail: View {
             .padding(6)
           }
 
-          GroupBox("Largest databases") {
+          GroupBox("占用空间最多的数据库") {
             VStack(alignment: .leading, spacing: 9) {
               ForEach(largestEntries(status)) { entry in
                 HStack {
@@ -547,7 +585,7 @@ private struct HistoryDirectOverviewDetail: View {
             || mode == .snapshotPassphrase || mode == .snapshotRecoveryKit
             || mode == .snapshotEncrypted
         {
-          GroupBox("Independent recovery") {
+          GroupBox("备份恢复方式") {
             Label(
               independentRecoveryExplanation(mode),
               systemImage: "key.radiowaves.forward.fill"
@@ -568,15 +606,15 @@ private struct HistoryDirectOverviewDetail: View {
   private func independentRecoveryExplanation(_ mode: HistoryDirectAccessMode) -> String {
     switch mode {
     case .snapshotKeychain:
-      "This snapshot is using a convenience credential from macOS Keychain. Losing that device-only entry does not destroy the backup: the separately stored 24 recovery words still unlock it."
+      "当前使用本机钥匙串解锁备份。钥匙串条目丢失后，仍可使用另外保存的 24 个恢复词打开。"
     case .snapshotLocalCredential:
-      "This snapshot is using its local convenience protector. Deleting that owner-only file does not destroy the backup: the separately stored 24 recovery words can still unlock it."
+      "当前使用本机解锁文件。文件丢失后，仍可使用另外保存的 24 个恢复词打开备份。"
     case .snapshotPassphrase:
-      "This snapshot is using its optional Argon2id passphrase protector. The mandatory, separately stored 24 recovery words remain the portable recovery path if the passphrase is forgotten."
+      "当前使用备份密码解锁。忘记密码后，仍可使用另外保存的 24 个恢复词打开。"
     case .snapshotRecoveryKit:
-      "This snapshot is unlocked by its portable 24-word recovery kit without consulting WeChat. Keep another copy of those words independent from this Mac."
+      "当前使用 24 个恢复词解锁，无需访问微信。请在此电脑以外的安全位置另存一份恢复词。"
     case .snapshotEncrypted:
-      "This legacy snapshot is queried using its raw recovery key without consulting WeChat or the original WeChat database key."
+      "当前使用旧版备份的恢复密钥读取记录，无需访问微信或使用微信原密钥。"
     case .liveEncrypted, .decrypted:
       ""
     }
@@ -588,19 +626,26 @@ private struct HistoryDirectConversationList: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      DirectFilterField(text: $model.conversationFilter, prompt: "Filter loaded chats")
+      Picker("会话类型", selection: $model.directChatCategory) {
+        Text("个人").tag("personal")
+        Text("群聊").tag("group")
+        Text("其他").tag("other")
+      }.pickerStyle(.segmented).labelsHidden().padding(.horizontal, 14).padding(.bottom, 10)
+      DirectFilterField(text: $model.conversationFilter, prompt: "搜索当前分类的会话")
       if let error = model.directConversationError {
         DirectInlineError(message: error)
       }
       List {
         ForEach(model.filteredDirectConversations) { conversation in
           Button {
+            model.directSection = .chats
             model.selectDirectConversation(conversation.id)
           } label: {
             HStack(spacing: 10) {
-              Image(systemName: "bubble.left.and.bubble.right.fill")
-                .foregroundStyle(.green)
-                .frame(width: 30)
+              HistoryPersonAvatar(
+                source: model.directStatus?.source.identity ?? "",
+                person: conversation.id, name: conversation.displayName,
+                embeddedAvatar: conversation.avatarBase64)
               VStack(alignment: .leading, spacing: 4) {
                 HStack {
                   Text(conversation.displayName)
@@ -613,7 +658,7 @@ private struct HistoryDirectConversationList: View {
                       .foregroundStyle(.tertiary)
                   }
                 }
-                Text(conversation.summary ?? "No decoded summary")
+                Text(conversation.summary ?? "")
                   .font(.caption)
                   .foregroundStyle(.secondary)
                   .lineLimit(2)
@@ -623,6 +668,26 @@ private struct HistoryDirectConversationList: View {
             .contentShape(Rectangle())
           }
           .buttonStyle(.plain)
+          .contextMenu {
+            if model.directCategory(for: conversation) == "other" {
+              Button(
+                conversation.id.hasSuffix("@chatroom") ? "移回群聊" : "移回个人",
+                systemImage: "arrow.uturn.backward"
+              ) {
+                model.moveDirectConversation(conversation, toOther: false)
+              }
+            } else {
+              Button("移到其他", systemImage: "tray.and.arrow.down") {
+                model.moveDirectConversation(conversation, toOther: true)
+              }
+            }
+            if model.hasDirectCategoryOverride(conversation) {
+              Divider()
+              Button("恢复自动分类", systemImage: "arrow.counterclockwise") {
+                model.restoreDirectCategory(conversation)
+              }
+            }
+          }
           .listRowBackground(
             model.directSelectedConversationID == conversation.id
               ? Color.accentColor.opacity(0.12) : Color.clear
@@ -638,7 +703,7 @@ private struct HistoryDirectConversationList: View {
               if model.isLoadingDirectConversations {
                 ProgressView().controlSize(.small)
               } else {
-                Label("Load next 100 chats", systemImage: "arrow.down.circle")
+                Label("加载更多会话", systemImage: "arrow.down.circle")
               }
               Spacer()
             }
@@ -649,20 +714,21 @@ private struct HistoryDirectConversationList: View {
       .overlay {
         if model.filteredDirectConversations.isEmpty && !model.isLoadingDirectConversations {
           ContentUnavailableView(
-            "No loaded chats",
+            "暂无会话",
             systemImage: "bubble.left",
-            description: Text("Adjust the filter or load another bounded page.")
+            description: Text("可调整搜索条件或加载更多会话。")
           )
         }
       }
     }
-    .navigationTitle("Chats")
+    .navigationTitle("聊天")
   }
 }
 
 private struct HistoryDirectTimelineView: View {
   @Bindable var model: HistoryBrowserModel
   let conversationID: String
+  @State private var chatSearch = ""
 
   var body: some View {
     VStack(spacing: 0) {
@@ -670,23 +736,42 @@ private struct HistoryDirectTimelineView: View {
         VStack(alignment: .leading, spacing: 3) {
           Text(model.selectedDirectConversation?.displayName ?? conversationID)
             .font(.title2.weight(.semibold))
-          Text("Bounded, newest-first SQLite pages")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+          Text(
+            model.selectedDirectConversation.map { model.directCategory(for: $0) } == "other"
+              ? "其他会话" : conversationID.hasSuffix("@chatroom") ? "群聊" : "个人聊天"
+          )
+          .font(.caption).foregroundStyle(.secondary)
         }
         Spacer()
-        if let consistency = model.directMessageConsistency {
-          Label(
-            consistency.crossDatabaseAtomic ? "Atomic page" : "Independent DB reads",
-            systemImage: consistency.crossDatabaseAtomic ? "checkmark.shield" : "square.stack.3d.up"
-          )
-          .font(.caption)
-          .foregroundStyle(consistency.crossDatabaseAtomic ? .green : .orange)
-        }
+        Button {
+          model.returnToLatestDirectMessages()
+        } label: {
+          Image(systemName: "arrow.clockwise")
+        }.help("刷新最新消息")
+
       }
       .padding(.horizontal, 18)
       .padding(.vertical, 12)
       .background(.bar)
+
+      HStack(spacing: 10) {
+        HistorySearchField(
+          prompt: "在当前聊天中搜索", text: $chatSearch,
+          onSubmit: {
+            guard !chatSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+              return
+            }
+            model.directSearchConversationID = conversationID
+            model.directSearchQuery = chatSearch
+            model.directSection = .search
+          }
+        ).frame(height: 28)
+        Button("搜索") {
+          model.directSearchConversationID = conversationID
+          model.directSearchQuery = chatSearch
+          model.directSection = .search
+        }.disabled(chatSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+      }.padding(.horizontal, 18).padding(.vertical, 10).background(.bar)
 
       if let error = model.directMessageError {
         DirectInlineError(message: error)
@@ -697,109 +782,149 @@ private struct HistoryDirectTimelineView: View {
           .padding(.top, 10)
       }
 
-      ScrollView {
-        LazyVStack(spacing: 10) {
-          if model.directIsSearchContext {
-            Button("Return to latest messages") {
-              model.returnToLatestDirectMessages()
-            }
-            .buttonStyle(.bordered)
-          } else if model.directMessageCursor != nil {
-            Button {
-              model.loadOlderDirectMessages()
-            } label: {
-              if model.isLoadingDirectMessages {
-                ProgressView().controlSize(.small)
-              } else {
-                Label("Load 100 older messages", systemImage: "arrow.up.circle")
+      ScrollViewReader { proxy in
+        ScrollView {
+          LazyVStack(spacing: 10) {
+            if model.directIsSearchContext {
+              Button("返回最新消息") {
+                model.returnToLatestDirectMessages()
               }
+              .buttonStyle(.bordered)
+            } else if model.directMessageCursor != nil {
+              Button {
+                model.loadOlderDirectMessages()
+              } label: {
+                if model.isLoadingDirectMessages {
+                  ProgressView().controlSize(.small)
+                } else {
+                  Label("加载更早消息", systemImage: "arrow.up.circle")
+                }
+              }
+              .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
-          }
 
-          let messages = Array(model.directMessages.reversed())
-          ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
-            if let date = message.createdAt as Date?,
-              HistoryMessageTime.showsSeparator(
-                for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
+            let messages = Array(model.directMessages.reversed())
+            ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+              if let date = message.createdAt as Date?,
+                HistoryMessageTime.showsSeparator(
+                  for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
+              {
+                HistoryMessageTimestamp(date: date)
+              }
+              HistoryDirectMessageBubble(
+                model: model, message: message,
+                highlighted: message.id == model.directHighlightedMessageID
+              )
+            }
+
+            if model.isLoadingDirectMessages && model.directMessages.isEmpty {
+              VStack(spacing: 22) {
+                ForEach(0..<4) { index in
+                  HStack(alignment: .top, spacing: 10) {
+                    if index % 2 == 1 { Spacer(minLength: 80) }
+                    RoundedRectangle(cornerRadius: 9).fill(.primary.opacity(0.05)).frame(
+                      width: 34, height: 34)
+                    RoundedRectangle(cornerRadius: 12).fill(.primary.opacity(0.045)).frame(
+                      width: index % 2 == 0 ? 230 : 170, height: 54)
+                    if index % 2 == 0 { Spacer(minLength: 80) }
+                  }
+                }
+                Label("正在加载消息…", systemImage: "clock").font(.caption).foregroundStyle(.secondary)
+              }.padding(.vertical, 14).accessibilityLabel("正在加载消息")
+            } else if !model.isLoadingDirectMessages && model.directMessages.isEmpty
+              && model.directMessageError == nil
             {
-              HistoryMessageTimestamp(date: date)
-            }
-            HistoryDirectMessageBubble(
-              message: message,
-              highlighted: message.id == model.directHighlightedMessageID
-            )
-          }
-
-          if model.isLoadingDirectMessages && model.directMessages.isEmpty {
-            ProgressView("Requesting bounded page…")
+              ContentUnavailableView(
+                "暂无消息",
+                systemImage: "bubble.left",
+                description: Text("本次查询未找到消息。")
+              )
               .padding(40)
-          } else if !model.isLoadingDirectMessages && model.directMessages.isEmpty
-            && model.directMessageError == nil
-          {
-            ContentUnavailableView(
-              "No messages",
-              systemImage: "bubble.left",
-              description: Text("This bounded query returned no messages.")
-            )
-            .padding(40)
+            }
+          }
+          .padding(18)
+          Color.clear.frame(height: 1).id("latest")
+        }
+        .onChange(of: model.directMessages.first?.id) { _, _ in
+          Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
+            proxy.scrollTo("latest", anchor: .bottom)
           }
         }
-        .padding(18)
+        .overlay(alignment: .bottomTrailing) {
+          Button {
+            withAnimation { proxy.scrollTo("latest", anchor: .bottom) }
+          } label: {
+            Image(systemName: "arrow.down").padding(8)
+          }.buttonStyle(.bordered).clipShape(Circle()).padding(16).help("回到最新消息")
+        }
       }
     }
     .background(Color(nsColor: .textBackgroundColor).opacity(0.45))
   }
 }
 
-private struct HistoryDirectMessageBubble: View {
+struct HistoryDirectMessageBubble: View {
+  let model: HistoryBrowserModel
   let message: HistoryDirectMessage
   let highlighted: Bool
+  private var outgoing: Bool { message.isAccountHolder == true }
+  private var system: Bool { message.messageTypeLabel == "system" }
+  private var imageOnly: Bool { message.messageTypeLabel == "image" }
+
+  private var avatar: some View {
+    HistoryPersonAvatar(
+      source: model.directStatus?.source.identity ?? "",
+      person: message.sender.isEmpty ? "unknown" : message.sender,
+      name: outgoing ? "我" : message.senderLabel, embeddedAvatar: message.avatarBase64)
+  }
 
   var body: some View {
-    HStack {
-      VStack(alignment: .leading, spacing: 7) {
-        HStack {
-          Text(message.senderLabel)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
-          Spacer()
-        }
-        Text(message.displayText)
-          .textSelection(.enabled)
-        HStack(spacing: 6) {
-          Text(directHumanize(message.messageTypeLabel))
-          if message.messageSubtype != 0 {
-            Text("•")
-            Text(directHumanize(message.messageSubtypeLabel))
+    if system {
+      Text(message.displayText).font(.caption).foregroundStyle(.secondary)
+        .textSelection(.enabled).frame(maxWidth: .infinity).padding(.vertical, 8)
+    } else {
+      HStack(alignment: .top, spacing: 9) {
+        if outgoing { Spacer(minLength: 80) } else { avatar }
+        VStack(alignment: outgoing ? .trailing : .leading, spacing: 5) {
+          if message.conversationID.hasSuffix("@chatroom") && !outgoing {
+            Text(message.senderLabel).font(.system(size: 11)).foregroundStyle(.secondary)
+          }
+          HistoryRichMessageBody(
+            message: message, cachedImage: model.directImagePreviews[message.id],
+            loadImage: {
+              try await model.previewDirectImage(message)
+            },
+            loadPDF: {
+              try await model.previewDirectPDF(message)
+            }
+          )
+          .font(.system(size: 14))
+          .padding(imageOnly ? 0 : 11)
+          .background(
+            imageOnly
+              ? Color.clear
+              : outgoing
+                ? Color(red: 0.83, green: 0.94, blue: 0.77)
+                : Color(nsColor: .controlBackgroundColor),
+            in: RoundedRectangle(cornerRadius: 9)
+          )
+          .overlay {
+            RoundedRectangle(cornerRadius: 9).stroke(
+              highlighted ? Color.accentColor : .clear, lineWidth: 2)
+          }
+          .contextMenu {
+            Button("复制消息") {
+              NSPasteboard.general.clearContents()
+              NSPasteboard.general.setString(message.displayText, forType: .string)
+            }
           }
           if message.contentTruncated {
-            Text("• truncated")
-              .foregroundStyle(.orange)
+            Text("内容过长，仅显示部分").font(.caption2).foregroundStyle(.orange)
           }
-        }
-        .font(.caption2)
-        .foregroundStyle(.secondary)
-      }
-      .padding(.horizontal, 13)
-      .padding(.vertical, 10)
-      .frame(maxWidth: 680, alignment: .leading)
-      .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 14))
-      .overlay {
-        RoundedRectangle(cornerRadius: 14)
-          .stroke(highlighted ? Color.accentColor : .clear, lineWidth: 3)
-      }
-      .contextMenu {
-        Button("Copy Message Text") {
-          NSPasteboard.general.clearContents()
-          NSPasteboard.general.setString(message.displayText, forType: .string)
-        }
-        Button("Copy Opaque Message ID") {
-          NSPasteboard.general.clearContents()
-          NSPasteboard.general.setString(message.id, forType: .string)
-        }
-      }
-      Spacer(minLength: 70)
+        }.frame(maxWidth: 570, alignment: outgoing ? .trailing : .leading)
+        if outgoing { avatar } else { Spacer(minLength: 80) }
+      }.frame(maxWidth: .infinity, alignment: outgoing ? .trailing : .leading)
     }
   }
 }
@@ -809,7 +934,12 @@ private struct HistoryDirectSearchView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      DirectFilterField(text: $model.directSearchQuery, prompt: "Search message text")
+      HStack {
+        Button("返回聊天") { model.directSection = .chats }
+        Spacer()
+        Text(model.directSearchConversationID == nil ? "搜索全部消息" : "搜索当前聊天").font(.headline)
+      }.padding(12)
+      DirectFilterField(text: $model.directSearchQuery, prompt: "搜索消息内容")
       if model.isSearchingDirect && model.directSearchResults.isEmpty {
         ProgressView()
           .controlSize(.small)
@@ -862,7 +992,7 @@ private struct HistoryDirectSearchView: View {
               if model.isSearchingDirect {
                 ProgressView().controlSize(.small)
               } else {
-                Label("Continue bounded search", systemImage: "arrow.down.circle")
+                Label("加载更多搜索结果", systemImage: "arrow.down.circle")
               }
               Spacer()
             }
@@ -873,10 +1003,10 @@ private struct HistoryDirectSearchView: View {
       .overlay {
         if model.directSearchQuery.isEmpty {
           ContentUnavailableView(
-            "Search SQLite history",
+            "搜索本机聊天记录",
             systemImage: "text.magnifyingglass",
             description: Text(
-              "The query is sent through standard input to native FTS or bounded read-only source windows."
+              "输入关键词，在本机已授权的聊天记录中查找。"
             )
           )
         } else if !model.isSearchingDirect && model.directSearchResults.isEmpty
@@ -886,7 +1016,7 @@ private struct HistoryDirectSearchView: View {
         }
       }
     }
-    .navigationTitle("Search")
+    .navigationTitle("搜索")
     .task(id: model.directSearchQuery) {
       await model.performDirectSearch()
     }
@@ -898,13 +1028,13 @@ private struct HistoryDirectWarnings: View {
 
   var body: some View {
     if !warnings.isEmpty {
-      Section("Warnings") {
+      Section("提示") {
         ForEach(warnings) { warning in
           Label {
             VStack(alignment: .leading, spacing: 2) {
-              Text(warning.message)
+              Text(historyChineseWarning(warning))
               if let count = warning.count {
-                Text("Affected records: \(count.formatted())")
+                Text("涉及记录：\(count.formatted()) 条")
                   .font(.caption2)
                   .foregroundStyle(.secondary)
               }
@@ -922,26 +1052,12 @@ private struct HistoryDirectWarnings: View {
 private struct DirectFilterField: View {
   @Binding var text: String
   let prompt: String
-
   var body: some View {
-    HStack {
-      Image(systemName: "magnifyingglass")
-        .foregroundStyle(.secondary)
-      TextField(prompt, text: $text)
-        .textFieldStyle(.plain)
-      if !text.isEmpty {
-        Button {
-          text = ""
-        } label: {
-          Image(systemName: "xmark.circle.fill")
-            .foregroundStyle(.tertiary)
-        }
-        .buttonStyle(.plain)
-      }
-    }
-    .padding(.horizontal, 10)
-    .padding(.vertical, 8)
-    .background(.bar)
+    HistorySearchField(prompt: prompt, text: $text)
+      .frame(height: 28)
+      .padding(.horizontal, 12)
+      .padding(.vertical, 8)
+      .background(.bar)
   }
 }
 
@@ -990,11 +1106,5 @@ private func directEntryBytes(_ entry: HistoryDirectDatabaseSize) -> UInt64 {
 }
 
 private func directHumanize(_ value: String) -> String {
-  guard !value.isEmpty else { return "Unknown" }
-  var result = ""
-  for character in value {
-    if character.isUppercase, !result.isEmpty { result.append(" ") }
-    result.append(character)
-  }
-  return result.replacingOccurrences(of: "_", with: " ").capitalized
+  historyChineseStatus(value)
 }

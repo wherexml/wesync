@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-10-02T09:51:12.990950+00:00",
+  "build": "10",
+  "installedApp": "/Applications/GreenBubbles.app",
+  "nativeQuitAndReopen": "PASS",
+  "automaticConnectionWithoutKeyEntry": "PASS",
+  "firstConversationLoad": "PASS",
+  "secondConversationLoad": "PASS",
+  "returnToCachedConversation": {
+    "loadingPlaceholder": false,
+    "visibleMessageTextRows": 13,
+    "result": "PASS"
+  },
+  "privateMessageContentRecorded": false,
+  "persistentCacheAcrossRestart": "NOT_IMPLEMENTED"
+}

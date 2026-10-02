@@ -1,0 +1,22 @@
+{
+  "scope": "synthetic-only; installed production app unchanged",
+  "nativeChecks": {
+    "welcome": true,
+    "connectionForm": true,
+    "allSevenAccessOptionLabels": true,
+    "passphraseSubview": true,
+    "emptyPassphraseValidation": true,
+    "backupSetupAndPasswordToggle": true,
+    "exportedFolderDialog": true,
+    "menusAndDateLocale": true,
+    "quitProcessAbsent": true,
+    "restartNoCredentialInput": true,
+    "pdfAfterRestart": true
+  },
+  "notRun": [
+    "real screenshot PDF lookup/open",
+    "installed-app update and restart",
+    "creating a real backup"
+  ],
+  "timestamp": "2026-10-02T16:52:00.615811+08:00"
+}

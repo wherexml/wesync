@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-02",
+  "installedBundle": "/Applications/GreenBubbles.app",
+  "installedBuild": 8,
+  "signing": "Fixed local certificate; not Developer ID or notarized distribution",
+  "designatedRequirement": "designated => identifier \"me.greenbubbles.GreenBubbles\" and certificate leaf = H\"6d4a17ce69417dc567d430dd7f2df2361c45cd42\"",
+  "signatureIntegrity": "PASS",
+  "differentBuildsSameIdentity": "PASS: builds 7 and 8",
+  "fullDiskAccessMigration": "PASS: reset only this app then reselected through native System Settings",
+  "permissionRetentionAcrossNextUpdate": "PASS: build 7 to 8, no further TCC changes",
+  "queryAndSendBinariesUnchanged": "PASS",
+  "productIconFinderVisual": "PASS",
+  "menuOpenHideReopenQuit": "PASS",
+  "nativeQuitProcessAbsent": "PASS",
+  "initialAutomaticConnectionAfterUpdate": "PASS",
+  "finalColdRestart": "PENDING: app awaiting native Keychain approval for its remembered connection",
+  "secretValuesRecorded": false,
+  "menuBarGlyphScreenshot": "NOT_CAPTURED: computer-use API could not select system menu bar surface; installed template asset verified and native menu exercised",
+  "realDarkLightSwitch": "NOT_RUN; both colors validated by source compositing only",
+  "rollbackBuild6": ".build/brand-signed-20261002-r2/Before-brand-update.app",
+  "rollbackBuild7": ".build/menu-brand-signed-20261002/Before-menu-update.app"
+}

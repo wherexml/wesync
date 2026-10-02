@@ -1,0 +1,64 @@
+#!/usr/bin/python3
+"""Synthetic-only CLI for native E2E. Never opens WeChat, profiles, keys or network."""
+import hashlib,json,os,pathlib,sys,base64,plistlib
+root=pathlib.Path(__file__).resolve().parents[1]/'Resources'/'offline-fixture'
+a=sys.argv[1:]
+if len(a)<3 or pathlib.Path(a[2]).resolve()!=root.resolve() or '--decrypted' not in a:
+ raise SystemExit('Offline fixture accepts only its own synthetic source and --decrypted')
+if any(x in a for x in ['--passphrase-stdin','--profile','--snapshot-key-stdin']):raise SystemExit('Credentials forbidden')
+operation='.'.join(a[:2])
+with (root/'requests.jsonl').open('a') as f:f.write(json.dumps({'operation':operation,'json':'--json' in a,'source':'synthetic'})+'\n')
+def option(n):return a[a.index(n)+1]
+base={'schema':'greenbubbles.query.v1','formatVersion':1,'operation':operation,'ok':True,'source':{'mode':'decrypted','identity':'synthetic-presentation-v1'},'warnings':[],'consistency':{'guarantee':'fixture','databaseCount':1,'crossDatabaseAtomic':True,'coverageComplete':True,'observedAtUnixMilliseconds':1790910000000}}
+if operation=='source.status':
+ base.update(observedAtUnixMilliseconds=1790910000000,databaseCount=1,databaseBytes=1024,writeAheadLogCount=0,writeAheadLogBytes=0,sharedMemoryCount=0,sharedMemoryBytes=0,rollbackJournalCount=0,rollbackJournalBytes=0,totalSqliteStorageBytes=1024,entries=[])
+elif operation=='conversations.list':
+ base.update(page={'limit':100,'returned':1,'hasMore':False},items=[{'id':'demo-room','displayName':'离线验收 · 合成会话','summary':'头像 · 图片 · 引用回复 · 失败重试','summaryDecodeState':'complete','summaryTruncated':False,'sortTimestamp':1790910000}])
+ base['items'][0]['avatarBase64']=base64.b64encode((root/'sample.png').read_bytes()).decode()
+ group=dict(base['items'][0]);group.update(id='demo@chatroom',displayName='合成项目群')
+ placeholder=dict(base['items'][0]);placeholder.update(id='@placeholder_foldgroup',displayName='不可见占位')
+ base['items'] += [group,placeholder]
+ for ident,name,official in [('cmb4008205555','合成银行服务',True),('wxid_legacy_public','合成老公众号',True),('notifymessage','服务通知',False),('gh_demo','合成公众号',False),('demo-human','服务通知',False),('demo@openim','企业联系人',False)]:
+  item=dict(base['items'][0]);item.update(id=ident,displayName=name,isOfficialAccount=official);base['items'].append(item)
+ base['page']['returned']=len(base['items'])
+elif operation=='messages.list':
+ if '--json' not in a:raise SystemExit('Native message queries must explicitly request JSON')
+ samples=[('text','Text','这是一段合成消息，开发与验收不连接微信。'),('quote','Quote',{'reply_text':'这个方向可以，周五确认。','refer_sender':'小林','refer_content':'新界面什么时候可以验收？'}),('image','Image',{}),('quote','Quote',{'reply_text':None,'refer_content':None,'raw_xml':''}),('image','Image',{}),('quote','Quote',{'raw_xml':'<msg><appmsg><title>XML 引用恢复成功</title><refermsg><displayname>小周</displayname><content>仅使用现有原文，不猜测缺失内容。</content></refermsg></appmsg></msg>'}),('system','System','一条消息已撤回')]
+ samples += [('pdf','App',{'title':'Synthetic report.PDF'}),('pdf','App',{'title':'Missing report.pdf'})]
+ samples += [('emoji','Emoji','<msg><emoji cdnurl="http://wxapp.tc.qq.com/synthetic.png" aeskey="synthetic-not-a-key" /></msg>'),('emoji','Emoji','<!DOCTYPE msg [<!ENTITY x SYSTEM "file:///synthetic-forbidden">]><msg><emoji cdnurl="https://example.invalid/x" /></msg>'),('emoji','Emoji','<msg><emoji broken') ]
+ items=[]
+ for i,(kind,tag,body) in enumerate(samples):
+  items.append({'id':f'demo-{i}','conversationId':option('--conversation') or 'demo-room','sortSequence':100+i,'serverId':100+i,'messageType':{'text':1,'image':3,'quote':49,'system':10000,'pdf':49,'emoji':47}[kind],'messageTypeLabel':'app' if kind in ['quote','pdf'] else kind,'messageSubtype':57 if kind=='quote' else 6 if kind=='pdf' else 0,'messageSubtypeLabel':kind,'sender':'demo-lin' if i%2==0 else 'demo-zhou','senderDisplayName':'小林' if i%2==0 else '小周','createdAtUnix':1790910000+i*60,'status':0,'isAccountHolder':i%2==1,'avatarBase64':base64.b64encode((root/'sample.png').read_bytes()).decode(),'content':{tag:body},'contentDecodeState':'complete','contentTruncated':False})
+ base.update(page={'limit':100,'returned':len(items),'hasMore':False},items=list(reversed(items)))
+ if (root/'message-cache-acceptance').exists():
+  if (root/'cache-fail').exists():raise SystemExit('Synthetic query failure')
+  offset=int(option('--cursor')) if '--cursor' in a else 0
+  items=[]
+  for i in range(offset,offset+40):
+   item=dict(base['items'][0]);item.update(id=f'cache-{i}',sortSequence=1000-i,content={'Text':f'Synthetic cache message {i}'})
+   items.append(item)
+  base.update(items=items,page={'limit':40,'returned':40,'hasMore':True,'nextCursor':str(offset+40)})
+
+elif operation=='messages.search':
+ query=sys.stdin.buffer.read()
+ items=[{'id':'demo-0','conversationId':option('--conversation') if '--conversation' in a else 'demo-room','sender':'demo-lin','senderDisplayName':'小林','createdAtUnix':1790910000,'sortSequence':100,'messageLocalId':1,'messageType':1,'messageTypeLabel':'text','messageSubtype':0,'messageSubtypeLabel':'text','snippet':'这是一段合成消息，开发与验收不连接微信。','snippetTruncated':False}]
+ base.update(page={'limit':50,'returned':1,'hasMore':False},items=items)
+elif operation=='attachment.inspect':
+ document=option('--kind')=='document'
+ missing=(option('--message')=='demo-4' and not (root/'retry-ready').exists()) or (option('--message')=='demo-8' and not (root/'pdf-retry-ready').exists())
+ base={'schema':'greenbubbles.attachment.v1','formatVersion':1,'operation':operation,'ok':True,'kind':'document' if document else 'image','availability':'notDownloaded' if missing else 'downloaded','accountImageKeyRequired':True}
+ if not missing:base.update(preferredAttachmentId='demo-attachment',preferredSourceByteCount=(root/'sample.png').stat().st_size)
+elif operation=='attachment.materialize':
+ output=pathlib.Path(option('--output')).resolve()
+ app_id=plistlib.loads((root.parents[1]/'Info.plist').read_bytes())['CFBundleIdentifier']
+ if app_id not in ['me.greenbubbles.PresentationPreview','me.greenbubbles.PolishPreview','me.greenbubbles.ChinesePreview']:raise SystemExit('Not an acceptance app')
+ allowed=pathlib.Path.home()/'Library/Application Support'/app_id/'Presentation/Previews'
+ if output.parent!=allowed:raise SystemExit('Offline fixture output outside preview sandbox')
+ document=option('--kind')=='document'
+ data=(root/('sample.pdf' if document else 'sample.wxgf' if option('--message')=='demo-4' else 'sample.png')).read_bytes()
+ if document and (root/'pdf-corrupt').exists():data=b'not a PDF'
+ with output.open('xb') as f:f.write(data)
+ os.chmod(output,0o600)
+ base={'schema':'greenbubbles.attachment.v1','formatVersion':1,'operation':operation,'ok':True,'attachmentId':'demo-attachment','kind':'document' if document else 'image','decodedFormat':'pdf' if document else 'wxgf' if option('--message')=='demo-4' else 'png','decodedByteCount':len(data),'decodedSha256':('0'*64 if (root/'bad-digest').exists() else hashlib.sha256(data).hexdigest())}
+else:raise SystemExit('Unsupported fixture operation')
+print(json.dumps(base,ensure_ascii=False))

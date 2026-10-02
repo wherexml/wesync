@@ -1,15 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="title desc">
-  <title id="title">GreenBubbles</title>
-  <desc id="desc">An emerald chat bubble containing a cream pixel chatbot with an antenna and two eyes, on a pale mint rounded square.</desc>
-  <rect x="16" y="16" width="480" height="480" rx="112" fill="#EAF5ED"/>
-  <path d="M164 96h184c49 0 88 39 88 88v112c0 49-39 88-88 88H236l-76 56v-56c-47-2-84-40-84-88V184c0-49 39-88 88-88Z" fill="#087F5B"/>
-  <g fill="#FFF4D6">
-    <path d="M176 184h160v16h16v88h-16v16H176v-16h-16v-88h16Z"/>
-    <path d="M248 152h16v32h-16ZM236 140h40v20h-40Z"/>
-    <path d="M140 220h20v48h-20Zm212 0h20v48h-20Z"/>
-    <path d="M192 304h32v24h-32Zm96 0h32v24h-32Z"/>
-  </g>
-  <g fill="#087F5B">
-    <path d="M204 220h24v32h-24Zm80 0h24v32h-24Z"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">GreenBubbles</title>
+<desc id="desc">Two green pixel robots on a white rounded square.</desc>
+<rect x="32" y="32" width="448" height="448" rx="100" fill="#FFFFFF"/>
+<g transform="translate(41.28 50.08) scale(0.88)">
+<path fill="#075E47" fill-rule="evenodd" d="M208 88H432V304H412V360H392L356 324H352V260H328V140H208Z M344 164V196H368V164Z M392 164V196H416V164Z"/>
+<path fill="#07C160" fill-rule="evenodd" d="M96 156H312V224H344V272H312V328H184L120 380V328H96V272H56V224H96Z M136 200V240H168V200Z M240 200V240H272V200Z"/>
+</g>
 </svg>

@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "checks": {
+    "encrypted-fallback": true,
+    "encrypted-cache-restart": true,
+    "thumbnail-fallback": true,
+    "malformed": true,
+    "entity-rejected": true,
+    "host-rejected": true,
+    "userinfo-rejected": true,
+    "invalid-key": true,
+    "wrong-digest": true,
+    "cache-warm": true,
+    "corrupt-cache-rejected": true,
+    "corrupt-cache-recovers": true
+  },
+  "source": "bounded-real-sticker-with-controlled-failure-variants",
+  "installedApp": "NOT_RUN"
+}

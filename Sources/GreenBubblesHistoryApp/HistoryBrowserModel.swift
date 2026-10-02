@@ -1,7 +1,9 @@
 import AppKit
+import CryptoKit
 import Foundation
 import GreenBubblesHistory
 import Observation
+import PDFKit
 
 enum HistorySection: String, CaseIterable, Identifiable {
   case overview
@@ -13,10 +15,10 @@ enum HistorySection: String, CaseIterable, Identifiable {
 
   var title: String {
     switch self {
-    case .overview: "Overview"
-    case .chats: "Chats"
-    case .contacts: "Contacts"
-    case .search: "Search"
+    case .overview: "概览"
+    case .chats: "聊天"
+    case .contacts: "联系人"
+    case .search: "搜索"
     }
   }
 
@@ -39,9 +41,9 @@ enum HistoryDirectSection: String, CaseIterable, Identifiable {
 
   var title: String {
     switch self {
-    case .overview: "Overview"
-    case .chats: "Chats"
-    case .search: "Search"
+    case .overview: "概览"
+    case .chats: "聊天"
+    case .search: "搜索"
     }
   }
 
@@ -90,6 +92,10 @@ final class HistoryBrowserModel {
   var liveAuditPath = ""
   var showsDirectConnection = false
   var showsSnapshotCreation = false
+  var directCategoryOverrides: [String: String] = [:]
+  var directChatCategory = "personal"
+  var rememberDirectConnection = true
+  var connectionPersistenceNotice: String?
   var directSourcePath = ""
   var directAccessMode: HistoryDirectAccessMode = .liveEncrypted
   var directLocalCredentialPath = ""
@@ -103,9 +109,22 @@ final class HistoryBrowserModel {
   var directConversationConsistency: HistoryDirectConsistency?
   var directSelectedConversationID: String?
   var directMessages: [HistoryDirectMessage] = []
+  var directImagePreviews: [String: NSImage] = [:]
+  private var directImagePreviewOrder: [String] = []
+  private struct CachedTimeline {
+    let messages: [HistoryDirectMessage]
+    let cursor: String?
+    let warnings: [HistoryDirectWarning]
+    let consistency: HistoryDirectConsistency?
+    let refreshedAt: Date
+    var accessedAt: Date
+  }
+  private var directMessagePageCache: [String: CachedTimeline] = [:]
   var directMessageCursor: String?
   var directMessageWarnings: [HistoryDirectWarning] = []
   var directMessageConsistency: HistoryDirectConsistency?
+  var directSearchConversationID: String?
+  var directImageLoads = 0
   var directSearchQuery = ""
   var directSearchResults: [HistoryDirectSearchHit] = []
   var directSearchCursor: String?
@@ -164,6 +183,14 @@ final class HistoryBrowserModel {
       liveExecutablePath = executable.path
     }
     let defaults = UserDefaults.standard
+    directCategoryOverrides =
+      defaults.dictionary(forKey: "history.direct.categoryOverrides.v1") as? [String: String] ?? [:]
+    rememberDirectConnection = defaults.object(forKey: "history.direct.remember") as? Bool ?? true
+    if let rememberedCLI = defaults.string(forKey: "history.direct.executablePath"),
+      FileManager.default.isExecutableFile(atPath: rememberedCLI)
+    {
+      liveExecutablePath = rememberedCLI
+    }
     if let rememberedSource = defaults.string(forKey: "history.direct.sourcePath") {
       directSourcePath = rememberedSource
     }
@@ -184,7 +211,7 @@ final class HistoryBrowserModel {
         currentDirectoryURL: currentDirectoryURL
       ).bundleURL
     } catch {
-      libraryError = String(describing: error)
+      libraryError = historyUserError(error)
     }
   }
 
@@ -236,10 +263,57 @@ final class HistoryBrowserModel {
     }
   }
 
+  private func directCategoryKey(_ id: String) -> String {
+    let source = URL(fileURLWithPath: directSourcePath).standardizedFileURL.path
+    return SHA256.hash(data: Data((source + "\u{0}" + id).utf8))
+      .map { String(format: "%02x", $0) }.joined()
+  }
+
+  func directCategory(for conversation: HistoryDirectConversation) -> String? {
+    guard conversation.chatCategory != nil else { return nil }
+    let saved = directCategoryOverrides[directCategoryKey(conversation.id)]
+    return ["personal", "group", "other"].contains(saved ?? "") ? saved : conversation.chatCategory
+  }
+
+  func hasDirectCategoryOverride(_ conversation: HistoryDirectConversation) -> Bool {
+    directCategoryOverrides[directCategoryKey(conversation.id)] != nil
+  }
+
+  func moveDirectConversation(_ conversation: HistoryDirectConversation, toOther: Bool) {
+    guard conversation.chatCategory != nil else { return }
+    directCategoryOverrides[directCategoryKey(conversation.id)] =
+      toOther
+      ? "other"
+      : conversation.id.hasSuffix("@chatroom") ? "group" : "personal"
+    saveDirectCategoryOverrides(conversation)
+  }
+
+  func restoreDirectCategory(_ conversation: HistoryDirectConversation) {
+    directCategoryOverrides.removeValue(forKey: directCategoryKey(conversation.id))
+    saveDirectCategoryOverrides(conversation)
+  }
+
+  private func saveDirectCategoryOverrides(_ conversation: HistoryDirectConversation) {
+    UserDefaults.standard.set(
+      directCategoryOverrides, forKey: "history.direct.categoryOverrides.v1")
+    if directSelectedConversationID == conversation.id
+      && directCategory(for: conversation) != directChatCategory
+    {
+      directMessageTask?.cancel()
+      activeDirectMessageID = UUID()
+      isLoadingDirectMessages = false
+      directSelectedConversationID = nil
+      directMessages = []
+    }
+  }
+
   var filteredDirectConversations: [HistoryDirectConversation] {
     let query = conversationFilter.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !query.isEmpty else { return directConversations }
-    return directConversations.filter { conversation in
+    let visible = directConversations.filter { item in
+      directCategory(for: item) == directChatCategory
+    }
+    guard !query.isEmpty else { return visible }
+    return visible.filter { conversation in
       conversation.displayName.localizedCaseInsensitiveContains(query)
         || (conversation.summary?.localizedCaseInsensitiveContains(query) == true)
         || (conversation.lastSenderDisplayName?.localizedCaseInsensitiveContains(query) == true)
@@ -300,8 +374,17 @@ final class HistoryBrowserModel {
     accessMode: HistoryDirectAccessMode,
     keyUTF8: [UInt8],
     recoveryKitURL: URL? = nil,
-    localCredentialURL: URL? = nil
+    localCredentialURL: URL? = nil,
+    restoring: Bool = false
   ) {
+    connectionPersistenceNotice = nil
+    let shouldRemember = rememberDirectConnection
+    UserDefaults.standard.set(shouldRemember, forKey: "history.direct.remember")
+    if !shouldRemember {
+      do { try HistoryConnectionVault().remove() } catch {
+        connectionPersistenceNotice = historyUserError(error)
+      }
+    }
     closeBundle()
     let effectiveLocalCredentialURL: URL?
     if accessMode == .snapshotKeychain {
@@ -311,7 +394,7 @@ final class HistoryBrowserModel {
           sessionDirectory: snapshotUnlockSessionURL
         )
       } catch {
-        libraryError = String(describing: error)
+        libraryError = historyUserError(error)
         showsDirectConnection = false
         return
       }
@@ -334,6 +417,7 @@ final class HistoryBrowserModel {
       localCredentialURL: effectiveLocalCredentialURL
     )
     let defaults = UserDefaults.standard
+    defaults.set(liveExecutablePath, forKey: "history.direct.executablePath")
     defaults.set(directSourcePath, forKey: "history.direct.sourcePath")
     defaults.set(accessMode.rawValue, forKey: "history.direct.accessMode")
     if let recoveryKitURL {
@@ -377,17 +461,138 @@ final class HistoryBrowserModel {
         directConversationCursor = page.page.nextCursor
         directConversationWarnings = page.warnings
         directConversationConsistency = page.consistency
-        directSection = .overview
+        directSection = .chats
         isDirectConnecting = false
+        if shouldRemember && rememberDirectConnection && !restoring {
+          do {
+            let record = HistoryRememberedConnection(
+              executablePath: configuration.executableURL.path,
+              executableDigest: try HistoryRememberedConnection.digest(configuration.executableURL),
+              sourcePath: configuration.sourceURL.path, accessMode: accessMode.rawValue,
+              recoveryKitPath: recoveryKitURL?.path, localCredentialPath: localCredentialURL?.path,
+              secret: Data(key))
+            try HistoryConnectionVault().save(record)
+          } catch { connectionPersistenceNotice = "已连接，但未能记住：" + historyUserError(error) }
+        }
       } catch is CancellationError {
         if activeDirectLoadID == loadID { isDirectConnecting = false }
       } catch {
         guard activeDirectLoadID == loadID else { return }
         isDirectConnecting = false
-        libraryError = String(describing: error)
+        libraryError = historyUserError(error)
         clearDirectState()
       }
     }
+  }
+
+  func previewDirectPDF(_ message: HistoryDirectMessage) async throws -> HistoryPDFPreview {
+    guard message.pdfFilename != nil, let configuration = directConfiguration else {
+      throw PDFPreviewError.unavailable
+    }
+    let sessionID = activeDirectLoadID
+    var key = directKeyUTF8
+    defer { key.resetBytes(in: 0..<key.count) }
+    let inspection = try await directClient.inspectDocument(
+      configuration: configuration, keyUTF8: key, message: message)
+    try Task.checkCancellation()
+    guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
+      throw PresentationError.sourceChanged
+    }
+    guard inspection.kind == "document", let attachment = inspection.preferredAttachmentId else {
+      throw PDFPreviewError.unavailable
+    }
+    guard let size = inspection.preferredSourceByteCount, size > 0, size <= 64 * 1_024 * 1_024
+    else { throw PDFPreviewError.tooLarge }
+    let folder = HistoryPresentationAssets.shared.root.appending(path: "Previews")
+    try HistoryPresentationAssets.shared.prepareDirectory(folder)
+    let output = folder.appending(path: UUID().uuidString + ".pdf")
+    var retained = false
+    defer { if !retained { try? FileManager.default.removeItem(at: output) } }
+    let report = try await directClient.materializeDocument(
+      configuration: configuration, keyUTF8: key,
+      message: message, attachmentID: attachment, output: output)
+    try Task.checkCancellation()
+    guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
+      throw PresentationError.sourceChanged
+    }
+    guard report.decodedByteCount <= 64 * 1_024 * 1_024 else { throw PDFPreviewError.tooLarge }
+    let attributes = try FileManager.default.attributesOfItem(atPath: output.path)
+    guard attributes[.type] as? FileAttributeType == .typeRegular,
+      (attributes[.size] as? NSNumber)?.uint64Value == report.decodedByteCount,
+      report.attachmentId == attachment, report.kind == "document"
+    else { throw PresentationError.invalidIntegrity }
+    let bytes = try Data(contentsOf: output)
+    guard
+      SHA256.hash(data: bytes).map({ String(format: "%02x", $0) }).joined()
+        == report.decodedSha256.lowercased()
+    else { throw PresentationError.invalidIntegrity }
+    guard bytes.starts(with: Data("%PDF-".utf8)), let document = PDFDocument(data: bytes) else {
+      throw PDFPreviewError.invalid
+    }
+    guard !document.isLocked else { throw PDFPreviewError.locked }
+    guard document.pageCount > 0 else { throw PDFPreviewError.invalid }
+    try Task.checkCancellation()
+    retained = true
+    return HistoryPDFPreview(url: output, document: document)
+  }
+
+  func previewDirectImage(_ message: HistoryDirectMessage) async throws -> NSImage {
+    guard let configuration = directConfiguration else { throw PresentationError.sourceChanged }
+    let sessionID = activeDirectLoadID
+    while directImageLoads >= 2 {
+      try Task.checkCancellation()
+      try await Task.sleep(for: .milliseconds(50))
+    }
+    directImageLoads += 1
+    defer { directImageLoads -= 1 }
+    guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
+      throw PresentationError.sourceChanged
+    }
+    var key = directKeyUTF8
+    defer { key.resetBytes(in: 0..<key.count) }
+    let inspection = try await directClient.inspectImage(
+      configuration: configuration, keyUTF8: key, message: message)
+    guard inspection.kind == "image", let attachment = inspection.preferredAttachmentId,
+      (inspection.preferredSourceByteCount ?? 0) <= 32 * 1_024 * 1_024
+    else { throw PresentationError.unavailable }
+    try Task.checkCancellation()
+    guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
+      throw PresentationError.sourceChanged
+    }
+    let folder = HistoryPresentationAssets.shared.root.appending(path: "Previews")
+    try HistoryPresentationAssets.shared.prepareDirectory(folder)
+    let output = folder.appending(path: UUID().uuidString + ".image")
+    defer { try? FileManager.default.removeItem(at: output) }
+    let report = try await directClient.materializeImage(
+      configuration: configuration, keyUTF8: key,
+      message: message, attachmentID: attachment, output: output)
+    try Task.checkCancellation()
+    guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
+      throw PresentationError.sourceChanged
+    }
+    let attributes = try FileManager.default.attributesOfItem(atPath: output.path)
+    guard attributes[.type] as? FileAttributeType == .typeRegular,
+      (attributes[.size] as? NSNumber)?.uint64Value == report.decodedByteCount,
+      report.decodedByteCount <= 32 * 1_024 * 1_024,
+      report.attachmentId == attachment, report.kind == "image"
+    else { throw PresentationError.invalidIntegrity }
+    let bytes = try Data(contentsOf: output)
+    let digest = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
+    guard digest == report.decodedSha256.lowercased() else {
+      throw PresentationError.invalidIntegrity
+    }
+    let image = try await HistoryImageDecoder.preview(at: output)
+    try Task.checkCancellation()
+    guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
+      throw PresentationError.sourceChanged
+    }
+    directImagePreviewOrder.removeAll { $0 == message.id }
+    directImagePreviewOrder.append(message.id)
+    while directImagePreviewOrder.count > 20 {
+      directImagePreviews.removeValue(forKey: directImagePreviewOrder.removeFirst())
+    }
+    directImagePreviews[message.id] = image
+    return image
   }
 
   func loadMoreDirectConversations() {
@@ -429,7 +634,7 @@ final class HistoryBrowserModel {
       } catch {
         if activeDirectConversationID == requestID {
           isLoadingDirectConversations = false
-          directConversationError = String(describing: error)
+          directConversationError = historyUserError(error)
         }
       }
     }
@@ -437,8 +642,32 @@ final class HistoryBrowserModel {
 
   func selectDirectConversation(_ conversationID: String) {
     directSection = .chats
+    // Re-selecting the visible conversation must not restart a query or discard history.
+    if directSelectedConversationID == conversationID && !directIsSearchContext
+      && directMessageError == nil && (isLoadingDirectMessages || !directMessages.isEmpty)
+    {
+      return
+    }
     directSelectedConversationID = conversationID
-    loadDirectMessages(conversationID: conversationID, cursor: nil, appending: false)
+    if var cached = directMessagePageCache[conversationID] {
+      cached.accessedAt = Date()
+      directMessagePageCache[conversationID] = cached
+      directMessageTask?.cancel()
+      activeDirectMessageID = UUID()
+      directMessages = cached.messages
+      directMessageCursor = cached.cursor
+      directMessageWarnings = cached.warnings
+      directMessageConsistency = cached.consistency
+      directMessageError = nil
+      directIsSearchContext = false
+      directHighlightedMessageID = nil
+      isLoadingDirectMessages = false
+      if Date().timeIntervalSince(cached.refreshedAt) < 60 { return }
+      loadDirectMessages(
+        conversationID: conversationID, cursor: nil, appending: false, preservingContent: true)
+    } else {
+      loadDirectMessages(conversationID: conversationID, cursor: nil, appending: false)
+    }
   }
 
   func loadOlderDirectMessages() {
@@ -452,7 +681,9 @@ final class HistoryBrowserModel {
 
   func returnToLatestDirectMessages() {
     guard let conversationID = directSelectedConversationID else { return }
-    loadDirectMessages(conversationID: conversationID, cursor: nil, appending: false)
+    loadDirectMessages(
+      conversationID: conversationID, cursor: nil, appending: false,
+      preservingContent: !directIsSearchContext)
   }
 
   func performDirectSearch() async {
@@ -482,6 +713,7 @@ final class HistoryBrowserModel {
         configuration: configuration,
         keyUTF8: key,
         query: query,
+        conversationID: directSearchConversationID,
         limit: 100
       )
       try Task.checkCancellation()
@@ -500,7 +732,7 @@ final class HistoryBrowserModel {
         isSearchingDirect = false
         directSearchResults = []
         directSearchCursor = nil
-        directSearchError = String(describing: error)
+        directSearchError = historyUserError(error)
       }
     }
   }
@@ -543,7 +775,7 @@ final class HistoryBrowserModel {
       } catch {
         if activeDirectSearchID == searchID {
           isSearchingDirect = false
-          directSearchError = String(describing: error)
+          directSearchError = historyUserError(error)
         }
       }
     }
@@ -588,7 +820,7 @@ final class HistoryBrowserModel {
       } catch {
         if activeDirectMessageID == requestID {
           isLoadingDirectMessages = false
-          directMessageError = String(describing: error)
+          directMessageError = historyUserError(error)
         }
       }
     }
@@ -596,10 +828,10 @@ final class HistoryBrowserModel {
 
   func chooseBundle() {
     let panel = NSOpenPanel()
-    panel.title = "Open GreenBubbles AI Context Bundle"
+    panel.title = "打开导出的聊天记录文件夹"
     panel.message =
-      "Choose the private directory containing manifest.json and the four JSONL files."
-    panel.prompt = "Open History"
+      "选择完整的导出记录文件夹，其中应包含清单文件和四份记录文件。"
+    panel.prompt = "打开记录"
     panel.canChooseDirectories = true
     panel.canChooseFiles = false
     panel.allowsMultipleSelection = false
@@ -611,14 +843,40 @@ final class HistoryBrowserModel {
   func openStartupBundleIfNeeded() {
     guard !processedStartupBundle else { return }
     processedStartupBundle = true
-    guard let pendingStartupBundleURL else { return }
+    guard let pendingStartupBundleURL else {
+      restoreRememberedConnection()
+      return
+    }
     self.pendingStartupBundleURL = nil
     openBundle(pendingStartupBundleURL)
   }
 
+  func restoreRememberedConnection() {
+    guard rememberDirectConnection, directConfiguration == nil, session == nil else { return }
+    do {
+      guard var record = try HistoryConnectionVault().load() else { return }
+      defer { record.secret.resetBytes(in: 0..<record.secret.count) }
+      let configuration = try record.configuration()
+      connectDirectSource(
+        executableURL: configuration.executableURL,
+        sourceURL: configuration.sourceURL, accessMode: configuration.accessMode,
+        keyUTF8: Array(record.secret), recoveryKitURL: configuration.recoveryKitURL,
+        localCredentialURL: configuration.localCredentialURL, restoring: true)
+    } catch { libraryError = historyUserError(error) }
+  }
+
+  func forgetRememberedConnection() {
+    rememberDirectConnection = false
+    UserDefaults.standard.set(false, forKey: "history.direct.remember")
+    do {
+      try HistoryConnectionVault().remove()
+      connectionPersistenceNotice = "已忘记保存的连接。下次启动不会自动连接。"
+    } catch { connectionPersistenceNotice = historyUserError(error) }
+  }
+
   func openExternalURLs(_ urls: [URL]) {
     guard urls.count == 1, let url = urls.first else {
-      libraryError = "Open one history bundle at a time."
+      libraryError = "请每次只打开一个聊天记录文件夹。"
       return
     }
     openBundle(HistoryBrowserLaunchOptions.normalizeOpenedURL(url))
@@ -698,7 +956,7 @@ final class HistoryBrowserModel {
       } catch {
         if activeLoadID == loadID {
           isLoading = false
-          libraryError = String(describing: error)
+          libraryError = historyUserError(error)
         }
       }
     }
@@ -785,7 +1043,7 @@ final class HistoryBrowserModel {
         guard activeTimelineID == timelineID else { return }
         isLoadingTimeline = false
         if !(error is CancellationError) {
-          timelineError = String(describing: error)
+          timelineError = historyUserError(error)
         }
       }
     }
@@ -824,7 +1082,7 @@ final class HistoryBrowserModel {
     } catch {
       if activeSearchID == searchID {
         isSearching = false
-        searchError = String(describing: error)
+        searchError = historyUserError(error)
       }
     }
   }
@@ -861,7 +1119,7 @@ final class HistoryBrowserModel {
       !livePolicyPath.isEmpty, !liveAuditPath.isEmpty, let context = session?.manifest.context
     else {
       throw HistoryLiveMediaError.invalidConfiguration(
-        "choose the CLI, replica, policy, and audit paths")
+        "请选择读取工具、记录副本、访问规则和操作记录文件位置")
     }
     return HistoryLiveMediaConfiguration(
       executableURL: URL(fileURLWithPath: liveExecutablePath),
@@ -878,29 +1136,29 @@ final class HistoryBrowserModel {
   }
 
   func chooseLiveExecutable() {
-    if let url = chooseFile(title: "Choose greenbubbles", prompt: "Choose CLI") {
+    if let url = chooseFile(title: "选择本机读取工具", prompt: "选择工具") {
       liveExecutablePath = url.path
     }
   }
 
   func chooseLiveReplica() {
     if let url = chooseFile(
-      title: "Choose encrypted GreenBubbles replica", prompt: "Choose Replica")
+      title: "选择加密的聊天记录副本", prompt: "选择副本")
     {
       liveReplicaPath = url.path
     }
   }
 
   func chooseLivePolicy() {
-    if let url = chooseFile(title: "Choose GreenBubbles tool policy", prompt: "Choose Policy") {
+    if let url = chooseFile(title: "选择访问规则文件", prompt: "选择规则文件") {
       livePolicyPath = url.path
     }
   }
 
   func chooseLiveAudit() {
     let panel = NSSavePanel()
-    panel.title = "Choose the private connector audit log"
-    panel.prompt = "Use Audit Log"
+    panel.title = "选择私有的操作记录文件"
+    panel.prompt = "使用此记录文件"
     panel.nameFieldStringValue = "audit.ndjson"
     panel.canCreateDirectories = true
     if panel.runModal() == .OK, let url = panel.url {
@@ -942,7 +1200,7 @@ final class HistoryBrowserModel {
       } catch {
         if activeTimelineID == timelineID {
           isLoadingTimeline = false
-          timelineError = String(describing: error)
+          timelineError = historyUserError(error)
         }
       }
     }
@@ -951,13 +1209,14 @@ final class HistoryBrowserModel {
   private func loadDirectMessages(
     conversationID: String,
     cursor: String?,
-    appending: Bool
+    appending: Bool,
+    preservingContent: Bool = false
   ) {
     guard let configuration = directConfiguration else { return }
     directMessageTask?.cancel()
     let requestID = UUID()
     activeDirectMessageID = requestID
-    if !appending {
+    if !appending && !preservingContent {
       directMessages = []
       directMessageCursor = nil
       directMessageWarnings = []
@@ -975,7 +1234,7 @@ final class HistoryBrowserModel {
           configuration: configuration,
           keyUTF8: key,
           conversationID: conversationID,
-          limit: 100,
+          limit: 40,
           cursor: cursor
         )
         try Task.checkCancellation()
@@ -987,19 +1246,50 @@ final class HistoryBrowserModel {
           let existing = Set(directMessages.map(\.id))
           directMessages.append(contentsOf: page.items.filter { !existing.contains($0.id) })
           directMessageWarnings = mergeDirectWarnings(directMessageWarnings, page.warnings)
+          directMessageCursor = page.page.nextCursor
+        } else if preservingContent, let boundary = page.items.last,
+          let overlap = directMessages.firstIndex(where: { $0.id == boundary.id })
+        {
+          // Only retain older records when the refreshed page proves continuity.
+          let refreshedIDs = Set(page.items.map(\.id))
+          let older = directMessages.dropFirst(overlap + 1).filter { !refreshedIDs.contains($0.id) }
+          directMessages = page.items + older
+          directMessageWarnings = mergeDirectWarnings(
+            page.warnings, older.isEmpty ? [] : directMessageWarnings)
+          if older.isEmpty { directMessageCursor = page.page.nextCursor }
         } else {
           directMessages = page.items
           directMessageWarnings = page.warnings
+          directMessageCursor = page.page.nextCursor
         }
-        directMessageCursor = page.page.nextCursor
         directMessageConsistency = page.consistency
+        // Keep a bounded, contiguous timeline with its matching pagination cursor.
+        // If the user reads beyond the per-chat budget, retain the last bounded snapshot.
+        if directMessages.count <= 400 {
+          let now = Date()
+          let refreshedAt =
+            appending ? directMessagePageCache[conversationID]?.refreshedAt ?? now : now
+          directMessagePageCache[conversationID] = CachedTimeline(
+            messages: directMessages, cursor: directMessageCursor,
+            warnings: directMessageWarnings, consistency: directMessageConsistency,
+            refreshedAt: refreshedAt, accessedAt: now)
+          while directMessagePageCache.count > 32
+            || directMessagePageCache.values.reduce(0, { $0 + $1.messages.count }) > 2_000
+          {
+            guard
+              let oldest = directMessagePageCache.filter({ $0.key != conversationID })
+                .min(by: { $0.value.accessedAt < $1.value.accessedAt })?.key
+            else { break }
+            directMessagePageCache.removeValue(forKey: oldest)
+          }
+        }
         isLoadingDirectMessages = false
       } catch is CancellationError {
         if activeDirectMessageID == requestID { isLoadingDirectMessages = false }
       } catch {
         if activeDirectMessageID == requestID {
           isLoadingDirectMessages = false
-          directMessageError = String(describing: error)
+          directMessageError = historyUserError(error)
         }
       }
     }
@@ -1027,6 +1317,9 @@ final class HistoryBrowserModel {
     directKeyUTF8.resetBytes(in: 0..<directKeyUTF8.count)
     directKeyUTF8.removeAll(keepingCapacity: false)
     directConfiguration = nil
+    directImagePreviews.removeAll()
+    directImagePreviewOrder.removeAll()
+    directMessagePageCache.removeAll()
     directStatus = nil
     directSection = .overview
     directConversations = []
@@ -1075,7 +1368,7 @@ final class HistoryBrowserModel {
         for: .applicationSupportDirectory, in: .userDomainMask
       ).first
     else {
-      throw HistoryBundleError.indexFailure("Application Support is unavailable")
+      throw HistoryBundleError.indexFailure("无法访问应用数据文件夹")
     }
     return
       applicationSupport
