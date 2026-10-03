@@ -931,8 +931,10 @@ private struct HistoryDirectTimelineView: View {
             paginationAnchor = nil
           }
         }
-        .task(id: [conversationID, model.directMessages.first?.id ?? "",
-                   model.directHighlightedMessageID ?? ""]) {
+        .task(id: [
+          conversationID, model.directMessages.first?.id ?? "",
+          model.directHighlightedMessageID ?? "",
+        ]) {
           guard !model.directMessages.isEmpty else { return }
           // Also runs for synchronous cache hits. Cancellation prevents an old
           // conversation's pending layout from moving the newly selected one.

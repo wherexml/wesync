@@ -208,8 +208,10 @@ struct ConversationTimelineView: View {
           paginationAnchor = nil
         }
       }
-      .task(id: [conversation.conversationID, model.timelineMessages.first?.canonicalID ?? "",
-                 model.highlightedMessageID ?? ""]) {
+      .task(id: [
+        conversation.conversationID, model.timelineMessages.first?.canonicalID ?? "",
+        model.highlightedMessageID ?? "",
+      ]) {
         guard !model.timelineMessages.isEmpty else { return }
         do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
         if let highlighted = model.highlightedMessageID {

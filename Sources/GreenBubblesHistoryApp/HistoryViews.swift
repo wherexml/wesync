@@ -145,7 +145,9 @@ private struct WelcomeHelp: View {
   @State private var isPresented = false
 
   var body: some View {
-    Button { isPresented.toggle() } label: {
+    Button {
+      isPresented.toggle()
+    } label: {
       Image(systemName: "questionmark.circle")
         .font(.system(size: 18))
         .foregroundStyle(Color.primary)
