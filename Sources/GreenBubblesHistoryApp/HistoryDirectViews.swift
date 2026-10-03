@@ -714,24 +714,28 @@ private struct HistoryDirectConversationList: View {
           .buttonStyle(.plain)
           .help(conversation.displayName)
           .accessibilityLabel(conversation.displayName)
-          .contextMenu {
-            if model.directCategory(for: conversation) == "other" {
-              Button(
-                conversation.id.hasSuffix("@chatroom") ? "移回群聊" : "移回个人",
-                systemImage: "arrow.uturn.backward"
-              ) {
-                model.moveDirectConversation(conversation, toOther: false)
+          .overlay {
+            HistoryConversationContextMenu {
+              var actions = [
+                HistoryConversationContextMenu.Action(
+                  title: model.directCategory(for: conversation) == "other"
+                    ? (conversation.id.hasSuffix("@chatroom") ? "移回群聊" : "移回个人")
+                    : "移到其他",
+                  symbol: model.directCategory(for: conversation) == "other"
+                    ? "arrow.uturn.backward" : "tray.and.arrow.down",
+                  perform: {
+                    model.moveDirectConversation(
+                      conversation, toOther: model.directCategory(for: conversation) != "other")
+                  }
+                )
+              ]
+              if model.hasDirectCategoryOverride(conversation) {
+                actions.append(
+                  .init(
+                    title: "恢复自动分类", symbol: "arrow.counterclockwise",
+                    perform: { model.restoreDirectCategory(conversation) }))
               }
-            } else {
-              Button("移到其他", systemImage: "tray.and.arrow.down") {
-                model.moveDirectConversation(conversation, toOther: true)
-              }
-            }
-            if model.hasDirectCategoryOverride(conversation) {
-              Divider()
-              Button("恢复自动分类", systemImage: "arrow.counterclockwise") {
-                model.restoreDirectCategory(conversation)
-              }
+              return actions
             }
           }
           .listRowBackground(
