@@ -200,6 +200,7 @@ struct ConversationTimelineView: View {
             model.loadOlderMessages()
           })
       }
+      .defaultScrollAnchor(.bottom)
       .scrollPosition(id: $readingPosition, anchor: .top)
       .onChange(of: model.timelineMessages.last?.canonicalID) { _, _ in
         if let anchor = paginationAnchor {
@@ -207,11 +208,13 @@ struct ConversationTimelineView: View {
           paginationAnchor = nil
         }
       }
-      .onChange(of: model.timelineMessages.count) { previousCount, currentCount in
-        guard currentCount > 0 else { return }
+      .task(id: [conversation.conversationID, model.timelineMessages.first?.canonicalID ?? "",
+                 model.highlightedMessageID ?? ""]) {
+        guard !model.timelineMessages.isEmpty else { return }
+        do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
         if let highlighted = model.highlightedMessageID {
           proxy.scrollTo(highlighted, anchor: .center)
-        } else if previousCount == 0, let newest = model.timelineMessages.first {
+        } else if let newest = model.timelineMessages.first {
           proxy.scrollTo(newest.canonicalID, anchor: .bottom)
         }
       }

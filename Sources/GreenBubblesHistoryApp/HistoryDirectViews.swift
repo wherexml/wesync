@@ -474,6 +474,7 @@ struct HistoryDirectLibraryView: View {
     case .chats:
       if let conversationID = model.directSelectedConversationID {
         HistoryDirectTimelineView(model: model, conversationID: conversationID)
+          .id(conversationID)
       } else {
         HistoryDirectPlaceholder(
           icon: "bubble.left.and.bubble.right",
@@ -922,6 +923,7 @@ private struct HistoryDirectTimelineView: View {
               model.loadOlderDirectMessages()
             })
         }
+        .defaultScrollAnchor(.bottom)
         .scrollPosition(id: $readingPosition, anchor: .top)
         .onChange(of: model.directMessages.last?.id) { _, _ in
           if let anchor = paginationAnchor {
@@ -929,9 +931,15 @@ private struct HistoryDirectTimelineView: View {
             paginationAnchor = nil
           }
         }
-        .onChange(of: model.directMessages.first?.id) { _, _ in
-          Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(100))
+        .task(id: [conversationID, model.directMessages.first?.id ?? "",
+                   model.directHighlightedMessageID ?? ""]) {
+          guard !model.directMessages.isEmpty else { return }
+          // Also runs for synchronous cache hits. Cancellation prevents an old
+          // conversation's pending layout from moving the newly selected one.
+          do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+          if let highlighted = model.directHighlightedMessageID {
+            proxy.scrollTo(highlighted, anchor: .center)
+          } else {
             proxy.scrollTo("latest", anchor: .bottom)
           }
         }

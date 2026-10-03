@@ -92,22 +92,23 @@ private struct HistoryWelcomeView: View {
         .frame(maxWidth: 660)
       }
       Button(action: browseDirect) {
-        Label("连接微信记录或备份…", systemImage: "externaldrive.badge.magnifyingglass")
+        Label("连接微信记录或备份…", systemImage: "externaldrive")
+          .fixedSize()
           .padding(.horizontal, 10)
           .padding(.vertical, 4)
       }
       .buttonStyle(HistoryActionStyle(prominent: true))
       .controlSize(.large)
 
-      Button(action: createSnapshot) {
-        Label("创建可恢复的加密备份…", systemImage: "externaldrive.badge.plus")
-      }
-      .buttonStyle(HistoryActionStyle())
+      welcomeAction(
+        "创建可恢复的加密备份…", icon: "externaldrive.badge.plus",
+        explanation: "把本机微信记录保存为加密备份，供以后恢复或连接查看。需要选择来源和备份保存位置；仅查看当前聊天时，无需先创建备份。",
+        action: createSnapshot)
 
-      Button(action: openBundle) {
-        Label("打开已导出的聊天记录…", systemImage: "folder.badge.plus")
-      }
-      .buttonStyle(HistoryActionStyle())
+      welcomeAction(
+        "打开已导出的聊天记录…", icon: "folder.badge.plus",
+        explanation: "打开由 GreenBubbles 导出的聊天记录文件夹，离线浏览其中的会话和附件。请选择完整的导出文件夹；本机微信数据库或加密备份请使用上方的连接按钮。",
+        action: openBundle)
 
       if let errorMessage {
         Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
@@ -119,29 +120,49 @@ private struct HistoryWelcomeView: View {
           .frame(maxWidth: 680)
       }
 
-      HStack(spacing: 24) {
-        WelcomePromise(icon: "lock.shield", text: "仅在本机读取，不修改原记录")
-        WelcomePromise(icon: "list.number", text: "按需加载，浏览更轻快")
-        WelcomePromise(icon: "externaldrive.badge.checkmark", text: "直接查看，无需先恢复全部数据")
-      }
       Spacer()
-      Text("也可以将已导出的聊天记录文件夹直接拖入此窗口。")
-        .font(.footnote)
-        .foregroundStyle(.tertiary)
-        .padding(.bottom, 24)
     }
     .padding(40)
   }
+
+  private func welcomeAction(
+    _ title: String, icon: String, explanation: String, action: @escaping () -> Void
+  ) -> some View {
+    Button(action: action) {
+      Label(title, systemImage: icon).fixedSize()
+    }
+    .buttonStyle(HistoryActionStyle())
+    .overlay(alignment: .trailing) {
+      WelcomeHelp(title: title, explanation: explanation)
+        .offset(x: 40)
+    }
+  }
 }
 
-private struct WelcomePromise: View {
-  let icon: String
-  let text: String
+private struct WelcomeHelp: View {
+  let title: String
+  let explanation: String
+  @State private var isPresented = false
 
   var body: some View {
-    Label(text, systemImage: icon)
-      .font(.callout)
-      .foregroundStyle(.secondary)
+    Button { isPresented.toggle() } label: {
+      Image(systemName: "questionmark.circle")
+        .font(.system(size: 18))
+        .foregroundStyle(Color.primary)
+        .frame(width: 32, height: 32)
+        .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("了解" + title)
+    .help("查看用途说明")
+    .popover(isPresented: $isPresented, arrowEdge: .trailing) {
+      VStack(alignment: .leading, spacing: 10) {
+        Text(title).font(.headline)
+        Text(explanation).font(.body).fixedSize(horizontal: false, vertical: true)
+      }
+      .padding(18)
+      .frame(width: 320)
+    }
   }
 }
 
@@ -331,6 +352,7 @@ private struct HistoryLibraryView: View {
     case .chats:
       if let conversation = model.selectedConversation {
         ConversationTimelineView(model: model, conversation: conversation)
+          .id(conversation.conversationID)
       } else {
         DetailPlaceholder(
           icon: "bubble.left.and.bubble.right",
