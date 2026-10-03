@@ -352,36 +352,56 @@ struct HistoryDirectConnectingView: View {
 
 struct HistoryDirectLibraryView: View {
   @Bindable var model: HistoryBrowserModel
+  @AppStorage("historyConversationSidebarCollapsed") private var isSidebarCollapsed = false
 
   var body: some View {
     HSplitView {
       VStack(spacing: 0) {
-        HStack {
-          VStack(alignment: .leading, spacing: 3) {
-            Text("聊天").font(.system(size: 22, weight: .semibold, design: .rounded))
-            Text("GreenBubbles").font(.system(size: 11, weight: .medium)).foregroundStyle(
-              .secondary)
+        HStack(spacing: 4) {
+          if !isSidebarCollapsed {
+            VStack(alignment: .leading, spacing: 3) {
+              Text("聊天").font(.system(size: 22, weight: .semibold, design: .rounded))
+              Text("GreenBubbles").font(.system(size: 11, weight: .medium)).foregroundStyle(
+                .secondary)
+            }
+            Spacer()
+            Button {
+              model.presentDirectConnection()
+            } label: {
+              Image(systemName: "gearshape")
+                .font(.system(size: 16))
+                .frame(width: 32, height: 32)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .help("高级设置")
+            .accessibilityLabel("高级设置")
           }
-          Spacer()
           Button {
-            model.presentDirectConnection()
+            isSidebarCollapsed.toggle()
           } label: {
-            Image(systemName: "gearshape")
+            Image(systemName: isSidebarCollapsed ? "sidebar.left" : "sidebar.leading")
               .font(.system(size: 16))
               .frame(width: 32, height: 32)
               .contentShape(Rectangle())
           }
           .buttonStyle(.plain)
           .foregroundStyle(.secondary)
-          .help("高级设置")
-          .accessibilityLabel("高级设置")
-        }.padding(16)
-        if let notice = model.connectionPersistenceNotice {
+          .help(isSidebarCollapsed ? "展开会话列表" : "折叠会话列表")
+          .accessibilityLabel(isSidebarCollapsed ? "展开会话列表" : "折叠会话列表")
+          .accessibilityIdentifier("conversation-sidebar-toggle")
+        }.padding(isSidebarCollapsed ? 10 : 16)
+        if !isSidebarCollapsed, let notice = model.connectionPersistenceNotice {
           Text(notice).font(.caption).foregroundStyle(.orange).padding(.horizontal)
         }
-        HistoryDirectConversationList(model: model)
+        HistoryDirectConversationList(model: model, isCollapsed: isSidebarCollapsed)
       }
-      .frame(minWidth: 280, idealWidth: 320, maxWidth: 380)
+      .frame(
+        minWidth: isSidebarCollapsed ? 76 : 280,
+        idealWidth: isSidebarCollapsed ? 76 : 320,
+        maxWidth: isSidebarCollapsed ? 76 : 380
+      )
       .background(HistoryChatPalette.sidebar)
       Group {
         if model.directSection == .overview {
@@ -639,17 +659,20 @@ private struct HistoryDirectOverviewDetail: View {
 
 private struct HistoryDirectConversationList: View {
   @Bindable var model: HistoryBrowserModel
+  var isCollapsed = false
 
   var body: some View {
     VStack(spacing: 0) {
-      Picker("会话类型", selection: $model.directChatCategory) {
-        Text("个人").tag("personal")
-        Text("群聊").tag("group")
-        Text("其他").tag("other")
-      }.pickerStyle(.segmented).labelsHidden().padding(.horizontal, 14).padding(.bottom, 10)
-      DirectFilterField(text: $model.conversationFilter, prompt: "搜索当前分类的会话")
+      if !isCollapsed {
+        Picker("会话类型", selection: $model.directChatCategory) {
+          Text("个人").tag("personal")
+          Text("群聊").tag("group")
+          Text("其他").tag("other")
+        }.pickerStyle(.segmented).labelsHidden().padding(.horizontal, 14).padding(.bottom, 10)
+        DirectFilterField(text: $model.conversationFilter, prompt: "搜索当前分类的会话")
+      }
       if let error = model.directConversationError {
-        DirectInlineError(message: error)
+        if !isCollapsed { DirectInlineError(message: error) }
         Button("重试") { model.loadMoreDirectConversations() }
           .buttonStyle(.plain).padding(.bottom, 6)
       }
@@ -664,28 +687,33 @@ private struct HistoryDirectConversationList: View {
                 source: model.directStatus?.source.identity ?? "",
                 person: conversation.id, name: conversation.displayName,
                 embeddedAvatar: conversation.avatarBase64)
-              VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                  Text(conversation.displayName)
-                    .font(.body.weight(.medium))
-                    .lineLimit(1)
-                  Spacer()
-                  if let date = conversation.sortDate {
-                    HistoryConversationTimestamp(date: date)
-                      .font(.caption2)
-                      .foregroundStyle(.tertiary)
+              if !isCollapsed {
+                VStack(alignment: .leading, spacing: 4) {
+                  HStack {
+                    Text(conversation.displayName)
+                      .font(.body.weight(.medium))
+                      .lineLimit(1)
+                    Spacer()
+                    if let date = conversation.sortDate {
+                      HistoryConversationTimestamp(date: date)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    }
                   }
+                  Text(conversation.summary ?? "")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
                 }
-                Text(conversation.summary ?? "")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                  .lineLimit(2)
               }
             }
+            .frame(maxWidth: .infinity, alignment: isCollapsed ? .center : .leading)
             .padding(.vertical, 8)
             .contentShape(Rectangle())
           }
           .buttonStyle(.plain)
+          .help(conversation.displayName)
+          .accessibilityLabel(conversation.displayName)
           .contextMenu {
             if model.directCategory(for: conversation) == "other" {
               Button(
@@ -717,8 +745,8 @@ private struct HistoryDirectConversationList: View {
             Spacer()
             if model.isLoadingDirectConversations {
               ProgressView().controlSize(.small)
-              Text("正在补齐会话…").font(.caption).foregroundStyle(.secondary)
-            } else {
+              if !isCollapsed { Text("正在补齐会话…").font(.caption).foregroundStyle(.secondary) }
+            } else if !isCollapsed {
               Text("向下滚动继续浏览").font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
@@ -734,11 +762,15 @@ private struct HistoryDirectConversationList: View {
       .background(HistoryChatPalette.sidebar)
       .overlay {
         if model.filteredDirectConversations.isEmpty && !model.isLoadingDirectConversations {
-          ContentUnavailableView(
-            "暂无会话",
-            systemImage: "bubble.left",
-            description: Text("可调整搜索条件，或在高级设置中扩大时间范围；其余会话会自动补齐。")
-          )
+          if isCollapsed {
+            Image(systemName: "bubble.left").foregroundStyle(.secondary).help("暂无会话，展开列表调整筛选")
+          } else {
+            ContentUnavailableView(
+              "暂无会话",
+              systemImage: "bubble.left",
+              description: Text("可调整搜索条件，或在高级设置中扩大时间范围；其余会话会自动补齐。")
+            )
+          }
         }
       }
     }

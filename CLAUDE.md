@@ -31,3 +31,5 @@ Private repository: `wherexml/chat-sync`; `origin` is the private development re
 会话时间范围默认 1 个月，可选 1 周、1 个月、3 个月、1 年、所有；按最近消息时间筛选并持久化，保留缓存和分页。规则及原生重启验收见 [docs/CONVERSATION_RANGE.md](docs/CONVERSATION_RANGE.md)。
 
 Agent skills 统一使用 `wechatsync-setup`、`wechatsync-context`、`wechatsync-personal-memory`，见 [docs/AGENT_SKILLS.md](docs/AGENT_SKILLS.md)。底层程序仍为 `greenbubbles`，不要将 skill 名称改动传播到 CLI 命令、协议标识或应用签名身份。
+
+会话侧栏折叠后为 76 pt 头像栏，保留选择、筛选和分页，持久化折叠状态；规范与原生验收见 `docs/DESIGN_SYSTEM.md`。
