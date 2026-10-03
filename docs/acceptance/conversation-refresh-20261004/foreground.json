@@ -1,5 +1,13 @@
 {
-  "installedBuild": "25",
-  "status": "PENDING",
-  "reason": "Waiting for remembered connection system authorization; superseded periodic-build observations removed."
+  "installedBuild": "27",
+  "paginationQueriesExcluded": true,
+  "queryLaunches": [],
+  "observedIntervalsSeconds": [],
+  "observedRateWithinLimit": true,
+  "privacy": "Only process existence and observation times; no command arguments, credentials, source paths, content or conversation identifiers.",
+  "withoutManualRefreshSeconds": 90,
+  "windowRemainedVisible": true,
+  "foregroundContinuityVerified": false,
+  "windowRaisedDuringObservation": true,
+  "observerScope": "Catalog first pages only; excludes pagination and message queries. This bounded observation does not prove continuous foreground scene activity."
 }

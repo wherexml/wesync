@@ -12,6 +12,7 @@
     "complete-manual-refresh-reconciles-deletion": true,
     "disconnect-cancels-refresh": true,
     "event-burst-coalesces-to-one-read": true,
+    "existing-row-timestamp-advances-one-minute": true,
     "file-monitor-attached": true,
     "history-loaded-before-refresh": true,
     "idle-source-does-not-poll": true,
@@ -28,5 +29,7 @@
   "passed": true,
   "source": "synthetic-only",
   "wechatRead": false,
-  "observedInitialToAutomaticReadSeconds": 60.041
+  "observedInitialToAutomaticReadSeconds": 59.999,
+  "nativeTimestampImagesReviewed": true,
+  "sameRowTimestampChangedWithoutCategorySwitch": true
 }

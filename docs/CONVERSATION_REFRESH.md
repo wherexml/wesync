@@ -35,7 +35,9 @@
 1. 执行 `python3 scripts/package-presentation-preview.py --polish`，仅构建独立合成应用。
 2. 在 `.local-install/GreenBubbles Polish Preview.app/Contents/Resources/offline-fixture/` 创建空文件 `conversation-refresh-acceptance`；删除同目录上次的 `conversation-refresh-fail`、`conversation-refresh-slow`、`conversation-refresh-stage` 与 `conversation-refresh-acceptance.json`。
 3. 原生退出旧预览并重新打开，让窗口保持前台至少 90 秒。生产文件监听必须发现合成 WAL 的真实写入与替换；生产调度使用单调时钟，合成 transport 用跨进程共享的 Unix 时间记录实际读取间隔。验收不通过直接调用替代事件触发。
-4. 查看同目录 `conversation-refresh-acceptance.json`，检查所有断言为 true。覆盖静默 20 秒不查询、SHM 噪声不查询、后台延迟、60 秒限频、突发事件合并及 WAL 替换，同时保留 230 会话分页、新会话与排序、目录尾部、选择/筛选/80 条已读历史、失败暂停、完整主动刷新删除项、并发主动刷新与断开隔离。
+4. 查看同目录 `conversation-refresh-acceptance.json`，检查所有断言为 true。覆盖静默 20 秒不查询、SHM 噪声不查询、后台延迟、60 秒限频、突发事件合并及 WAL 替换，同时保留 230 会话分页、新会话与排序、目录尾部、选择/筛选/80 条已读历史、失败暂停、完整主动刷新删除项、并发主动刷新与断开隔离。按 `conversation-timestamp-evidence.json` 核对真实合成窗口的 `conversation-timestamp-before.png` 与 `conversation-timestamp-after.png`，同一已选会话时间应推进一分钟，分类和筛选不变。
 5. 使用同一稳定签名安装主应用，原生退出重开；不输入密钥自动连接，比较左侧时间与 bundled CLI 的有限只读查询结果，点击刷新并检查会话选择保持。只保存脱敏结论。
 
 验收记录目录：`docs/acceptance/conversation-refresh-20261004/`。
+
+2026-10-04：build 27 使用原稳定证书安装，完整退出后重开自动连接，无需输入数据库密钥；有限来源查询与三条原生侧栏时间一致，主动刷新保持选择，历史上滚可用。合成 E2E 通过 24 项，原生合成行标签在保持分类不变时从 `01:34` 更新至 `01:35`。频率记录仅统计非分页首页读取，不将首次或主动全目录的分页请求混算成自动查询。
