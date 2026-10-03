@@ -65,6 +65,16 @@
             ? value?["observedAtUnixSeconds"] as? Double : nil
         }
       }
+      func captureTimestampWindow(_ name: String) throws {
+        guard let view = NSApp.windows.first(where: { $0.isVisible })?.contentView,
+          let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds)
+        else { throw PresentationError.invalidImage }
+        view.cacheDisplay(in: view.bounds, to: bitmap)
+        guard let png = bitmap.representation(using: .png, properties: [:]) else {
+          throw PresentationError.invalidImage
+        }
+        try png.write(to: root.appending(path: "conversation-timestamp-\(name).png"))
+      }
       do {
         model.rememberDirectConnection = false
         model.conversationRange = .month
@@ -98,6 +108,9 @@
         let historyCursor = model.directMessageCursor
         try require(historyIDs.count == 80, "history-loaded-before-refresh")
         model.conversationFilter = "Synthetic"
+        let existingRowDate = model.directConversations.first { $0.id == "demo-room" }!.sortDate!
+        try await Task.sleep(for: .milliseconds(200))
+        try captureTimestampWindow("before")
         let oldTime = model.directConversations.first { $0.id == "synthetic-229" }!.sortTimestamp
         model.setDirectConversationMonitoringActive(false)
         try stage(1, replaceWAL: true)
@@ -135,6 +148,24 @@
         try require(
           model.directConversations.first?.summary == "Synthetic refreshed stage 1",
           "wal-replacement-still-delivers-changes")
+        let updatedRowDate = model.directConversations.first { $0.id == "demo-room" }!.sortDate!
+        try require(
+          updatedRowDate.timeIntervalSince(existingRowDate) == 60,
+          "existing-row-timestamp-advances-one-minute")
+        try await Task.sleep(for: .milliseconds(200))
+        try captureTimestampWindow("after")
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let evidence = [
+          "source": "synthetic-only", "row": "Synthetic conversation 0",
+          "expectedBefore": formatter.string(from: existingRowDate),
+          "expectedAfter": formatter.string(from: updatedRowDate),
+          "categorySwitch": "none",
+        ]
+        try JSONSerialization.data(
+          withJSONObject: evidence, options: [.prettyPrinted, .sortedKeys]
+        )
+        .write(to: root.appending(path: "conversation-timestamp-evidence.json"))
         try stage(1)
         try await Task.sleep(for: .seconds(5))
         try require(

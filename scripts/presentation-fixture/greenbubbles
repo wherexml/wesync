@@ -49,7 +49,8 @@ elif operation=='conversations.list':
   stamp=int((root/'conversation-refresh-clock').read_text())
   all_items=[{'id':'demo-room' if i==0 else f'synthetic-{i}','displayName':f'Synthetic conversation {i}','summary':f'Synthetic catalog {i}','summaryDecodeState':'complete','summaryTruncated':False,'sortTimestamp':stamp-i*60} for i in range(230)]
   if stage:
-   all_items[-1].update(summary=f'Synthetic refreshed stage {stage}',sortTimestamp=stamp+stage)
+   all_items[0]['sortTimestamp']=stamp+stage*60
+   all_items[-1].update(summary=f'Synthetic refreshed stage {stage}',sortTimestamp=stamp+stage*60+1)
    all_items.append(dict(all_items[-1],id='synthetic-new@chatroom',displayName='Synthetic new group',sortTimestamp=stamp))
   if stage>=2:all_items=[x for x in all_items if x['id']!='synthetic-100']
   if stage>=3:all_items=[x for x in all_items if x['id']!='synthetic-200']
