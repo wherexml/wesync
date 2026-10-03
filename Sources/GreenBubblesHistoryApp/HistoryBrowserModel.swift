@@ -864,10 +864,11 @@ final class HistoryBrowserModel {
         sourceRoot: configuration.sourceURL
       ) { [weak self] in
         Task { @MainActor [weak self] in
-          guard let self, activeDirectLoadID == sessionID, directConfiguration == configuration
+          guard let self, self.activeDirectLoadID == sessionID,
+            self.directConfiguration == configuration
           else { return }
-          conversationSourceChanged = true
-          refreshDirectConversationsIfNeeded()
+          self.conversationSourceChanged = true
+          self.refreshDirectConversationsIfNeeded()
         }
       }
     } catch {
