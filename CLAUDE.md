@@ -10,6 +10,8 @@ For local update signing and permission migration, follow [docs/LOCAL_SIGNING.md
 
 Message cache behavior, capacity, privacy boundaries and E2E reproduction: [docs/MESSAGE_CACHE.md](docs/MESSAGE_CACHE.md).
 
+Conversation catalog refresh is triggered by database/WAL file changes, coalesced with at least 60 seconds between automatic reads; no changes means no query. Manual refresh reconciles the full catalog and current messages. Preserve selection, filters and loaded history, and pause automatic retries on failure. See [docs/CONVERSATION_REFRESH.md](docs/CONVERSATION_REFRESH.md).
+
 - Message timeline separators follow [docs/MESSAGE_TIMESTAMPS.md](docs/MESSAGE_TIMESTAMPS.md): centered, 15-minute adjacent-message gaps or day boundaries; shared by live and imported timelines.
 
 Image thumbnail bounds and native alignment acceptance: see [docs/IMAGE_ALIGNMENT.md](docs/IMAGE_ALIGNMENT.md). Keep portrait thumbnails aligned with the same-side text bubble edge.

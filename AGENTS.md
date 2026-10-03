@@ -37,6 +37,8 @@ Private repository: `wherexml/chat-sync`; `origin` is the private development re
 
 会话默认后台补齐，已读历史加密缓存跨重启恢复，聊天向上滚动预取并保持阅读锚点；实现边界、隐私与原生验收见 [docs/MESSAGE_CACHE.md](docs/MESSAGE_CACHE.md)。
 
+左侧会话列表由数据库/WAL 文件变化触发，合并事件并将自动读取限为至少间隔 60 秒；无变化不查询。刷新按钮同时核对全目录与当前消息。保留选择、筛选及历史阅读位置，失败保留旧列表并暂停自动重试；见 [docs/CONVERSATION_REFRESH.md](docs/CONVERSATION_REFRESH.md)。
+
 会话时间范围默认 1 个月，可选 1 周、1 个月、3 个月、1 年、所有；按最近消息时间筛选并持久化，保留缓存和分页。规则及原生重启验收见 [docs/CONVERSATION_RANGE.md](docs/CONVERSATION_RANGE.md)。
 
 Agent skills 统一使用 `wechatsync-setup`、`wechatsync-context`、`wechatsync-personal-memory`，见 [docs/AGENT_SKILLS.md](docs/AGENT_SKILLS.md)。底层程序仍为 `greenbubbles`，不要将 skill 名称改动传播到 CLI 命令、协议标识或应用签名身份。

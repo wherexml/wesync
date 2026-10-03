@@ -1,0 +1,32 @@
+{
+  "checks": {
+    "automatic-error-does-not-retry": true,
+    "automatic-query-minimum-sixty-second-gap": true,
+    "automatic-read-cooldown-enforced": true,
+    "automatic-refresh-discovers-new-chat": true,
+    "automatic-refresh-keeps-filters": true,
+    "automatic-refresh-keeps-selection-and-history": true,
+    "automatic-refresh-updates-time-summary-and-order": true,
+    "bounded-refresh-keeps-catalog-tail": true,
+    "cancelled-refresh-cannot-overwrite-new-connection": true,
+    "complete-manual-refresh-reconciles-deletion": true,
+    "disconnect-cancels-refresh": true,
+    "event-burst-coalesces-to-one-read": true,
+    "file-monitor-attached": true,
+    "history-loaded-before-refresh": true,
+    "idle-source-does-not-poll": true,
+    "inactive-scene-defers-changes": true,
+    "initial-full-catalog": true,
+    "manual-during-automatic-refresh-still-reconciles-full-catalog": true,
+    "manual-refresh-keeps-contiguous-history": true,
+    "manual-refresh-retries-catalog-and-updates-summary": true,
+    "refresh-failure-keeps-readable-catalog": true,
+    "shared-memory-noise-does-not-query": true,
+    "wal-replacement-still-delivers-changes": true
+  },
+  "error": "",
+  "passed": true,
+  "source": "synthetic-only",
+  "wechatRead": false,
+  "observedInitialToAutomaticReadSeconds": 60.041
+}

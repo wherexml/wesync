@@ -674,7 +674,7 @@ private struct HistoryDirectConversationList: View {
       }
       if let error = model.directConversationError {
         if !isCollapsed { DirectInlineError(message: error) }
-        Button("重试") { model.loadMoreDirectConversations() }
+        Button("重试") { model.retryDirectConversations() }
           .buttonStyle(.plain).padding(.bottom, 6)
       }
       List {
@@ -830,7 +830,7 @@ private struct HistoryDirectTimelineView: View {
         .accessibilityLabel(isChatSearchVisible ? "收起聊天搜索" : "搜索当前聊天")
         .accessibilityIdentifier("chat-search-toggle")
         Button {
-          model.returnToLatestDirectMessages()
+          model.refreshDirectHistory()
         } label: {
           Image(systemName: "arrow.clockwise")
             .frame(width: 32, height: 32)
@@ -838,7 +838,7 @@ private struct HistoryDirectTimelineView: View {
             .foregroundStyle(.secondary)
         }
         .buttonStyle(.plain)
-        .help("刷新最新消息")
+        .help("刷新会话列表和最新消息")
 
       }
       .padding(.horizontal, 18)

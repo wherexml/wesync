@@ -1,0 +1,16 @@
+{
+  "installedBuild": "25",
+  "observedAt": "2026-10-04T01:19:31.220742+08:00",
+  "status": "BLOCKED",
+  "blocker": "Startup waiting for application-owned remembered connection Keychain authorization; system window requires local user confirmation.",
+  "nativeQuitBeforeInstall": true,
+  "stableSigningIdentityVerified": true,
+  "helpersUnchanged": true,
+  "credentialsEnteredByAgent": false,
+  "connectionRecordsModified": false,
+  "automaticReconnect": "PENDING",
+  "sidebarTimestampComparison": "PENDING",
+  "manualRefresh": "PENDING",
+  "foregroundRateObservation": "PENDING",
+  "privacy": "No credentials, source paths, chat contents, identifiers or screenshots retained."
+}

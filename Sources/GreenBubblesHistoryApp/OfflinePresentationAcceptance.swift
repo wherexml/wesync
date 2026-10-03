@@ -37,6 +37,183 @@
     }
     var failure: String?
     if FileManager.default.fileExists(
+      atPath: root.appending(path: "conversation-refresh-acceptance").path)
+    {
+      func waitForRefresh(_ ready: @escaping () -> Bool) async throws {
+        for _ in 0..<2400 {
+          if ready() { return }
+          try await Task.sleep(for: .milliseconds(50))
+        }
+        throw NSError(
+          domain: "OfflineAcceptance", code: 2,
+          userInfo: [NSLocalizedDescriptionKey: "Conversation refresh timed out"])
+      }
+      func stage(_ value: Int, replaceWAL: Bool = false) throws {
+        try Data(String(value).utf8).write(to: root.appending(path: "conversation-refresh-stage"))
+        try Data("Synthetic WAL stage \(value) \(UUID().uuidString)".utf8).write(
+          to: root.appending(path: "session/session.db-wal"), options: replaceWAL ? .atomic : [])
+      }
+      func catalogReadCount() throws -> Int {
+        let text = try String(contentsOf: root.appending(path: "requests.jsonl"), encoding: .utf8)
+        return text.split(separator: "\n").filter { $0.contains("conversations.list") }.count
+      }
+      func catalogReadTimes() throws -> [Double] {
+        let text = try String(contentsOf: root.appending(path: "requests.jsonl"), encoding: .utf8)
+        return try text.split(separator: "\n").compactMap { line in
+          let value = try JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any]
+          return value?["operation"] as? String == "conversations.list"
+            ? value?["observedAtUnixSeconds"] as? Double : nil
+        }
+      }
+      do {
+        model.rememberDirectConnection = false
+        model.conversationRange = .month
+        try FileManager.default.createDirectory(
+          at: root.appending(path: "session"), withIntermediateDirectories: true)
+        try Data("Synthetic database event fixture".utf8).write(
+          to: root.appending(path: "session/session.db"))
+        try Data(String(Int(Date().timeIntervalSince1970)).utf8).write(
+          to: root.appending(path: "conversation-refresh-clock"))
+        try stage(0)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitForRefresh {
+          !model.isDirectConnecting && model.directConversationCursor == nil
+            && !model.isLoadingDirectConversations
+        }
+        try require(model.directConversations.count == 230, "initial-full-catalog")
+        try require(model.isMonitoringDirectConversationChanges, "file-monitor-attached")
+        let quietReadCount = try catalogReadCount()
+        let initialQueryTime = try catalogReadTimes().suffix(3).first!
+        try Data("Synthetic shared memory".utf8).write(
+          to: root.appending(path: "session/session.db-shm"))
+        try await Task.sleep(for: .seconds(20))
+        try require(try catalogReadCount() == quietReadCount, "idle-source-does-not-poll")
+        try require(try catalogReadCount() == quietReadCount, "shared-memory-noise-does-not-query")
+        model.selectDirectConversation("demo-room")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.loadOlderDirectMessages()
+        try await waitFor { !model.isLoadingDirectMessages }
+        let historyIDs = model.directMessages.map(\.id)
+        let historyCursor = model.directMessageCursor
+        try require(historyIDs.count == 80, "history-loaded-before-refresh")
+        model.conversationFilter = "Synthetic"
+        let oldTime = model.directConversations.first { $0.id == "synthetic-229" }!.sortTimestamp
+        model.setDirectConversationMonitoringActive(false)
+        try stage(1, replaceWAL: true)
+        try stage(1)
+        try stage(1)
+        try await Task.sleep(for: .seconds(5))
+        try require(try catalogReadCount() == quietReadCount, "inactive-scene-defers-changes")
+        model.setDirectConversationMonitoringActive(true)
+        // Real filesystem notifications must trigger a throttled read, without a button call.
+        try await waitForRefresh {
+          model.directConversations.first?.summary == "Synthetic refreshed stage 1"
+        }
+        try require(model.directConversations.count == 231, "automatic-refresh-discovers-new-chat")
+        try require(
+          model.directConversations.first?.id == "synthetic-229"
+            && model.directConversations.first!.sortTimestamp > oldTime,
+          "automatic-refresh-updates-time-summary-and-order")
+        try require(
+          model.directConversations.contains { $0.id == "synthetic-200" },
+          "bounded-refresh-keeps-catalog-tail")
+        try require(
+          model.directSelectedConversationID == "demo-room"
+            && model.directMessages.map(\.id) == historyIDs
+            && model.directMessageCursor == historyCursor,
+          "automatic-refresh-keeps-selection-and-history")
+        try require(
+          model.conversationFilter == "Synthetic" && model.directChatCategory == "personal"
+            && model.conversationRange == .month,
+          "automatic-refresh-keeps-filters")
+        try require(
+          try catalogReadCount() == quietReadCount + 1, "event-burst-coalesces-to-one-read")
+        try require(
+          try catalogReadTimes().last! - initialQueryTime >= 59,
+          "automatic-query-minimum-sixty-second-gap")
+        try require(
+          model.directConversations.first?.summary == "Synthetic refreshed stage 1",
+          "wal-replacement-still-delivers-changes")
+        try stage(1)
+        try await Task.sleep(for: .seconds(5))
+        try require(
+          try catalogReadCount() == quietReadCount + 1, "automatic-read-cooldown-enforced")
+        let oldCatalog = model.directConversations
+        try Data().write(to: root.appending(path: "conversation-refresh-fail"))
+        model.refreshDirectConversations()
+        try await waitForRefresh { !model.isRefreshingDirectConversations }
+        try require(
+          model.directConversationError != nil && model.directConversations == oldCatalog,
+          "refresh-failure-keeps-readable-catalog")
+        model.refreshDirectConversationsIfNeeded()
+        try require(!model.isRefreshingDirectConversations, "automatic-error-does-not-retry")
+        try FileManager.default.removeItem(at: root.appending(path: "conversation-refresh-fail"))
+        try stage(2)
+        model.refreshDirectHistory()
+        try await waitForRefresh {
+          !model.isRefreshingDirectConversations && !model.isLoadingDirectConversations
+            && model.directConversationCursor == nil && !model.isLoadingDirectMessages
+        }
+        try require(
+          model.directConversations.first?.summary == "Synthetic refreshed stage 2"
+            && model.directConversationError == nil,
+          "manual-refresh-retries-catalog-and-updates-summary")
+        try require(
+          model.directConversations.count == 230
+            && !model.directConversations.contains { $0.id == "synthetic-100" },
+          "complete-manual-refresh-reconciles-deletion")
+        try require(
+          model.directMessages.map(\.id) == historyIDs
+            && model.directMessageCursor == historyCursor,
+          "manual-refresh-keeps-contiguous-history")
+        try Data().write(to: root.appending(path: "conversation-refresh-slow"))
+        try stage(3)
+        model.refreshDirectConversations()
+        model.refreshDirectHistory()
+        try await waitForRefresh {
+          !model.isRefreshingDirectConversations && !model.isLoadingDirectConversations
+            && model.directConversationCursor == nil && !model.isLoadingDirectMessages
+        }
+        try require(
+          !model.directConversations.contains { $0.id == "synthetic-200" }
+            && model.directConversations.count == 229,
+          "manual-during-automatic-refresh-still-reconciles-full-catalog")
+        try stage(4)
+        model.refreshDirectConversations()
+        try await Task.sleep(for: .milliseconds(150))
+        model.closeBundle()
+        try require(
+          !model.isRefreshingDirectConversations && model.directConversations.isEmpty,
+          "disconnect-cancels-refresh")
+        try stage(5)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitForRefresh {
+          !model.isDirectConnecting && model.directConversationCursor == nil
+            && !model.isLoadingDirectConversations
+        }
+        try require(
+          model.directConversations.first?.summary == "Synthetic refreshed stage 5",
+          "cancelled-refresh-cannot-overwrite-new-connection")
+        try FileManager.default.removeItem(at: root.appending(path: "conversation-refresh-slow"))
+        model.conversationFilter = ""
+        model.directChatCategory = "group"
+        model.selectDirectConversation("synthetic-new@chatroom")
+        try await waitFor { !model.isLoadingDirectMessages }
+      } catch { failure = error.localizedDescription }
+      let report: [String: Any] = [
+        "checks": checks, "passed": failure == nil, "error": failure ?? "",
+        "source": "synthetic-only", "wechatRead": false,
+      ]
+      if let data = try? JSONSerialization.data(
+        withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+      {
+        try? data.write(to: root.appending(path: "conversation-refresh-acceptance.json"))
+      }
+      return
+    }
+    if FileManager.default.fileExists(
       atPath: root.appending(path: "conversation-range-acceptance").path)
     {
       do {

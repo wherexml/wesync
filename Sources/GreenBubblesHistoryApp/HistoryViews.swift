@@ -4,6 +4,7 @@ import SwiftUI
 
 struct HistoryRootView: View {
   @Bindable var model: HistoryBrowserModel
+  @Environment(\.scenePhase) private var scenePhase
 
   var body: some View {
     Group {
@@ -49,6 +50,9 @@ struct HistoryRootView: View {
         do { try await Task.sleep(for: .seconds(60)) } catch { return }
         model.refreshConversationRangeClock()
       }
+    }
+    .onChange(of: scenePhase, initial: true) { _, phase in
+      model.setDirectConversationMonitoringActive(phase == .active)
     }
     .dropDestination(for: URL.self) { urls, _ in
       guard let directory = urls.first,

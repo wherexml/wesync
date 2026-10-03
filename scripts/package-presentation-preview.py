@@ -12,6 +12,8 @@ if '--dark-mode' in sys.argv:
  app_name='GreenBubbles Dark Mode Preview';app_id='me.greenbubbles.DarkModePreview'
 app=repo/('.local-install/'+app_name+'.app');mac=app/'Contents/MacOS';res=app/'Contents/Resources';data=res/'offline-fixture'
 mac.mkdir(parents=True,exist_ok=True);data.mkdir(parents=True,exist_ok=True);os.chmod(data,0o700)
+(data/'session').mkdir(exist_ok=True)
+(data/'session/session.db').write_bytes(b'Synthetic filesystem-notification fixture; not a real database')
 shutil.copy2(repo/'.build/debug/greenbubbles-history',mac/'greenbubbles-history')
 shutil.copy2(repo/'scripts/presentation-fixture/greenbubbles',mac/'greenbubbles')
 shutil.copy2(repo/'Resources/Brand/GreenBubbles.icns',res/'GreenBubbles.icns')

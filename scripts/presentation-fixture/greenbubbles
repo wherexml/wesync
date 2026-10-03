@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 """Synthetic-only CLI for native E2E. Never opens WeChat, profiles, keys or network."""
-import hashlib,json,os,pathlib,sys,base64,plistlib
+import hashlib,json,os,pathlib,sys,base64,plistlib,time
 root=pathlib.Path(__file__).resolve().parents[1]/'Resources'/'offline-fixture'
 a=sys.argv[1:]
 if len(a)<3 or pathlib.Path(a[2]).resolve()!=root.resolve() or '--decrypted' not in a:
  raise SystemExit('Offline fixture accepts only its own synthetic source and --decrypted')
 if any(x in a for x in ['--passphrase-stdin','--profile','--snapshot-key-stdin']):raise SystemExit('Credentials forbidden')
 operation='.'.join(a[:2])
-with (root/'requests.jsonl').open('a') as f:f.write(json.dumps({'operation':operation,'json':'--json' in a,'source':'synthetic'})+'\n')
+with (root/'requests.jsonl').open('a') as f:f.write(json.dumps({'operation':operation,'json':'--json' in a,'source':'synthetic','observedAtUnixSeconds':time.time()})+'\n')
 def option(n):return a[a.index(n)+1]
 base={'schema':'greenbubbles.query.v1','formatVersion':1,'operation':operation,'ok':True,'source':{'mode':'decrypted','identity':'synthetic-presentation-v1'},'warnings':[],'consistency':{'guarantee':'fixture','databaseCount':1,'crossDatabaseAtomic':True,'coverageComplete':True,'observedAtUnixMilliseconds':1790910000000}}
 if operation=='source.status':
@@ -41,6 +41,24 @@ elif operation=='conversations.list':
     base['items'].append({'id':ident,'displayName':f'Synthetic {category} {i}','summary':'Synthetic range fixture','summaryDecodeState':'complete','summaryTruncated':False,'sortTimestamp':stamp*1000 if i==0 else stamp,'isOfficialAccount':category=='other'})
   base['page']={'limit':100,'returned':len(base['items']),'hasMore':False}
 
+ if (root/'conversation-refresh-acceptance').exists():
+  import time
+  stage=int((root/'conversation-refresh-stage').read_text()) if (root/'conversation-refresh-stage').exists() else 0
+  if (root/'conversation-refresh-fail').exists():raise SystemExit('Synthetic conversation refresh failure')
+  if (root/'conversation-refresh-slow').exists() and '--cursor' not in a:time.sleep(1)
+  stamp=int((root/'conversation-refresh-clock').read_text())
+  all_items=[{'id':'demo-room' if i==0 else f'synthetic-{i}','displayName':f'Synthetic conversation {i}','summary':f'Synthetic catalog {i}','summaryDecodeState':'complete','summaryTruncated':False,'sortTimestamp':stamp-i*60} for i in range(230)]
+  if stage:
+   all_items[-1].update(summary=f'Synthetic refreshed stage {stage}',sortTimestamp=stamp+stage)
+   all_items.append(dict(all_items[-1],id='synthetic-new@chatroom',displayName='Synthetic new group',sortTimestamp=stamp))
+  if stage>=2:all_items=[x for x in all_items if x['id']!='synthetic-100']
+  if stage>=3:all_items=[x for x in all_items if x['id']!='synthetic-200']
+  all_items.sort(key=lambda x:(-x['sortTimestamp'],x['id']))
+  offset=int(option('--cursor')) if '--cursor' in a else 0
+  page=all_items[offset:offset+100]
+  base.update(items=page,page={'limit':100,'returned':len(page),'hasMore':offset+100<len(all_items)})
+  if offset+100<len(all_items):base['page']['nextCursor']=str(offset+100)
+
 elif operation=='messages.list':
  if '--json' not in a:raise SystemExit('Native message queries must explicitly request JSON')
  samples=[('text','Text','这是一段合成消息，开发与验收不连接微信。'),('quote','Quote',{'reply_text':'这个方向可以，周五确认。','refer_sender':'小林','refer_content':'新界面什么时候可以验收？'}),('image','Image',{}),('quote','Quote',{'reply_text':None,'refer_content':None,'raw_xml':''}),('image','Image',{}),('quote','Quote',{'raw_xml':'<msg><appmsg><title>XML 引用恢复成功</title><refermsg><displayname>小周</displayname><content>仅使用现有原文，不猜测缺失内容。</content></refermsg></appmsg></msg>'}),('system','System','一条消息已撤回')]
@@ -50,7 +68,7 @@ elif operation=='messages.list':
  for i,(kind,tag,body) in enumerate(samples):
   items.append({'id':f'demo-{i}','conversationId':option('--conversation') or 'demo-room','sortSequence':100+i,'serverId':100+i,'messageType':{'text':1,'image':3,'quote':49,'system':10000,'pdf':49,'emoji':47}[kind],'messageTypeLabel':'app' if kind in ['quote','pdf'] else kind,'messageSubtype':57 if kind=='quote' else 6 if kind=='pdf' else 0,'messageSubtypeLabel':kind,'sender':'demo-lin' if i%2==0 else 'demo-zhou','senderDisplayName':'小林' if i%2==0 else '小周','createdAtUnix':1790910000+i*60,'status':0,'isAccountHolder':i%2==1,'avatarBase64':base64.b64encode((root/'sample.png').read_bytes()).decode(),'content':{tag:body},'contentDecodeState':'complete','contentTruncated':False})
  base.update(page={'limit':100,'returned':len(items),'hasMore':False},items=list(reversed(items)))
- if (root/'message-cache-acceptance').exists():
+ if (root/'message-cache-acceptance').exists() or (root/'conversation-refresh-acceptance').exists():
   if (root/'cache-fail').exists():raise SystemExit('Synthetic query failure')
   offset=int(option('--cursor')) if '--cursor' in a else 0
   items=[]
