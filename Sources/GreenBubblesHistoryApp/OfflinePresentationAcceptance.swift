@@ -35,6 +35,19 @@
       throw NSError(
         domain: "OfflineAcceptance", code: 2, userInfo: [NSLocalizedDescriptionKey: "Timed out"])
     }
+    if FileManager.default.fileExists(atPath: root.appending(path: "ai-blacklist-acceptance").path)
+    {
+      model.rememberDirectConnection = false
+      model.connectDirectSource(
+        executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+      do {
+        try await waitFor { !model.isDirectConnecting && !model.directConversations.isEmpty }
+        model.showsDirectConnection = true
+      } catch {
+        try? Data("Synthetic blacklist setup failed".utf8).write(to: reportURL)
+      }
+      return
+    }
     var failure: String?
     if FileManager.default.fileExists(
       atPath: root.appending(path: "conversation-refresh-acceptance").path)

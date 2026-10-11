@@ -169,6 +169,11 @@ jobs:
           python3 scripts/sticker-acceptance/metadata-e2e.py Native/GreenBubbles/target/debug/greenbubbles docs/acceptance/emoji-fix-20261002/metadata.json
           cat docs/acceptance/emoji-fix-20261002/metadata.json
 
+      - name: Verify AI read blacklist end to end
+        run: |
+          python3 scripts/verify-ai-read-blacklist.py Native/GreenBubbles/target/debug/greenbubbles
+          cat docs/acceptance/ai-read-blacklist/cli-e2e.json
+
       - name: Check the cross-language send vectors are current
         working-directory: Native/GreenBubbles
         run: |

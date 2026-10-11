@@ -18,11 +18,58 @@ struct HistoryRememberedConnection: Codable {
       .map { String(format: "%02x", $0) }.joined()
   }
 
+  /// Exact predecessor/successor binding in the app's signed resource envelope.
+  /// External tools and unsigned/ad-hoc apps never gain an automatic migration.
+  static func acceptsSignedToolUpdate(_ executable: URL, previousDigest: String) -> Bool {
+    struct Migration: Decodable {
+      let previousSHA256: String
+      let previousSHA256s: [String]?
+      let currentSHA256: String
+    }
+    guard Bundle.main.bundleIdentifier == "me.greenbubbles.GreenBubbles",
+      let bundled = Bundle.main.executableURL?.deletingLastPathComponent().appending(
+        path: "greenbubbles"),
+      executable.standardizedFileURL == bundled.standardizedFileURL,
+      let manifest = Bundle.main.url(forResource: "ToolUpdate", withExtension: "json"),
+      let data = try? Data(contentsOf: manifest),
+      let migration = try? JSONDecoder().decode(Migration.self, from: data),
+      migration.previousSHA256 == previousDigest
+        || (migration.previousSHA256s ?? []).contains(previousDigest),
+      let currentDigest = try? digest(executable), currentDigest == migration.currentSHA256
+    else { return false }
+    var appCode: SecStaticCode?
+    var toolCode: SecStaticCode?
+    let flags = SecCSFlags(
+      rawValue: kSecCSCheckAllArchitectures | kSecCSCheckNestedCode | kSecCSStrictValidate)
+    guard
+      SecStaticCodeCreateWithPath(Bundle.main.bundleURL as CFURL, [], &appCode) == errSecSuccess,
+      SecStaticCodeCreateWithPath(executable as CFURL, [], &toolCode) == errSecSuccess,
+      let appCode, let toolCode,
+      SecStaticCodeCheckValidity(appCode, flags, nil) == errSecSuccess,
+      SecStaticCodeCheckValidity(toolCode, flags, nil) == errSecSuccess
+    else { return false }
+    func certificate(_ code: SecStaticCode) -> Data? {
+      var info: CFDictionary?
+      guard
+        SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &info)
+          == errSecSuccess,
+        let values = info as? [String: Any],
+        let certificates = values[kSecCodeInfoCertificates as String] as? [SecCertificate],
+        let leaf = certificates.first
+      else { return nil }
+      return SecCertificateCopyData(leaf) as Data
+    }
+    guard let appCertificate = certificate(appCode), let toolCertificate = certificate(toolCode)
+    else { return false }
+    return appCertificate == toolCertificate
+  }
+
   func configuration() throws -> HistoryDirectConfiguration {
     let executable = URL(fileURLWithPath: executablePath)
     guard let mode = HistoryDirectAccessMode(rawValue: accessMode),
       FileManager.default.isExecutableFile(atPath: executablePath),
       try Self.digest(executable) == executableDigest
+        || Self.acceptsSignedToolUpdate(executable, previousDigest: executableDigest)
     else {
       throw RememberedConnectionError.changedExecutable
     }

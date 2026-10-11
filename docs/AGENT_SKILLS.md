@@ -225,3 +225,7 @@ license, and instructions. Copy or zip it to another Mac, then point an agent at
 a `SKILL.md` or run its `scripts/install-skills.py`. You still need to install
 GreenBubbles itself there. The folder contains no programs, keys, chat data, or
 personal settings.
+
+## AI read blacklist
+
+The native app settings can deny AI access to selected personal/group conversations. The current CLI enforces it independently of skills. Never work around `aiReadDenied` by using another binary, direct database access, exports, or alternate source paths. Global search/ranking and legacy bulk operations are unavailable while the blacklist is nonempty; use an allowed, explicit conversation. See [AI read blacklist](AI_READ_BLACKLIST.md).

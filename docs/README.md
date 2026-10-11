@@ -25,6 +25,8 @@ which parts, if any, an AI gets to see. Start with the
 
 ## Everyday use
 
+- [AI 读取黑名单](AI_READ_BLACKLIST.md)：使用真实名称和头像多选个人/群聊，限制 AI 读取，保留本人查看。
+
 - [会话时间范围](CONVERSATION_RANGE.md)：设置联系人和群聊的显示期限、持久化及重复验收。
 - [会话列表刷新](CONVERSATION_REFRESH.md)：前台持续更新左侧时间、摘要与排序，主动核对全目录及失败重试。
 

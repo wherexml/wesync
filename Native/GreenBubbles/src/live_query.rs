@@ -48,6 +48,8 @@ const MAXIMUM_SQL_STATEMENT_DURATION: Duration = Duration::from_secs(10);
 
 #[derive(Debug, Error)]
 pub enum LiveQueryError {
+    #[error("AI read blacklist denies this operation; manage access in the native app settings")]
+    AiReadDenied,
     #[error("{0}")]
     ConversationSelection(String),
     #[error("invalid query: {0}")]
@@ -1680,6 +1682,8 @@ pub fn list_contacts(
         .map(|cursor| validate_contact_cursor(source, kind, include_details, cursor))
         .transpose()?;
     let mut loaded = load_contact_records(source)?;
+    let blocked = crate::ai_read_policy::effective()?;
+    loaded.records.retain(|id, _| !blocked.contains(id));
     if let Some(account_holder) = source.account_holder_source_id() {
         loaded
             .records
@@ -2554,20 +2558,33 @@ pub fn list_conversations(
     let last_type = optional_column(&columns, "last_msg_type");
     let last_sender = optional_column(&columns, "last_msg_sender");
     let last_display = optional_column(&columns, "last_sender_display_name");
+    let blocked = crate::ai_read_policy::effective()?;
+    let deny_sql = if blocked.is_empty() {
+        "1".to_owned()
+    } else {
+        format!(
+            "username NOT IN ({})",
+            blocked
+                .iter()
+                .map(|id| format!("CAST(X'{}' AS TEXT)", hex::encode(id.as_bytes())))
+                .collect::<Vec<_>>()
+                .join(",")
+        )
+    };
     let fetch_limit = limit.saturating_add(1);
     let sql = if cursor.is_some() {
         format!(
             "SELECT username, sort_timestamp, summary, {last_type}, {last_sender}, {last_display} \
              FROM SessionTable \
-             WHERE sort_timestamp < ?1 \
-                OR (sort_timestamp = ?1 AND username > ?2) \
+             WHERE ({deny_sql}) AND (sort_timestamp < ?1 \
+                OR (sort_timestamp = ?1 AND username > ?2)) \
              ORDER BY sort_timestamp DESC, username ASC \
              LIMIT ?3"
         )
     } else {
         format!(
             "SELECT username, sort_timestamp, summary, {last_type}, {last_sender}, {last_display} \
-             FROM SessionTable \
+             FROM SessionTable WHERE {deny_sql} \
              ORDER BY sort_timestamp DESC, username ASC \
              LIMIT ?1"
         )
@@ -2676,6 +2693,8 @@ pub fn list_conversations(
             count: Some(summary_decode_failures),
         });
     }
+    let blocked = crate::ai_read_policy::effective()?;
+    items.retain(|item| !blocked.contains(&item.id));
     let contact_enrichment = enrich_conversation_items(source, &mut items)?;
     warnings.extend(contact_enrichment.warnings);
     coalesce_warnings(&mut warnings);
@@ -2755,6 +2774,7 @@ pub fn rank_conversations(
     limit: usize,
     offset: usize,
 ) -> Result<ConversationRankReport, LiveQueryError> {
+    crate::ai_read_policy::require_unrestricted()?;
     if !(1..=2_000).contains(&limit) {
         return Err(LiveQueryError::InvalidArgument(
             "--limit must be between 1 and 2000 for chats rank".into(),
@@ -2954,6 +2974,7 @@ pub fn find_conversation(
     source: &LiveQuerySource<'_>,
     conversation: &str,
 ) -> Result<Option<ConversationItem>, LiveQueryError> {
+    crate::ai_read_policy::require_conversation(conversation)?;
     validate_conversation_id(conversation)?;
     let connection = source.open_database(Path::new("session/session.db"))?;
     let columns = table_columns(&connection, "SessionTable")?;
@@ -3025,6 +3046,7 @@ pub fn find_conversations(
         return Ok(std::collections::BTreeMap::new());
     }
     for conversation in conversations {
+        crate::ai_read_policy::require_conversation(conversation)?;
         validate_conversation_id(conversation)?;
     }
     let connection = source.open_database(Path::new("session/session.db"))?;
@@ -3132,7 +3154,8 @@ pub fn find_chats(
     let loaded = load_contact_records(source)?;
     let needle = name.to_lowercase();
     let mut matches = Vec::new();
-    for record in loaded.records.values() {
+    let blocked = crate::ai_read_policy::effective()?;
+    for record in loaded.records.values().filter(|r| !blocked.contains(&r.id)) {
         if [
             Some(record.id.as_str()),
             record.remark.as_deref(),
@@ -3173,6 +3196,7 @@ pub fn resolve_conversation(
     source: &LiveQuerySource<'_>,
     selector: &str,
 ) -> Result<String, LiveQueryError> {
+    crate::ai_read_policy::require_conversation(selector)?;
     validate_conversation_id(selector)?;
     if selector.starts_with("wxid_")
         || selector.ends_with("@chatroom")
@@ -3180,7 +3204,9 @@ pub fn resolve_conversation(
     {
         return Ok(selector.to_string());
     }
-    let contacts = load_contact_records(source)?;
+    let mut contacts = load_contact_records(source)?;
+    let blocked = crate::ai_read_policy::effective()?;
+    contacts.records.retain(|id, _| !blocked.contains(id));
     if contacts.records.contains_key(selector) {
         return Ok(selector.to_string());
     }
@@ -3304,6 +3330,7 @@ fn list_messages_in_time_range_with_open_shards(
     enrich_contacts: bool,
 ) -> Result<QueryEnvelope<MessageItem>, LiveQueryError> {
     validate_limit(limit)?;
+    crate::ai_read_policy::require_conversation(conversation)?;
     validate_conversation_id(conversation)?;
     if not_before_unix
         .zip(not_after_unix)
@@ -3586,6 +3613,7 @@ pub fn get_message(
     conversation: &str,
     message_id: &str,
 ) -> Result<QueryResourceEnvelope<MessageItem>, LiveQueryError> {
+    crate::ai_read_policy::require_conversation(conversation)?;
     validate_conversation_id(conversation)?;
     let conversation_digest = digest_text("greenbubbles-conversation-v1", conversation);
     let key = validate_message_identity(
@@ -3733,6 +3761,7 @@ pub fn get_search_result_message(
     conversation: &str,
     search_result_id: &str,
 ) -> Result<QueryResourceEnvelope<MessageItem>, LiveQueryError> {
+    crate::ai_read_policy::require_conversation(conversation)?;
     validate_conversation_id(conversation)?;
     let conversation_digest = digest_text("greenbubbles-search-conversation-v1", conversation);
     let cursor = decode_search_cursor(search_result_id)?;
@@ -3906,6 +3935,11 @@ pub fn search_messages_in_time_range(
     not_before_unix: Option<i64>,
     not_after_unix: Option<i64>,
 ) -> Result<QueryEnvelope<SearchItem>, LiveQueryError> {
+    if let Some(id) = conversation {
+        crate::ai_read_policy::require_conversation(id)?;
+    } else {
+        crate::ai_read_policy::require_unrestricted()?;
+    }
     let cursor_kind = cursor.map(decode_cursor_kind).transpose()?;
     if cursor_kind.as_deref() == Some(FALLBACK_SEARCH_CURSOR_KIND) {
         return search_messages_fallback_in_time_range(
@@ -3967,6 +4001,7 @@ fn search_messages_native_in_time_range(
         ));
     }
     if let Some(conversation) = conversation {
+        crate::ai_read_policy::require_conversation(conversation)?;
         validate_conversation_id(conversation)?;
     }
     if not_before_unix
@@ -4253,6 +4288,7 @@ fn search_messages_fallback_in_time_range(
         ));
     }
     if let Some(conversation) = conversation {
+        crate::ai_read_policy::require_conversation(conversation)?;
         validate_conversation_id(conversation)?;
     }
     if not_before_unix

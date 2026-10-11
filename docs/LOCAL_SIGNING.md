@@ -29,3 +29,17 @@ Apple 支持使用自签代码签名证书，为本机应用建立固定的 desi
 build 6 → 7 建立固定证书身份；原权限开关关闭、重新选择应用仍未恢复连接。通过系统 `tccutil reset SystemPolicyAllFiles me.greenbubbles.GreenBubbles` 撤销仅该应用的旧授权，然后原生系统设置重新选择 `/Applications/GreenBubbles.app`，重开恢复连接。没有直接编辑权限数据库。
 
 build 7 → 8 安装此前准备好的菜单栏/中文界面 release 程序，同一固定证书签名，保留查询工具及发送工具字节。无需再次变更磁盘授权即自动连接。菜单隐藏/打开/退出通过，Finder 白底图标通过。最终冷启动待原生钥匙串确认后复验，结果以 `docs/acceptance/brand-20261002/installed-acceptance.json` 为准。
+
+## 同签名读取工具更新
+
+需要更新 bundled CLI 时，使用 `scripts/stage-local-tool-update.py`。签名封装中精确绑定旧/新摘要，验证主应用与工具同证书后由 App 自动迁移已记住连接。不会扫描钥匙串、导出凭据、放宽 TCC 或接受任意替换工具；外部工具仍须原摘要匹配。详细验收见 [AI_READ_BLACKLIST.md](AI_READ_BLACKLIST.md)。
+
+## 2026-10-11：钥匙串重复弹窗根因与更正
+
+此前“同一本机自签证书的 DR 稳定”只验证了代码签名要求，并不足以证明钥匙串访问跨构建稳定。实际 build 28 → 29 的证书/DR 均相同，仍再次停在应用自己连接条目的 `SecItemCopyMatching`。只读查询该精确条目的访问控制元数据，未读取凭据或枚举其他条目。
+
+Apple securityd 的 [partitionIdForProcess](https://github.com/apple-oss-distributions/Security/blob/main/securityd/src/clientid.cpp) 区分 Apple 颁发的开发/Developer ID 身份（teamid）与其他签名（cdhash）。本机自签证书没有 Apple Team ID，每次构建摘要变化仍可能再次授权。不能把“始终允许”解释为同一自签证书所有未来构建永久放行。
+
+本机已有 Apple Development 签名身份。后续优先沿用该身份；首次迁移使用 staging 脚本显式 `--migrate-signing-identity`，要求 `anchor apple generic` 和 TeamIdentifier，并通过第二个不同资源版本验证 DR 一致。Apple Development 用于本机开发，不等于 Developer ID 分发/公证。首次钥匙串/TCC 迁移仍遵循原生安全流程，不修改 partition list，不给所有程序访问权。需实际验证第二次更新和冷启动不再反复询问后，才声明此问题已解决。
+
+实机结果：用户完成系统设置确认后，原生删除旧条目并重新加入同一路径应用，build 31 自动连接。相同 Apple Development 身份更新至 build 32，Finder 冷启动自动连接，未再次出现钥匙串或磁盘权限弹窗，用户已保存的黑名单保持。证据见 `docs/acceptance/ai-read-blacklist/native-e2e.json`。

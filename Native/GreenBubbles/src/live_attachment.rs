@@ -597,6 +597,9 @@ fn map_live_query_error(error: LiveQueryError) -> LiveAttachmentError {
                 "message identity is not bound to this source and conversation".into(),
             )
         }
+        LiveQueryError::AiReadDenied => {
+            LiveAttachmentError::UnsafeSource("AI read blacklist denies this operation".into())
+        }
         LiveQueryError::UnsafeSource(_) => LiveAttachmentError::UnsafeSource(
             "the database source required for attachment lookup is unsafe".into(),
         ),

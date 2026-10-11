@@ -847,7 +847,7 @@ impl SendAdapter {
                 {
                     failures.insert(SendFailureCode::UnsupportedAttachmentType);
                 }
-                if !attachment.byte_count.is_some_and(|count| count > 0) {
+                if attachment.byte_count.is_none_or(|count| count == 0) {
                     failures.insert(SendFailureCode::AttachmentInvalid);
                 }
             }

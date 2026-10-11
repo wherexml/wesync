@@ -469,7 +469,8 @@ final class HistoryBrowserModel {
     keyUTF8: [UInt8],
     recoveryKitURL: URL? = nil,
     localCredentialURL: URL? = nil,
-    restoring: Bool = false
+    restoring: Bool = false,
+    migratingTool: Bool = false
   ) {
     connectionPersistenceNotice = nil
     let shouldRemember = rememberDirectConnection
@@ -573,7 +574,7 @@ final class HistoryBrowserModel {
         saveHistoryCache()
         loadMoreDirectConversations()
         refreshDirectConversationsIfNeeded()
-        if shouldRemember && rememberDirectConnection && !restoring {
+        if shouldRemember && rememberDirectConnection && (!restoring || migratingTool) {
           do {
             let record = HistoryRememberedConnection(
               executablePath: configuration.executableURL.path,
@@ -1174,7 +1175,11 @@ final class HistoryBrowserModel {
         executableURL: configuration.executableURL,
         sourceURL: configuration.sourceURL, accessMode: configuration.accessMode,
         keyUTF8: Array(record.secret), recoveryKitURL: configuration.recoveryKitURL,
-        localCredentialURL: configuration.localCredentialURL, restoring: true)
+        localCredentialURL: configuration.localCredentialURL, restoring: true,
+        migratingTool: try HistoryRememberedConnection.digest(configuration.executableURL)
+          != record.executableDigest)
+    } catch let error as RememberedConnectionError {
+      libraryError = error.localizedDescription
     } catch { libraryError = historyUserError(error) }
   }
 

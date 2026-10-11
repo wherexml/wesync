@@ -205,6 +205,7 @@ fn query_error_details(
 ) -> (&'static str, &'static str, bool) {
     if let Some(error) = error.downcast_ref::<LiveQueryError>() {
         return match error {
+            LiveQueryError::AiReadDenied => ("aiReadDenied", "AI read blacklist denies this operation; manage access in the native app settings.", false),
             LiveQueryError::ConversationSelection(_) => ("conversationSelection", "Choose an unambiguous chat name or exact conversation ID. See the matching chats on standard error.", false),
             LiveQueryError::InvalidArgument(_) => (
                 "invalidQuery",
@@ -281,6 +282,16 @@ fn query_error_details(
 fn attachment_error_details(
     error: &(dyn std::error::Error + 'static),
 ) -> (&'static str, &'static str, bool) {
+    if matches!(
+        error.downcast_ref::<LiveQueryError>(),
+        Some(LiveQueryError::AiReadDenied)
+    ) {
+        return (
+            "aiReadDenied",
+            "AI read blacklist denies this operation; manage access in the native app settings.",
+            false,
+        );
+    }
     if let Some(error) = error.downcast_ref::<LiveAttachmentError>() {
         return match error {
             LiveAttachmentError::InvalidArgument(_) => (
@@ -579,6 +590,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             .into());
         }
     }
+    greenbubbles::ai_read_policy::check_command(&command)?;
     match command.as_str() {
         "profile" => {
             run_query_profile_command(arguments.collect::<Vec<_>>())?;
@@ -621,6 +633,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             let invocation = resolve_query_invocation(database_root, &remaining)?;
             let source = invocation.access.open_source(&invocation.source_root)?;
             if subcommand == "presentation" {
+                greenbubbles::ai_read_policy::require_unrestricted()?;
                 let response = greenbubbles::live_query::presentation_metadata(&source)?;
                 println!("{}", serde_json::to_string(&response)?);
                 return Ok(());
@@ -1289,6 +1302,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                         ],
                     )?;
                     let conversation = required_option(&remaining, "--conversation")?;
+                    greenbubbles::ai_read_policy::require_conversation(&conversation)?;
                     let kind = option_string(&remaining, "--kind")?
                         .map(|value| value.parse::<AttachmentKind>())
                         .transpose()?
@@ -1345,6 +1359,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                         ],
                     )?;
                     let conversation = required_option(&remaining, "--conversation")?;
+                    greenbubbles::ai_read_policy::require_conversation(&conversation)?;
                     let kind = option_string(&remaining, "--kind")?
                         .map(|value| value.parse::<AttachmentKind>())
                         .transpose()?

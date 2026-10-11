@@ -20,6 +20,7 @@ struct HistoryDirectConnectionSheet: View {
       }
 
       Form {
+        HistoryAIReadBlacklistSection(model: model)
         Section("会话显示") {
           Picker("联系人和群聊时间范围", selection: $model.conversationRange) {
             ForEach(HistoryConversationRange.allCases) { range in
