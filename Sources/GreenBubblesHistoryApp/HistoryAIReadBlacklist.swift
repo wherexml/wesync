@@ -91,28 +91,34 @@ private struct HistoryAIReadBlacklistPicker: View {
     let name: String
     let avatar: String?
     let available: Bool
+    let category: String
   }
 
   private var candidates: [Candidate] {
-    var items = Dictionary(
-      model.directConversations.map {
-        (
-          $0.id,
-          Candidate(id: $0.id, name: $0.displayName, avatar: $0.avatarBase64, available: true)
-        )
-      }, uniquingKeysWith: { first, _ in first })
-    for id in selected where items[id] == nil {
-      items[id] = Candidate(
-        id: id,
-        name: id.hasSuffix("@chatroom") ? "暂未载入的群聊" : "暂未载入的个人会话",
-        avatar: nil, available: false)
+    // Keep the chat catalog's order, including its stable tie ordering.
+    var seen = Set<String>()
+    var items = model.directConversations.compactMap { conversation -> Candidate? in
+      guard seen.insert(conversation.id).inserted else { return nil }
+      return Candidate(
+        id: conversation.id, name: conversation.displayName,
+        avatar: conversation.avatarBase64, available: true,
+        category: model.directCategory(for: conversation) ?? "other")
     }
-    return items.values.filter {
+    // Missing saved selections have no chat position; keep them stable at the end.
+    for id in selected.sorted() where !seen.contains(id) {
+      items.append(
+        Candidate(
+          id: id,
+          name: id.hasSuffix("@chatroom") ? "暂未载入的群聊" : "暂未载入的个人会话",
+          avatar: nil, available: false,
+          category: id.hasSuffix("@chatroom") ? "group" : "personal"))
+    }
+    return items.filter {
       (category == "selected"
-        ? selected.contains($0.id) : ($0.id.hasSuffix("@chatroom") == (category == "groups")))
+        ? selected.contains($0.id) : $0.category == category)
         && (search.isEmpty || $0.name.localizedCaseInsensitiveContains(search)
           || $0.id.localizedCaseInsensitiveContains(search))
-    }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
   }
 
   var body: some View {
@@ -122,7 +128,8 @@ private struct HistoryAIReadBlacklistPicker: View {
         .foregroundStyle(.secondary)
       Picker("会话类型", selection: $category) {
         Text("个人").tag("personal")
-        Text("群聊").tag("groups")
+        Text("群聊").tag("group")
+        Text("其他").tag("other")
         Text("已选 \(selected.count)").tag("selected")
       }.pickerStyle(.segmented)
       HistorySearchField(prompt: "搜索个人或群聊", text: $search)
