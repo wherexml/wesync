@@ -46,6 +46,7 @@ struct HistoryRichMessageBody: View {
   var resolveStickerMetadata: (@MainActor () async throws -> HistorySticker)? = nil
   var cachedImage: NSImage? = nil
   let loadImage: @MainActor () async throws -> NSImage
+  var loadMergedImage: (@MainActor (Int) async throws -> NSImage)? = nil
   var loadPDF: (@MainActor () async throws -> HistoryPDFPreview)? = nil
   @State private var image: NSImage?
   @State private var error: String?
@@ -56,7 +57,7 @@ struct HistoryRichMessageBody: View {
   var body: some View {
     Group {
       if let record = message.content.mergedRecord {
-        HistoryMergedRecordView(record: record)
+        HistoryMergedRecordView(record: record, loadImage: loadMergedImage)
       } else if let sticker = message.sticker {
         HistoryStickerView(
           sticker: sticker, localSource: localStickerSource, resolveMetadata: resolveStickerMetadata

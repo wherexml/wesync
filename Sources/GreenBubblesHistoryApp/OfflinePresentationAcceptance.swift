@@ -557,6 +557,11 @@
         model.directMessages.filter { ["demo-13", "demo-14"].contains($0.id) }
           .allSatisfy { $0.content.mergedRecord?.entries.isEmpty == true },
         "merged-record-malformed-and-entity-safe")
+      let mergedImage = try await model.previewDirectImage(
+        model.directMessages.first { $0.id == "demo-12" }!, mergedIndex: 1)
+      try require(
+        mergedImage.size.width > 0 && mergedImage.size.height > 0,
+        "merged-image-production-load-and-decode")
       let emoji = model.directMessages.first { $0.id == "demo-9" }!
       let unsafeEmoji = model.directMessages.first { $0.id == "demo-10" }!
       let malformedEmoji = model.directMessages.first { $0.id == "demo-11" }!

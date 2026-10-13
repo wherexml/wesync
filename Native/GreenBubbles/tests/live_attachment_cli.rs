@@ -797,3 +797,91 @@ fn assert_success(output: &Output) {
     );
     assert!(output.stderr.is_empty());
 }
+
+// Failure contract, before implementation: bind child to its source parent and index;
+// reject non-image/out-of-range children, wrong parents and changed attachment identity.
+#[test]
+fn merged_image_child_cli_is_parent_bound_and_materializes_local_bytes() {
+    let fixture = MessageFixture::new();
+    let db = Connection::open(fixture.database_root.join("message/message_0.db")).unwrap();
+    let table = format!("Msg_{:x}", md5::compute(MESSAGE_CONVERSATION.as_bytes()));
+    let xml = String::from("<msg><appmsg><type>19</type><title>History</title><recorditem><![CDATA[<recordinfo><datalist><dataitem datatype=\"2\"><fullmd5>abcdefabcdefabcdefabcdefabcdefab</fullmd5><fromnewmsgid>3001</fromnewmsgid><srcMsgCreateTime>400</srcMsgCreateTime></dataitem><dataitem datatype=\"1\"><datadesc>text</datadesc></dataitem></datalist></recordinfo>]]></recorditem></appmsg></msg>");
+    db.execute(
+        &format!("INSERT INTO [{table}] VALUES (3999,500,?1,1,500,0,?2,NULL,0,NULL)"),
+        params![(19_i64 << 32) | 49, xml.into_bytes()],
+    )
+    .unwrap();
+    drop(db);
+    let page = run(&[
+        "messages",
+        "list",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--limit",
+        "10",
+        "--decrypted",
+        "--json",
+    ]);
+    assert_success(&page);
+    let page: Value = serde_json::from_slice(&page.stdout).unwrap();
+    let parent = page["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["serverId"] == 3999)
+        .unwrap()["id"]
+        .as_str()
+        .unwrap();
+    let child = format!("{parent}~merged-image~0");
+    let inspect = run(&[
+        "attachment",
+        "inspect",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--message",
+        &child,
+        "--kind",
+        "image",
+        "--decrypted",
+    ]);
+    assert_success(&inspect);
+    let report: Value = serde_json::from_slice(&inspect.stdout).unwrap();
+    let attachment = report["preferredAttachmentId"].as_str().unwrap();
+    let path = fixture.output.join("merged.jpg");
+    let output = run(&[
+        "attachment",
+        "materialize",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--message",
+        &child,
+        "--kind",
+        "image",
+        "--attachment",
+        attachment,
+        "--output",
+        path.to_str().unwrap(),
+        "--decrypted",
+    ]);
+    assert_success(&output);
+    assert_eq!(fs::read(path).unwrap(), fixture.image);
+    for index in ["1", "500", "bad"] {
+        let invalid = format!("{parent}~merged-image~{index}");
+        let result = run(&[
+            "attachment",
+            "inspect",
+            fixture.database_root.to_str().unwrap(),
+            "--conversation",
+            MESSAGE_CONVERSATION,
+            "--message",
+            &invalid,
+            "--kind",
+            "image",
+            "--decrypted",
+        ]);
+        assert!(!result.status.success());
+    }
+}

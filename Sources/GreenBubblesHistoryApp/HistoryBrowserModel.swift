@@ -679,7 +679,10 @@ final class HistoryBrowserModel {
     return sticker
   }
 
-  func previewDirectImage(_ message: HistoryDirectMessage) async throws -> NSImage {
+  func previewDirectImage(_ message: HistoryDirectMessage, mergedIndex: Int? = nil) async throws
+    -> NSImage
+  {
+    let imageID = mergedIndex.map { message.id + "~merged-image~" + String($0) } ?? message.id
     guard let configuration = directConfiguration else { throw PresentationError.sourceChanged }
     let sessionID = activeDirectLoadID
     while directImageLoads >= 2 {
@@ -694,7 +697,7 @@ final class HistoryBrowserModel {
     var key = directKeyUTF8
     defer { key.resetBytes(in: 0..<key.count) }
     let inspection = try await directClient.inspectImage(
-      configuration: configuration, keyUTF8: key, message: message)
+      configuration: configuration, keyUTF8: key, message: message, attachmentMessageID: imageID)
     guard inspection.kind == "image", let attachment = inspection.preferredAttachmentId,
       (inspection.preferredSourceByteCount ?? 0) <= 32 * 1_024 * 1_024
     else { throw PresentationError.unavailable }
@@ -708,7 +711,7 @@ final class HistoryBrowserModel {
     defer { try? FileManager.default.removeItem(at: output) }
     let report = try await directClient.materializeImage(
       configuration: configuration, keyUTF8: key,
-      message: message, attachmentID: attachment, output: output)
+      message: message, attachmentMessageID: imageID, attachmentID: attachment, output: output)
     try Task.checkCancellation()
     guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
       throw PresentationError.sourceChanged
@@ -729,12 +732,12 @@ final class HistoryBrowserModel {
     guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
       throw PresentationError.sourceChanged
     }
-    directImagePreviewOrder.removeAll { $0 == message.id }
-    directImagePreviewOrder.append(message.id)
+    directImagePreviewOrder.removeAll { $0 == imageID }
+    directImagePreviewOrder.append(imageID)
     while directImagePreviewOrder.count > 20 {
       directImagePreviews.removeValue(forKey: directImagePreviewOrder.removeFirst())
     }
-    directImagePreviews[message.id] = image
+    directImagePreviews[imageID] = image
     return image
   }
 

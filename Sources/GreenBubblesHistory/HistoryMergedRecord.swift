@@ -3,6 +3,7 @@ import Foundation
 /// Local presentation only: embedded attachments never trigger remote downloads.
 public struct HistoryMergedRecord: Sendable {
   public struct Entry: Sendable {
+    public let isImage: Bool
     public let sender: String
     public let time: String
     public let text: String
@@ -36,7 +37,7 @@ extension HistoryDirectJSONValue {
           node.value("datadesc") ?? node.value("datatitle") ?? fallback[kind] ?? "[暂不支持的消息]"
         entries.append(
           .init(
-            sender: node.value("sourcename") ?? "未知发送者",
+            isImage: kind == "2", sender: node.value("sourcename") ?? "未知发送者",
             time: node.value("sourcetime") ?? "", text: text))
         return
       }

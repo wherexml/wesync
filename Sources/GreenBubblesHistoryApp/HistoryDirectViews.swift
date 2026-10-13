@@ -1009,6 +1009,9 @@ struct HistoryDirectMessageBubble: View {
             loadImage: {
               try await model.previewDirectImage(message)
             },
+            loadMergedImage: { index in
+              try await model.previewDirectImage(message, mergedIndex: index)
+            },
             loadPDF: {
               try await model.previewDirectPDF(message)
             }
