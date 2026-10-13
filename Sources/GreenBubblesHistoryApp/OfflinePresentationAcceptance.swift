@@ -547,7 +547,16 @@
         "same-name-human-and-enterprise-remain-personal")
       model.selectDirectConversation("demo-room")
       try await waitFor { !model.isLoadingDirectMessages }
-      try require(model.directMessages.count == 12, "typed-json-messages")
+      try require(model.directMessages.count == 15, "typed-json-messages")
+      let merged = model.directMessages.first { $0.id == "demo-12" }!.content.mergedRecord!
+      try require(
+        merged.entries.count == 2 && merged.entries[0].text == "第一条 & 完整正文"
+          && merged.entries[0].sender == "合成甲" && merged.entries[1].text == "[图片]",
+        "merged-record-ordered-text-and-media")
+      try require(
+        model.directMessages.filter { ["demo-13", "demo-14"].contains($0.id) }
+          .allSatisfy { $0.content.mergedRecord?.entries.isEmpty == true },
+        "merged-record-malformed-and-entity-safe")
       let emoji = model.directMessages.first { $0.id == "demo-9" }!
       let unsafeEmoji = model.directMessages.first { $0.id == "demo-10" }!
       let malformedEmoji = model.directMessages.first { $0.id == "demo-11" }!
@@ -562,7 +571,7 @@
         "sticker-rejects-entities-and-malformed-xml")
       model.selectDirectConversation("demo-room")
       try require(
-        !model.isLoadingDirectMessages && model.directMessages.count == 12,
+        !model.isLoadingDirectMessages && model.directMessages.count == 15,
         "recent-chat-memory-cache-immediate")
 
       try require(
@@ -720,7 +729,7 @@
 
       model.returnToLatestDirectMessages()
       try await waitFor { !model.isLoadingDirectMessages }
-      try require(model.directMessages.count == 12, "refresh-restores-message-page")
+      try require(model.directMessages.count == 15, "refresh-restores-message-page")
       let personal = model.directConversations.first { $0.id == "demo-room" }!
       let group = model.directConversations.first { $0.id == "demo@chatroom" }!
       let official = model.directConversations.first { $0.id == "cmb4008205555" }!

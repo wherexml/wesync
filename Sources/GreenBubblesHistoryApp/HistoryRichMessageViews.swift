@@ -55,7 +55,9 @@ struct HistoryRichMessageBody: View {
 
   var body: some View {
     Group {
-      if let sticker = message.sticker {
+      if let record = message.content.mergedRecord {
+        HistoryMergedRecordView(record: record)
+      } else if let sticker = message.sticker {
         HistoryStickerView(
           sticker: sticker, localSource: localStickerSource, resolveMetadata: resolveStickerMetadata
         )
