@@ -8,6 +8,10 @@ struct HistoryDirectConnectionSheet: View {
   @State private var secret = ""
   @State private var validationError: String?
   @State private var showsConnection = false
+  @State private var editsConnection = false
+  @State private var confirmsForget = false
+
+  private var viewingConnection: Bool { model.isDirectHistoryOpen && !editsConnection }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -39,6 +43,16 @@ struct HistoryDirectConnectionSheet: View {
           DisclosureGroup(isExpanded: $showsConnection) {
             VStack(alignment: .leading, spacing: 10) {
               Divider().padding(.vertical, 6)
+              if viewingConnection {
+                HStack {
+                  Label("当前连接可正常使用", systemImage: "checkmark.shield")
+                    .foregroundStyle(HistoryDesign.accent)
+                  Spacer()
+                  Button("修改连接") { editsConnection = true }
+                }
+                Text("仅更换记录来源或凭据时需要修改。")
+                  .font(.caption).foregroundStyle(.secondary)
+              }
               Text("本机读取工具").font(.subheadline.weight(.semibold))
               pathField(
                 title: "读取工具",
@@ -51,9 +65,19 @@ struct HistoryDirectConnectionSheet: View {
             VStack(alignment: .leading, spacing: 10) {
               Divider().padding(.vertical, 6)
               Text("聊天记录来源").font(.subheadline.weight(.semibold))
-              Picker("打开方式", selection: $model.directAccessMode) {
-                ForEach(HistoryDirectAccessMode.allCases, id: \.rawValue) { mode in
-                  Text(mode.displayName).tag(mode)
+              HStack {
+                Text("打开方式").foregroundStyle(.secondary)
+                Spacer()
+                if viewingConnection {
+                  Text(model.directAccessMode.displayName)
+                } else {
+                  Picker("打开方式", selection: $model.directAccessMode) {
+                    ForEach(HistoryDirectAccessMode.allCases, id: \.rawValue) { mode in
+                      Text(mode.displayName).tag(mode)
+                    }
+                  }
+                  .labelsHidden()
+                  .fixedSize()
                 }
               }
               pathField(
@@ -67,7 +91,10 @@ struct HistoryDirectConnectionSheet: View {
             VStack(alignment: .leading, spacing: 10) {
               Divider().padding(.vertical, 6)
               Text("访问凭据").font(.subheadline.weight(.semibold))
-              if model.directAccessMode == .decrypted {
+              if viewingConnection {
+                Label("当前连接已解锁，无需重新输入", systemImage: "lock.shield")
+                  .foregroundStyle(.secondary)
+              } else if model.directAccessMode == .decrypted {
                 Label(
                   "此方式无需密钥，仅适用于已经解密的数据库文件。",
                   systemImage: "exclamationmark.shield"
@@ -126,8 +153,15 @@ struct HistoryDirectConnectionSheet: View {
                 .font(.caption)
                 .foregroundStyle(.orange)
               } else {
-                SecureField(secretTitle, text: $secret)
-                  .textContentType(.password)
+                VStack(alignment: .leading, spacing: 6) {
+                  Text(secretTitle).font(.callout)
+                  SecureField("请输入" + secretTitle, text: $secret)
+                    .labelsHidden()
+                    .textFieldStyle(.roundedBorder)
+                    .textContentType(.password)
+                    .accessibilityLabel(secretTitle)
+                    .frame(maxWidth: .infinity)
+                }
                 Text(secretExplanation)
                   .font(.caption)
                   .foregroundStyle(.secondary)
@@ -139,7 +173,13 @@ struct HistoryDirectConnectionSheet: View {
               Toggle("记住此连接，下次启动自动打开", isOn: $model.rememberDirectConnection)
               Text("凭据仅保存在本机钥匙串中。")
                 .font(.caption).foregroundStyle(.secondary)
-              Button("忘记已保存的连接") { model.forgetRememberedConnection() }
+              Button("忘记已保存的连接…", role: .destructive) { confirmsForget = true }
+                .confirmationDialog("忘记已保存的连接？", isPresented: $confirmsForget) {
+                  Button("忘记连接", role: .destructive) { model.forgetRememberedConnection() }
+                  Button("取消", role: .cancel) {}
+                } message: {
+                  Text("下次启动需要重新连接。聊天记录不会被删除。")
+                }
               if let notice = model.connectionPersistenceNotice {
                 Text(notice).font(.caption).foregroundStyle(.orange)
               }
@@ -176,14 +216,14 @@ struct HistoryDirectConnectionSheet: View {
         Button("取消") { dismiss() }
           .keyboardShortcut(.cancelAction)
         Spacer()
-        if model.isDirectHistoryOpen && !showsConnection {
+        if viewingConnection {
           Text("会话显示与黑名单独立保存")
             .font(.caption).foregroundStyle(.secondary)
           Button("完成") { dismiss() }
             .buttonStyle(HistoryActionStyle(prominent: true))
             .keyboardShortcut(.defaultAction)
         } else {
-          Button("连接并查看", action: connect)
+          Button(model.isDirectHistoryOpen ? "重新连接" : "连接并查看", action: connect)
             .buttonStyle(HistoryActionStyle(prominent: true))
             .keyboardShortcut(.defaultAction)
         }
@@ -239,11 +279,30 @@ struct HistoryDirectConnectionSheet: View {
     actionTitle: String,
     action: @escaping () -> Void
   ) -> some View {
-    HStack {
-      TextField(title, text: text)
-        .textFieldStyle(.roundedBorder)
-      Button(actionTitle, action: action)
+    VStack(alignment: .leading, spacing: 6) {
+      Text(title).font(.callout).foregroundStyle(.secondary)
+      HStack(spacing: 8) {
+        if viewingConnection {
+          Text(text.wrappedValue.isEmpty ? "未选择" : text.wrappedValue)
+            .font(.system(.callout, design: .monospaced))
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .help(text.wrappedValue)
+        } else {
+          TextField("请选择" + title, text: text)
+            .labelsHidden()
+            .textFieldStyle(.roundedBorder)
+            .font(.system(.callout, design: .monospaced))
+            .accessibilityLabel(title)
+            .frame(maxWidth: .infinity)
+          Button(actionTitle, action: action).fixedSize()
+        }
+      }
+      .frame(minHeight: 28)
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   private func chooseExecutable() {

@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-16",
+  "scope": "Connection settings presentation and explicit edit mode",
+  "sourceBuild": "41",
+  "installedBuild": "42",
+  "signing": {
+    "sameIdentity": true,
+    "helpersUnchanged": true,
+    "signature": "PASS"
+  },
+  "build": "PASS: release build from HEAD plus HistoryDirectViews.swift only",
+  "nativeAcceptance": {
+    "firstColdStartAutomaticConnection": "PASS",
+    "secondColdStartAutomaticConnection": "PASS",
+    "credentialOrPermissionPromptObserved": false,
+    "collapsedByDefault": "PASS",
+    "expandedReadOnlyPathsAndUnlockedStatus": "PASS",
+    "expandedDoneClosesSettings": "PASS",
+    "editPathsAndSecureFieldAligned": "PASS: native screenshot inspection",
+    "emptySecretValidation": "PASS",
+    "forgetConfirmationCancel": "PASS",
+    "cancelEditPreservesConnection": "PASS",
+    "refreshAfterRestart": "PASS: no connection/read error observed"
+  },
+  "notRun": [
+    "Submitting replacement credentials",
+    "First-time connection on a separate clean profile",
+    "Other backup unlock modes"
+  ],
+  "repeat": [
+    "Quit installed WeSync via Command-Q; confirm process exits; reopen via native application entry.",
+    "Open advanced settings; tab to connection disclosure and press Space. Verify read-only paths, unlocked status and Done.",
+    "Click Modify connection; Page Down to inspect aligned paths, source picker and secure field. Leave credentials empty; reconnect must report missing key. Cancel.",
+    "Open connection details again; open Forget saved connection confirmation and cancel it.",
+    "Quit and reopen again; verify automatic connection, open one conversation and refresh. Open details and click Done."
+  ],
+  "privacy": "No credentials, contact names, message bodies or native screenshots stored in this artifact."
+}
