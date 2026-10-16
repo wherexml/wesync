@@ -1,0 +1,18 @@
+{
+  "sourceBundleVersion": "36",
+  "candidateBundleVersion": "37",
+  "certificateSHA1": "0B6B2162D5FFBCE215565650413CE81575A025B6",
+  "sameIdentityAcrossResourceUpdate": true,
+  "signatureVerification": "PASS",
+  "queryAndSendBinariesUnchanged": true,
+  "installedBundleUnchanged": true,
+  "date": "2026-10-16",
+  "scope": "codesign private-key access and two resource-distinct app copies; no installation",
+  "standaloneExecutableSigning": "PASS",
+  "passwordInputRequiredDuringRun": false,
+  "keychainAccessControlsModified": false,
+  "privateKeyExported": false,
+  "installedRestartAcceptance": "NOT_RUN: installed application unchanged",
+  "repeatableCommand": "python3 scripts/stage-local-brand-update.py --identity 0B6B2162D5FFBCE215565650413CE81575A025B6 --output .build/signing-repeat-UNIQUE",
+  "subsequentInstalledAcceptance": "docs/acceptance/reconnect-upgrade-20261016.json"
+}

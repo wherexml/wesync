@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-16",
+  "scope": "Installed resource/build update 36 to 37 using existing Apple Development identity; application executable and helper logic unchanged",
+  "baseline": {
+    "build": 36,
+    "quitProcessAbsenceVerified": true,
+    "finderColdLaunch": true,
+    "automaticConnection": true,
+    "manualRefreshWithoutError": true,
+    "passwordEntered": false
+  },
+  "upgrade": {
+    "build": 37,
+    "sameDesignatedRequirement": true,
+    "signatureVerification": "PASS",
+    "helperBytesUnchanged": true,
+    "originalBundleBackedUp": true,
+    "firstFinderColdLaunch": "PASS",
+    "messageTimelineLoaded": true,
+    "manualRefreshWithoutError": true,
+    "keychainPasswordPromptObserved": false,
+    "diskPermissionPromptObserved": false
+  },
+  "secondRestart": {
+    "quitProcessAbsenceVerified": true,
+    "finderColdLaunch": "PASS",
+    "automaticConnection": true,
+    "messageViewLoaded": true,
+    "manualRefreshWithoutError": true,
+    "keychainPasswordPromptObserved": false
+  },
+  "privacy": {
+    "credentialsReadOrExported": false,
+    "keychainACLModified": false,
+    "TCCModified": false,
+    "privateScreenshotsSaved": false
+  },
+  "limitations": [
+    "Initial pre-restart UI showed connection failure; cleared after cold launch. Root cause not established.",
+    "Resource/build update only; future CLI changes still require remembered-tool digest migration and native acceptance.",
+    "Does not guarantee behavior after certificate/team/machine changes or locked keychain."
+  ],
+  "repeatSteps": [
+    "Record installed build and signing identity.",
+    "Quit with native Cmd-Q; verify process absent.",
+    "Open /Applications/GreenBubbles.app via Finder; verify conversations, open one conversation and refresh.",
+    "Stage with scripts/stage-local-brand-update.py and same exact certificate; compare source/candidate DR and verify signatures.",
+    "Quit, preserve original bundle, install verified candidate.",
+    "Finder launch, load a conversation, refresh without credential input.",
+    "Quit, verify process absent, repeat Finder launch and refresh."
+  ]
+}
