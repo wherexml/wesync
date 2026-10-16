@@ -1,4 +1,4 @@
-# GreenBubbles local development
+# WeSync local development
 
 Inherit parent repository instructions and user privacy constraints.
 
@@ -25,7 +25,7 @@ Inherit parent repository instructions and user privacy constraints.
 
 Image thumbnail bounds and native alignment acceptance: see [docs/IMAGE_ALIGNMENT.md](docs/IMAGE_ALIGNMENT.md). Keep portrait thumbnails aligned with the same-side text bubble edge.
 
-Private repository: `wherexml/chat-sync`; `origin` is the private development repository and `upstream` preserves the original project. See [docs/REPOSITORY.md](docs/REPOSITORY.md). Do not publish personal data, credentials, local app bundles, or unreviewed native screenshots.
+Private repository: `wherexml/wesync`; `origin` is the private development repository and `upstream` preserves the original project. See [docs/REPOSITORY.md](docs/REPOSITORY.md). Do not publish personal data, credentials, local app bundles, or unreviewed native screenshots.
 
 正文表情、仅 MD5 的图片表情恢复、专用签名 helper 与原生验收：见 [docs/EMOJI_DISPLAY.md](docs/EMOJI_DISPLAY.md)。保留原消息及复制内容，不绕过 TLS、摘要校验或已记住连接的工具绑定。
 
@@ -60,3 +60,5 @@ AI 读取黑名单位于高级设置的“会话显示”之前，支持个人/�
 转发记录本机图片恢复使用父消息绑定的子序号、同会话精确原消息定位及现有附件校验；CLI 更新须迁移已记住工具摘要，见 `docs/MERGED_RECORDS.md`。
 
 同身份更新免重复授权的 build 36 → 37 实机冷启动与刷新验收见 `docs/LOCAL_SIGNING.md`、`docs/acceptance/reconnect-upgrade-20261016.json`；普通更新不得重新迁移签名身份，CLI 改动仍需摘要迁移及重启验收。
+
+应用显示名 WeSync、私有仓库 `wherexml/wesync`；保持原 Bundle ID、证书、凭据及 CLI/helper 身份，旧安装路径使用兼容软链接。改名、打包与重启验收见 [docs/WESYNC_RENAME.md](docs/WESYNC_RENAME.md)。

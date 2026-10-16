@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds, assembles, signs, notarizes, and staples the GreenBubbles application
+# Builds, assembles, signs, notarizes, and staples the WeSync application
 # together with its privilege-separated input helper.
 #
 # The send path is a Developer-ID direct distribution only: the helper needs
@@ -39,7 +39,7 @@ skip_build="${GREENBUBBLES_SKIP_BUILD:-0}"
 release_public_keys="${GREENBUBBLES_SEND_RELEASE_PUBLIC_KEYS:-}"
 notary_profile="${GREENBUBBLES_NOTARY_PROFILE:-}"
 output_directory="${GREENBUBBLES_OUTPUT_DIRECTORY:-$repository_root/.build/package}"
-app_bundle="$output_directory/GreenBubbles.app"
+app_bundle="$output_directory/WeSync.app"
 helper_bundle="$app_bundle/Contents/Library/LoginItems/GreenBubblesInputHelper.app"
 trust_source="Sources/GreenBubblesSendKit/SendReleaseTrust.swift"
 
@@ -203,15 +203,15 @@ if codesign --display --entitlements - "$helper_bundle" 2>&1 |
   fail "the helper must not disable library validation"
 fi
 
-disk_image="$output_directory/GreenBubbles.dmg"
+disk_image="$output_directory/WeSync.dmg"
 dmg_staging="$output_directory/GreenBubbles-dmg-root"
 echo "==> building $disk_image"
 rm -f "$disk_image"
 rm -rf "$dmg_staging"
 mkdir -p "$dmg_staging"
-/usr/bin/ditto "$app_bundle" "$dmg_staging/GreenBubbles.app"
+/usr/bin/ditto "$app_bundle" "$dmg_staging/WeSync.app"
 /bin/ln -s /Applications "$dmg_staging/Applications"
-hdiutil create -quiet -volname GreenBubbles -srcfolder "$dmg_staging" -ov -format UDZO "$disk_image"
+hdiutil create -quiet -volname WeSync -srcfolder "$dmg_staging" -ov -format UDZO "$disk_image"
 rm -rf "$dmg_staging"
 codesign --force --timestamp --sign "$signing_identity" "$disk_image"
 

@@ -29,7 +29,8 @@ struct HistoryRememberedConnection: Codable {
     guard Bundle.main.bundleIdentifier == "me.greenbubbles.GreenBubbles",
       let bundled = Bundle.main.executableURL?.deletingLastPathComponent().appending(
         path: "greenbubbles"),
-      executable.standardizedFileURL == bundled.standardizedFileURL,
+      executable.resolvingSymlinksInPath().standardizedFileURL
+        == bundled.resolvingSymlinksInPath().standardizedFileURL,
       let manifest = Bundle.main.url(forResource: "ToolUpdate", withExtension: "json"),
       let data = try? Data(contentsOf: manifest),
       let migration = try? JSONDecoder().decode(Migration.self, from: data),

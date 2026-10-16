@@ -362,7 +362,7 @@ struct HistoryDirectLibraryView: View {
           if !isSidebarCollapsed {
             VStack(alignment: .leading, spacing: 3) {
               Text("聊天").font(.system(size: 22, weight: .semibold, design: .rounded))
-              Text("GreenBubbles").font(.system(size: 11, weight: .medium)).foregroundStyle(
+              Text("WeSync").font(.system(size: 11, weight: .medium)).foregroundStyle(
                 .secondary)
             }
             Spacer()

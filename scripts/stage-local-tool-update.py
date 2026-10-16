@@ -18,8 +18,8 @@ parser.add_argument('--output', required=True, type=Path)
 parser.add_argument('--migrate-signing-identity', action='store_true', help='Explicit migration to an Apple-issued signing identity; native permission acceptance required')
 args = parser.parse_args()
 if not re.fullmatch('[0-9a-fA-F]{40}', args.identity): parser.error('Exact certificate SHA-1 required')
-source = Path('/Applications/GreenBubbles.app')
-target = args.output.resolve() / 'GreenBubbles.app'
+source = Path('/Applications/WeSync.app')
+target = args.output.resolve() / 'WeSync.app'
 if target.exists(): parser.error('Use a new staging output directory')
 
 def run(*command):

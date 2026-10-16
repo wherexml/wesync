@@ -71,3 +71,13 @@ python3 scripts/stage-local-brand-update.py --identity 0B6B2162D5FFBCE2155656504
 候选包与安装包 DR 完全一致，签名严格校验通过，helper 字节相同。退出后将 build 36 保存在 `.build/reconnect-upgrade-20261016/installed-build36-backup.app`，安装 build 37。升级后 Finder 冷启动、打开会话、主动刷新均通过；再次完整退出并确认进程不存在，Finder 重开与刷新再次通过。全程未输入密钥/密码，未观察到钥匙串或磁盘权限确认，没有修改 ACL、TCC 或读取凭据。
 
 脱敏可重复验收：`docs/acceptance/reconnect-upgrade-20261016.json`。后续保持相同证书、团队、Bundle ID 和工具迁移校验，普通更新不重复做签名身份迁移。此结果覆盖资源更新；主程序/CLI 变更仍执行对应安装验收，不据此跳过工具摘要迁移或承诺换身份后免授权。
+
+## 2026-10-16：WeSync 改名与权限连续性
+
+build 38 → 39 将应用展示名、菜单栏与侧栏改为 WeSync，安装到 `/Applications/WeSync.app`。沿用同一 Apple Development 证书、团队、Bundle ID、entitlements 和 designated requirement；安装包全部 CLI/helper 字节不变。旧路径 `/Applications/GreenBubbles.app` 保留为兼容软链接，因此已有连接中的工具路径和现有命令继续有效。后续工具摘要迁移对比解析软链接后的包内工具路径，原有完整签名、证书及确切摘要校验仍执行。
+
+主应用由 `git archive HEAD` 加五个改名相关 Swift 文件构建；原有搜索框未完成改动未进入安装包。使用 `stage-local-brand-update.py --source /Applications/GreenBubbles.app --main-executable REBUILT_MAIN --identity EXISTING_CERT --output NEW_DIRECTORY` 暂存；后续 staging 默认来源为 `/Applications/WeSync.app`。候选包与旧包证书、DR、entitlements 一致，严格签名验证及所有 helper 摘要比较通过。
+
+原生退出并确认进程消失后安装，连续两次原生冷启动均自动连接，打开会话与主动刷新通过。侧栏/应用菜单显示 WeSync，菜单栏“打开 WeSync / 退出 WeSync”及隐藏/重新打开窗口通过。全程未输入密钥或密码，未观察到钥匙串或磁盘权限提示，未修改 ACL 或 TCC。
+
+旧 build 38 位于 `.build/wesync-rename-20261016/installed-build38-backup.app`，回滚前须先退出应用并移除兼容软链接，再恢复原安装包。规范见 [WESYNC_RENAME.md](WESYNC_RENAME.md)，脱敏结果与重复步骤见 [改名验收](acceptance/wesync-rename-20261016.json)。

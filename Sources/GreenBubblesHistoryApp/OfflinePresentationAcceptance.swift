@@ -681,7 +681,7 @@
           && assets.avatar(source: "synthetic-presentation-v1", person: "demo-lin") != nil,
         "bad-avatar-preserves-existing")
       let content = VStack(alignment: .leading, spacing: 16) {
-        Text("GreenBubbles · 离线验收").font(.title.bold())
+        Text("WeSync · 离线验收").font(.title.bold())
         Text("仅使用合成消息和应用图标，未连接微信").foregroundStyle(.secondary)
         ForEach(Array(model.directMessages.reversed())) { message in
           HistoryDirectMessageBubble(model: model, message: message, highlighted: false)

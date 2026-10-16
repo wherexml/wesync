@@ -73,7 +73,7 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
       .flatMap { NSImage(contentsOf: $0) }
       ?? NSImage(
         systemSymbolName: "bubble.left.and.bubble.right.fill",
-        accessibilityDescription: "GreenBubbles")!
+        accessibilityDescription: "WeSync")!
     image.size = NSSize(width: 22, height: 22)
     image.isTemplate = true
     return image
@@ -100,9 +100,9 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     applyDockPolicy()
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     item.button?.image = Self.menuIcon
-    item.button?.toolTip = "GreenBubbles"
-    item.button?.setAccessibilityLabel("GreenBubbles 菜单栏")
-    let menu = NSMenu(title: "GreenBubbles")
+    item.button?.toolTip = "WeSync"
+    item.button?.setAccessibilityLabel("WeSync 菜单栏")
+    let menu = NSMenu(title: "WeSync")
     menu.delegate = self
     func add(_ title: String, _ action: Selector) -> NSMenuItem {
       let entry = NSMenuItem(title: title, action: action, keyEquivalent: "")
@@ -110,12 +110,12 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
       menu.addItem(entry)
       return entry
     }
-    _ = add("打开 GreenBubbles", #selector(showHistory))
+    _ = add("打开 WeSync", #selector(showHistory))
     _ = add("隐藏窗口", #selector(hideHistory))
     menu.addItem(.separator())
     dockMenuItem = add("在程序坞中显示", #selector(toggleDock))
     menu.addItem(.separator())
-    _ = add("退出 GreenBubbles", #selector(quitHistory))
+    _ = add("退出 WeSync", #selector(quitHistory))
     item.menu = menu
     statusItem = item
     #if DEBUG
