@@ -9,7 +9,8 @@ struct GreenBubblesHistoryApplication: App {
   @Environment(\.openWindow) private var openWindow
 
   var body: some Scene {
-    WindowGroup("微信聊天记录", id: "history") {
+    // Dock reopen and menu-bar actions must address the same main window.
+    Window("微信聊天记录", id: "history") {
       HistoryRootView(model: model)
         .environment(\.locale, Locale(identifier: "zh_CN"))
         .frame(minWidth: 980, minHeight: 680)
@@ -86,7 +87,10 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
   func activateHistoryWindow() {
     DispatchQueue.main.async {
       NSApp.activate(ignoringOtherApps: true)
-      NSApp.windows.first(where: { $0.canBecomeKey && !$0.isSheet })?.makeKeyAndOrderFront(nil)
+      if let window = NSApp.windows.first(where: { $0.canBecomeKey && !$0.isSheet }) {
+        if window.isMiniaturized { window.deminiaturize(nil) }
+        window.makeKeyAndOrderFront(nil)
+      }
     }
   }
 
@@ -172,9 +176,9 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
 
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool
   {
-    showWindowHandler?()
-    activateHistoryWindow()
-    return true
+    showHistory()
+    // We handled the reopen; do not also request AppKit's default handling.
+    return false
   }
 
   func application(_ application: NSApplication, open urls: [URL]) {
