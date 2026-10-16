@@ -7,18 +7,22 @@ struct HistoryDirectConnectionSheet: View {
   @Environment(\.dismiss) private var dismiss
   @State private var secret = ""
   @State private var validationError: String?
+  @State private var showsConnection = false
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
+    VStack(alignment: .leading, spacing: 0) {
       VStack(alignment: .leading, spacing: 5) {
-        Text("连接微信记录或备份")
+        Text(model.isDirectHistoryOpen ? "高级设置" : "连接微信记录或备份")
           .font(.title2.weight(.semibold))
         Text(
-          "只读取你正在查看的记录，不修改原数据，也无需先恢复全部聊天记录。"
+          "管理 AI 读取权限、会话显示和本机连接。"
         )
         .foregroundStyle(.secondary)
       }
 
+      .padding(24)
+
+      Divider()
       Form {
         HistoryAIReadBlacklistSection(model: model)
         Section("会话显示") {
@@ -31,105 +35,134 @@ struct HistoryDirectConnectionSheet: View {
           Text("按最近消息时间显示会话，选择后立即生效并自动保存。选择“所有”可查看全部会话。")
             .font(.caption).foregroundStyle(.secondary)
         }
-        Section("本机读取工具") {
-          pathField(
-            title: "读取工具",
-            text: $model.liveExecutablePath,
-            actionTitle: "选择…",
-            action: chooseExecutable
-          )
-        }
+        Section {
+          DisclosureGroup(isExpanded: $showsConnection) {
+            VStack(alignment: .leading, spacing: 10) {
+              Divider().padding(.vertical, 6)
+              Text("本机读取工具").font(.subheadline.weight(.semibold))
+              pathField(
+                title: "读取工具",
+                text: $model.liveExecutablePath,
+                actionTitle: "选择…",
+                action: chooseExecutable
+              )
+            }
 
-        Section("聊天记录来源") {
-          Picker("打开方式", selection: $model.directAccessMode) {
-            ForEach(HistoryDirectAccessMode.allCases, id: \.rawValue) { mode in
-              Text(mode.displayName).tag(mode)
+            VStack(alignment: .leading, spacing: 10) {
+              Divider().padding(.vertical, 6)
+              Text("聊天记录来源").font(.subheadline.weight(.semibold))
+              Picker("打开方式", selection: $model.directAccessMode) {
+                ForEach(HistoryDirectAccessMode.allCases, id: \.rawValue) { mode in
+                  Text(mode.displayName).tag(mode)
+                }
+              }
+              pathField(
+                title: "记录文件夹",
+                text: $model.directSourcePath,
+                actionTitle: "选择…",
+                action: chooseSource
+              )
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+              Divider().padding(.vertical, 6)
+              Text("访问凭据").font(.subheadline.weight(.semibold))
+              if model.directAccessMode == .decrypted {
+                Label(
+                  "此方式无需密钥，仅适用于已经解密的数据库文件。",
+                  systemImage: "exclamationmark.shield"
+                )
+                .foregroundStyle(.orange)
+              } else if model.directAccessMode == .snapshotKeychain {
+                Label(
+                  "使用本机钥匙串中已保存的凭据打开这份备份。",
+                  systemImage: "key.fill"
+                )
+                Text(
+                  "钥匙串保存的是这份备份的快捷解锁凭据。打开期间会使用仅本人可读的临时文件，关闭后清理。"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                Label(
+                  "即使电脑丢失或钥匙串条目被删除，也可以用另外保存的 24 个恢复词找回备份。",
+                  systemImage: "externaldrive.badge.checkmark"
+                )
+                .font(.caption)
+                .foregroundStyle(.green)
+              } else if model.directAccessMode == .snapshotLocalCredential {
+                pathField(
+                  title: "本机解锁文件",
+                  text: $model.directLocalCredentialPath,
+                  actionTitle: "选择…",
+                  action: chooseLocalCredential
+                )
+                Text(
+                  "选择之前保存的快捷解锁文件。应用只记住文件位置，不将内容写入普通设置。"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                Label(
+                  "快捷解锁文件被删除后，仍可使用另行保存的恢复词打开备份。请不要用它代替备份。",
+                  systemImage: "externaldrive.badge.exclamationmark"
+                )
+                .font(.caption)
+                .foregroundStyle(.orange)
+              } else if model.directAccessMode == .snapshotRecoveryKit {
+                pathField(
+                  title: "恢复词文件",
+                  text: $model.directRecoveryKitPath,
+                  actionTitle: "选择…",
+                  action: chooseRecoveryKit
+                )
+                Text(
+                  "恢复词文件只在本机读取，用其中的 24 个恢复词解锁备份。恢复词不会写入命令参数或普通设置。"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                Label(
+                  "请在其他安全位置另存一份恢复词，不要只保留本机这一份。",
+                  systemImage: "exclamationmark.triangle"
+                )
+                .font(.caption)
+                .foregroundStyle(.orange)
+              } else {
+                SecureField(secretTitle, text: $secret)
+                  .textContentType(.password)
+                Text(secretExplanation)
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              }
+            }
+            VStack(alignment: .leading, spacing: 10) {
+              Divider().padding(.vertical, 6)
+              Text("连接偏好").font(.subheadline.weight(.semibold))
+              Toggle("记住此连接，下次启动自动打开", isOn: $model.rememberDirectConnection)
+              Text("凭据仅保存在本机钥匙串中。")
+                .font(.caption).foregroundStyle(.secondary)
+              Button("忘记已保存的连接") { model.forgetRememberedConnection() }
+              if let notice = model.connectionPersistenceNotice {
+                Text(notice).font(.caption).foregroundStyle(.orange)
+              }
+            }
+          } label: {
+            HStack(spacing: 10) {
+              Image(systemName: "externaldrive").foregroundStyle(HistoryDesign.accent)
+              VStack(alignment: .leading, spacing: 4) {
+                Text("连接设置").fontWeight(.medium)
+                Text("记录来源、读取工具与访问凭据")
+                  .font(.caption).foregroundStyle(.secondary)
+              }
+              Spacer()
+              if model.isDirectHistoryOpen {
+                Label("已连接", systemImage: "checkmark.circle.fill")
+                  .font(.caption).foregroundStyle(HistoryDesign.accent)
+              }
             }
           }
-          pathField(
-            title: "记录文件夹",
-            text: $model.directSourcePath,
-            actionTitle: "选择…",
-            action: chooseSource
-          )
-        }
-
-        Section("访问凭据") {
-          if model.directAccessMode == .decrypted {
-            Label(
-              "此方式无需密钥，仅适用于已经解密的数据库文件。",
-              systemImage: "exclamationmark.shield"
-            )
-            .foregroundStyle(.orange)
-          } else if model.directAccessMode == .snapshotKeychain {
-            Label(
-              "使用本机钥匙串中已保存的凭据打开这份备份。",
-              systemImage: "key.fill"
-            )
-            Text(
-              "钥匙串保存的是这份备份的快捷解锁凭据。打开期间会使用仅本人可读的临时文件，关闭后清理。"
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            Label(
-              "即使电脑丢失或钥匙串条目被删除，也可以用另外保存的 24 个恢复词找回备份。",
-              systemImage: "externaldrive.badge.checkmark"
-            )
-            .font(.caption)
-            .foregroundStyle(.green)
-          } else if model.directAccessMode == .snapshotLocalCredential {
-            pathField(
-              title: "本机解锁文件",
-              text: $model.directLocalCredentialPath,
-              actionTitle: "选择…",
-              action: chooseLocalCredential
-            )
-            Text(
-              "选择之前保存的快捷解锁文件。应用只记住文件位置，不将内容写入普通设置。"
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            Label(
-              "快捷解锁文件被删除后，仍可使用另行保存的恢复词打开备份。请不要用它代替备份。",
-              systemImage: "externaldrive.badge.exclamationmark"
-            )
-            .font(.caption)
-            .foregroundStyle(.orange)
-          } else if model.directAccessMode == .snapshotRecoveryKit {
-            pathField(
-              title: "恢复词文件",
-              text: $model.directRecoveryKitPath,
-              actionTitle: "选择…",
-              action: chooseRecoveryKit
-            )
-            Text(
-              "恢复词文件只在本机读取，用其中的 24 个恢复词解锁备份。恢复词不会写入命令参数或普通设置。"
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            Label(
-              "请在其他安全位置另存一份恢复词，不要只保留本机这一份。",
-              systemImage: "exclamationmark.triangle"
-            )
-            .font(.caption)
-            .foregroundStyle(.orange)
-          } else {
-            SecureField(secretTitle, text: $secret)
-              .textContentType(.password)
-            Text(secretExplanation)
-              .font(.caption)
-              .foregroundStyle(.secondary)
-          }
+          .accessibilityIdentifier("connection-settings-disclosure")
         }
       }
       .formStyle(.grouped)
-      Toggle("记住此连接，下次启动自动打开", isOn: $model.rememberDirectConnection)
-      Text("连接成功后，凭据只保存在本机钥匙串中，不写入普通配置文件。")
-        .font(.caption).foregroundStyle(.secondary)
-      Button("忘记已保存的连接") { model.forgetRememberedConnection() }
-      if let notice = model.connectionPersistenceNotice {
-        Text(notice).font(.caption).foregroundStyle(.orange)
-      }
 
       if let validationError {
         Label(validationError, systemImage: "exclamationmark.triangle.fill")
@@ -137,25 +170,28 @@ struct HistoryDirectConnectionSheet: View {
           .foregroundStyle(.red)
       }
 
-      GroupBox {
-        Label(
-          "加密备份有独立的恢复凭据。以后查看备份时，不需要原来的微信数据库密钥。",
-          systemImage: "key.horizontal.fill"
-        )
-        .font(.callout)
-        .foregroundStyle(.secondary)
-      }
+      Divider()
 
       HStack {
         Button("取消") { dismiss() }
           .keyboardShortcut(.cancelAction)
         Spacer()
-        Button("连接并查看", action: connect)
-          .buttonStyle(HistoryActionStyle(prominent: true))
-          .keyboardShortcut(.defaultAction)
+        if model.isDirectHistoryOpen && !showsConnection {
+          Text("会话显示与黑名单独立保存")
+            .font(.caption).foregroundStyle(.secondary)
+          Button("完成") { dismiss() }
+            .buttonStyle(HistoryActionStyle(prominent: true))
+            .keyboardShortcut(.defaultAction)
+        } else {
+          Button("连接并查看", action: connect)
+            .buttonStyle(HistoryActionStyle(prominent: true))
+            .keyboardShortcut(.defaultAction)
+        }
       }
+      .padding(20)
     }
-    .padding(24)
+    .frame(width: 680, height: 560)
+    .onAppear { showsConnection = !model.isDirectHistoryOpen }
     .onChange(of: model.directAccessMode) { _, mode in
       if mode == .decrypted || mode == .snapshotRecoveryKit
         || mode == .snapshotLocalCredential || mode == .snapshotKeychain
