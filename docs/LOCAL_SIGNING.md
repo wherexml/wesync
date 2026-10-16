@@ -72,6 +72,16 @@ python3 scripts/stage-local-brand-update.py --identity 0B6B2162D5FFBCE2155656504
 
 脱敏可重复验收：`docs/acceptance/reconnect-upgrade-20261016.json`。后续保持相同证书、团队、Bundle ID 和工具迁移校验，普通更新不重复做签名身份迁移。此结果覆盖资源更新；主程序/CLI 变更仍执行对应安装验收，不据此跳过工具摘要迁移或承诺换身份后免授权。
 
+## 2026-10-16：rustls CLI 更新与摘要迁移
+
+build 37 → 38 已安装提交 `fc59e9d` 的 rustls 0.23.46 CLI。使用 `git archive` 导出的已提交 Rust 源码执行 release/locked 构建，暂存主程序来自原安装包，不构建工作区 Swift；搜索框未完成修改未进入应用。沿用同一证书，不使用签名身份迁移开关。
+
+使用归档的 `stage-local-tool-update.py` 更新主 CLI 和表情查询 helper，签名 `ToolUpdate.json` 精确绑定已安装旧摘要与新摘要，并保留受旧包签名保护的前驱历史。验证两工具与 App 证书相同、DR 不变、表情摘要一致、发送 helper 字节不变；移除验证副本的签名后比较主程序代码，确认未混入 UI 变动。没有读取已记住连接的凭据内容。
+
+退出并确认进程不存在后安装 build 38；原 build 37 保留于 `.build/rustls-install-20261016/installed-build37-backup.app`。通过原生应用入口启动，首次连接及再次完整退出冷启动后的消息加载、主动刷新均通过，全程未输入密钥/密码，未观察到钥匙串或磁盘权限弹窗。Finder 当时被其他任务使用，未继续操作其窗口。已安装 CLI 的 6 项合成元数据 E2E 通过，命令行软链接仍指向安装包内工具。
+
+脱敏证据与复验步骤：[rustls 本机安装验收](acceptance/rustls-installed-20261016.json)。本次实测覆盖 CLI 摘要变化后的连接连续性，不承诺换身份、钥匙串锁定或证书到期后永久免授权。
+
 ## 2026-10-16：WeSync 改名与权限连续性
 
 build 38 → 39 将应用展示名、菜单栏与侧栏改为 WeSync，安装到 `/Applications/WeSync.app`。沿用同一 Apple Development 证书、团队、Bundle ID、entitlements 和 designated requirement；安装包全部 CLI/helper 字节不变。旧路径 `/Applications/GreenBubbles.app` 保留为兼容软链接，因此已有连接中的工具路径和现有命令继续有效。后续工具摘要迁移对比解析软链接后的包内工具路径，原有完整签名、证书及确切摘要校验仍执行。

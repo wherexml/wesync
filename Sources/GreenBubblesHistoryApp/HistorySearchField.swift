@@ -42,7 +42,9 @@ private struct HistoryNativeSearchField: NSViewRepresentable {
     field.sendsWholeSearchString = true
     field.sendsSearchStringImmediately = false
     field.focusRingType = .none
-    field.isBezeled = false
+    // Borderless NSSearchField loses the native field-editor inset on macOS.
+    // Keep its search-cell layout; SwiftUI supplies the surrounding card.
+    field.isBezeled = true
     field.drawsBackground = false
     field.font = .systemFont(ofSize: 13)
     field.focusOnAttach = focusOnAppear
@@ -84,7 +86,19 @@ private struct HistoryNativeSearchField: NSViewRepresentable {
     }
   }
 }
+/// Retain AppKit's bezeled text/editor geometry without drawing a second bezel.
+private final class HistorySearchFieldCell: NSSearchFieldCell {
+  override func draw(withFrame cellFrame: NSRect, in controlView: NSView) {
+    super.drawInterior(withFrame: cellFrame, in: controlView)
+  }
+}
+
 private final class ActivatingSearchField: NSSearchField {
+  override class var cellClass: AnyClass? {
+    get { HistorySearchFieldCell.self }
+    set {}
+  }
+
   var focusOnAttach = false
 
   override func viewDidMoveToWindow() {
