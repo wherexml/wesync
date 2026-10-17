@@ -29,3 +29,21 @@ python3 scripts/dependency-upgrade-e2e.py OLD_CLI NEW_CLI REPORT.json --fixture-
 ```
 
 脚本生成临时 SQLCipher 数据库，随机凭据仅经 stdin 传递，保护文件在临时目录中随测试销毁；产物只保留二进制 SHA-256 和各项结果。覆盖 TOML 输出设置与无效输入，以及恢复词/Argon2 口令保护快照的双向验证、消息读取、错误口令/恢复词拒绝。初版夹具使用 Python 明文 SQLite 时，升级前后均在逻辑备份处拒绝；此记录不声称明文来源转换已通过，本次兼容性范围为实际加密来源。
+
+### #2 argon2 0.5 → 0.6
+
+现有 `Argon2::new`、`Params::new` 和 `hash_password_into` 可编译；固定 Argon2id v19、64 MiB、3 次、并行度 1、32 字节输出，未改格式标识与口令边界。更新 blake2/password-hash 和新增 phc 的许可证条目，同步分发基线；需通过跨版本快照互读后才合并。
+
+### #3 bip39 2.2 → 3.0
+
+应用使用系统随机熵、`from_entropy_in` 和 `parse_in_normalized`，不调用新版改变的助记词生成接口；继续固定英语 24 词与 zeroize。分发基线和 CC0 许可条目随版本更新，快照格式及恢复保护器标识不变。跨版本验收覆盖旧新恢复词双向解锁与错误恢复词拒绝。
+
+### #4 zstd 0.13 → 0.14
+
+主 CLI 使用 0.14，上游固定 wx-db 仍使用 0.13，保留两个 Rust 封装且共用 zstd-sys 2.1.0；底层 zstd 仍为 1.5.7。不修改 wx-cli 固定来源。新版 zstd/zstd-safe/zstd-sys 的许可声明变为 BSD-3-Clause，已核对包内 LICENSE 并重新生成许可证清单与原生依赖基线。现有压缩暂存往返、加密 WAL 恢复及 CLI 快照验收覆盖构建与运行兼容性。
+
+### #5 thiserror 2.0.20 → 2.0.21 与集成安装
+
+补丁升级仅改变错误派生宏及对应锁定包，保持原错误枚举和错误码；同步分发基线与许可证清单。
+
+安装脚本修复前的失败场景：更新 CLI 后仍携带旧许可证/SBOM；本机 Apple Development 包继续显示旧 Developer ID 构建来源；记录本次源码时误将保留的发送工具称为重新构建。处理方式是在最终签名前同步仓库许可证和已审查 SBOM，记录本机更新来源、构建输入摘要、签名团队与保留工具摘要，并明确本机证书更新不代表 Developer ID 分发。验收使用真实 staging、严格签名校验、资源比对及安装冷启动，不新增单元测试。

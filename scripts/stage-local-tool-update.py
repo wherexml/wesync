@@ -10,6 +10,7 @@ import plistlib
 import re
 import shutil
 import subprocess
+import time
 
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -53,6 +54,33 @@ info = plistlib.loads(info_path.read_bytes())
 info['CFBundleVersion'] = str(int(info['CFBundleVersion'])+1)
 info['GBStickerQuerySHA256'] = digest(mac/'greenbubbles-sticker-query')
 info_path.write_bytes(plistlib.dumps(info))
+# Dependency updates must carry their reviewed notices and inventory into the
+# signed bundle, rather than inheriting the previously installed versions.
+resources = target/'Contents/Resources'
+for name in ('LICENSE', 'NOTICE.md', 'THIRD_PARTY_NOTICES.md'):
+    shutil.copy2(root/name, resources/name)
+shutil.copy2(root/'docs/distribution-dependencies.json', resources/'sbom.json')
+tool_details = run('/usr/bin/codesign', '-dvv', str(mac/'greenbubbles')).stderr
+tool_team = re.search(r'TeamIdentifier=([A-Z0-9]+)', tool_details)
+provenance = {
+    'formatVersion': 1,
+    'version': info['CFBundleShortVersionString'],
+    'build': info['CFBundleVersion'],
+    'gitCommit': run('git', '-C', str(root), 'rev-parse', 'HEAD').stdout.strip(),
+    'workingTreeChanged': bool(run('git', '-C', str(root), 'status', '--porcelain').stdout.strip()),
+    'builtAtUnixSeconds': int(time.time()),
+    'teamIdentifier': tool_team.group(1) if tool_team else None,
+    'distribution': 'local-certificate-update',
+    'sourceScope': 'Rebuilt history application and query tools; send/input helpers preserved from installed app',
+    'buildInputsSHA256': {
+        'greenbubbles-history': digest(root/'.build/release/greenbubbles-history'),
+        'greenbubbles': digest(root/'Native/GreenBubbles/target/release/greenbubbles'),
+        'Cargo.lock': digest(root/'Native/GreenBubbles/Cargo.lock'),
+    },
+    'preservedSendHelperSHA256': digest(mac/'greenbubbles-send'),
+    'notarizationPerformed': False,
+}
+(resources/'build-provenance.json').write_text(json.dumps(provenance, indent=2)+'\n')
 run('/usr/bin/codesign','--force','--sign',args.identity,'--preserve-metadata=entitlements,flags,runtime',str(target))
 run('/usr/bin/codesign','--verify','--deep','--strict',str(target))
 new_requirement = requirement(target)
@@ -73,4 +101,6 @@ run('/usr/bin/codesign','--force','--sign',args.identity,'--preserve-metadata=en
 run('/usr/bin/codesign','--verify','--deep','--strict',str(probe))
 if requirement(probe) != new_requirement: raise RuntimeError('Signing identity changed across a resource update')
 if digest(mac/'greenbubbles-send') != digest(source/'Contents/MacOS/greenbubbles-send'): raise RuntimeError('Send helper unexpectedly changed')
-print(json.dumps({'staged':str(target),'stableIdentity':True,'identityMigration':new_requirement != old_requirement,'exactToolMigration':True,'sendHelperUnchanged':True,'build':info['CFBundleVersion']}))
+if digest(resources/'THIRD_PARTY_NOTICES.md') != digest(root/'THIRD_PARTY_NOTICES.md'): raise RuntimeError('Dependency notices do not match reviewed source')
+if digest(resources/'sbom.json') != digest(root/'docs/distribution-dependencies.json'): raise RuntimeError('Dependency inventory does not match reviewed source')
+print(json.dumps({'staged':str(target),'stableIdentity':True,'identityMigration':new_requirement != old_requirement,'exactToolMigration':True,'sendHelperUnchanged':True,'dependencyMetadataCurrent':True,'build':info['CFBundleVersion']}))

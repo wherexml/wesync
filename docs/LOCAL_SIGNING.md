@@ -91,3 +91,9 @@ build 38 → 39 将应用展示名、菜单栏与侧栏改为 WeSync，安装到
 原生退出并确认进程消失后安装，连续两次原生冷启动均自动连接，打开会话与主动刷新通过。侧栏/应用菜单显示 WeSync，菜单栏“打开 WeSync / 退出 WeSync”及隐藏/重新打开窗口通过。全程未输入密钥或密码，未观察到钥匙串或磁盘权限提示，未修改 ACL 或 TCC。
 
 旧 build 38 位于 `.build/wesync-rename-20261016/installed-build38-backup.app`，回滚前须先退出应用并移除兼容软链接，再恢复原安装包。规范见 [WESYNC_RENAME.md](WESYNC_RENAME.md)，脱敏结果与重复步骤见 [改名验收](acceptance/wesync-rename-20261016.json)。
+
+## 依赖更新的随包元数据
+
+`stage-local-tool-update.py` 在最终签名前同步仓库 LICENSE、NOTICE.md、THIRD_PARTY_NOTICES.md 与已审查的分发依赖基线（随包 sbom.json）。构建来源记录本机证书更新、当前源码提交及脏工作区状态、主程序/CLI 构建输入摘要、实际签名团队和保留的发送工具摘要；不得继续沿用旧包的 Developer ID 分发标签。它不会公证，也不把保留的 helper 标为本次重新构建。
+
+依赖升级仍按同身份摘要迁移流程执行；检查资源与仓库一致、严格签名及 DR 稳定，安装后验证两次原生冷启动自动连接与主动刷新。2026-10-17 的集成结果见 `docs/acceptance/dependency-upgrades-20261017.json`。
