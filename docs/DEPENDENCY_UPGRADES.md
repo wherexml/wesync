@@ -37,3 +37,7 @@ python3 scripts/dependency-upgrade-e2e.py OLD_CLI NEW_CLI REPORT.json --fixture-
 ### #3 bip39 2.2 → 3.0
 
 应用使用系统随机熵、`from_entropy_in` 和 `parse_in_normalized`，不调用新版改变的助记词生成接口；继续固定英语 24 词与 zeroize。分发基线和 CC0 许可条目随版本更新，快照格式及恢复保护器标识不变。跨版本验收覆盖旧新恢复词双向解锁与错误恢复词拒绝。
+
+### #4 zstd 0.13 → 0.14
+
+主 CLI 使用 0.14，上游固定 wx-db 仍使用 0.13，保留两个 Rust 封装且共用 zstd-sys 2.1.0；底层 zstd 仍为 1.5.7。不修改 wx-cli 固定来源。新版 zstd/zstd-safe/zstd-sys 的许可声明变为 BSD-3-Clause，已核对包内 LICENSE 并重新生成许可证清单与原生依赖基线。现有压缩暂存往返、加密 WAL 恢复及 CLI 快照验收覆盖构建与运行兼容性。

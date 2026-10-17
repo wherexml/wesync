@@ -307,6 +307,108 @@
         }
       ],
       "crossVersionE2E": "docs/acceptance/dependency-pr3-e2e-20261017.json"
+    },
+    "4": {
+      "originalHead": "6fdf4c1ca972f945f19bc65c4376a6cbffafcd7a",
+      "base": "2b73ff0db05dbf19cd3376f3749ac18fe363113c",
+      "localCI": ".build/local-ci/20261017T022326.722196Z/summary.json",
+      "localCIStatus": "PASS",
+      "sourceSHA256": "7b6a192446f0f06d5f8c92dedd71dc6403e345f3493497c32ea2481ee73174e7",
+      "checks": [
+        {
+          "name": "Verify pinned audit tools",
+          "status": "PASS"
+        },
+        {
+          "name": "Show Swift version",
+          "status": "PASS"
+        },
+        {
+          "name": "Check formatting",
+          "status": "PASS"
+        },
+        {
+          "name": "Run tests",
+          "status": "PASS"
+        },
+        {
+          "name": "Verify text emoji and bounded local stickers end to end",
+          "status": "PASS"
+        },
+        {
+          "name": "Build release executable",
+          "status": "PASS"
+        },
+        {
+          "name": "Check distribution dependency baseline",
+          "status": "PASS"
+        },
+        {
+          "name": "Check secret hygiene",
+          "status": "PASS"
+        },
+        {
+          "name": "Check cross-language pinned build profile",
+          "status": "PASS"
+        },
+        {
+          "name": "Test the personal-memory driver",
+          "status": "PASS"
+        },
+        {
+          "name": "Check Homebrew formula syntax",
+          "status": "PASS"
+        },
+        {
+          "name": "Check packaging manifests",
+          "status": "PASS"
+        },
+        {
+          "name": "Check the release helper contains no diagnostic bypass",
+          "status": "PASS"
+        },
+        {
+          "name": "Check the send path ships closed",
+          "status": "PASS"
+        },
+        {
+          "name": "Show Rust version",
+          "status": "PASS"
+        },
+        {
+          "name": "Audit Rust dependencies",
+          "status": "PASS"
+        },
+        {
+          "name": "Reproduce the third-party notice bundle",
+          "status": "PASS"
+        },
+        {
+          "name": "Check Rust formatting",
+          "status": "PASS"
+        },
+        {
+          "name": "Lint restoration engine",
+          "status": "PASS"
+        },
+        {
+          "name": "Run restoration-engine tests",
+          "status": "PASS"
+        },
+        {
+          "name": "Verify exact-message sticker metadata end to end",
+          "status": "PASS"
+        },
+        {
+          "name": "Verify AI read blacklist end to end",
+          "status": "PASS"
+        },
+        {
+          "name": "Check the cross-language send vectors are current",
+          "status": "PASS"
+        }
+      ],
+      "crossVersionE2E": "docs/acceptance/dependency-pr4-e2e-20261017.json"
     }
   },
   "installedAcceptance": "PENDING",
