@@ -356,7 +356,7 @@ class UserProject(unittest.TestCase):
         written = set((self.project / ".gitignore").read_text(encoding="utf-8").split())
         for reference in ("format-python.md", "format-markdown.md"):
             path = (Path(__file__).resolve().parent.parent / "skills"
-                    / "greenbubbles-personal-memory" / "references" / reference)
+                    / "wechatsync-personal-memory" / "references" / reference)
             documented = path.read_text(encoding="utf-8")
             block = documented.split("## `.gitignore`", 1)[1].split("```")[1]
             with self.subTest(reference=reference):
@@ -499,7 +499,7 @@ class LanguagePromptInjection(unittest.TestCase):
 
 class PortableSkillPrompts(unittest.TestCase):
     def test_only_selected_format_references_are_inlined(self):
-        root = Path(__file__).resolve().parent.parent / "skills/greenbubbles-personal-memory"
+        root = Path(__file__).resolve().parent.parent / "skills/wechatsync-personal-memory"
         for fmt, included, excluded in (
             ("markdown", "format-markdown.md", "format-python.md"),
             ("python", "format-python.md", "format-markdown.md"),

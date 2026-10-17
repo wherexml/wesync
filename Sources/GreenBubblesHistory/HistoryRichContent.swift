@@ -84,13 +84,18 @@ public struct HistoryStickerResource: Sendable {
 
 public struct HistorySticker: Sendable {
   public let resources: [HistoryStickerResource]
+  public let md5: String?
   public var previewURLs: [URL] { resources.filter { $0.aesKey == nil }.map(\.url) }
   public init(previewURLs: [URL]) {
+    md5 = nil
     resources = previewURLs.map {
       HistoryStickerResource(url: $0, kind: .original, md5: nil, aesKey: nil)
     }
   }
-  init(resources: [HistoryStickerResource]) { self.resources = resources }
+  init(resources: [HistoryStickerResource], md5: String?) {
+    self.resources = resources
+    self.md5 = md5
+  }
 }
 
 extension HistoryDirectMessage {
@@ -112,6 +117,16 @@ extension HistoryDirectMessage {
     let md5 =
       Self.stickerHex(reader.attributes["md5"], bytes: 16) == nil
       ? nil : reader.attributes["md5"]?.lowercased()
+    let metadata = content.fields["StickerResource"]?.fields ?? [:]
+    if let md5, metadata["md5"]?.string?.lowercased() == md5 {
+      for field in ["cdnurl", "encrypturl", "aeskey", "thumburl"] {
+        if reader.attributes[field]?.isEmpty != false, let value = metadata[field]?.string,
+          value.utf8.count <= 4096
+        {
+          reader.attributes[field] = value
+        }
+      }
+    }
     var resources: [HistoryStickerResource] = []
     for (attribute, kind) in [
       ("cdnurl", HistoryStickerResource.Kind.original), ("encrypturl", .encrypted),
@@ -126,7 +141,7 @@ extension HistoryDirectMessage {
         HistoryStickerResource(
           url: url, kind: kind, md5: kind == .thumbnail ? nil : md5, aesKey: key))
     }
-    return HistorySticker(resources: resources)
+    return HistorySticker(resources: resources, md5: md5)
   }
   private static func stickerHex(_ text: String?, bytes: Int) -> Data? {
     guard let text, text.utf8.count == bytes * 2,
@@ -149,6 +164,9 @@ extension HistoryDirectMessage {
       parts.user == nil, parts.password == nil, parts.port == nil,
       ["http", "https"].contains(parts.scheme?.lowercased() ?? "")
     else { return nil }
+    // Historical CDN host has no matching TLS certificate. The same resource path
+    // is served by Tencent's TLS-valid wxapp endpoint; MD5 is still verified.
+    if parts.host?.lowercased() == "vweixinf.tc.qq.com" { parts.host = "wxapp.tc.qq.com" }
     parts.scheme = "https"
     return parts.url
   }

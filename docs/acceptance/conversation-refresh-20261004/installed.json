@@ -1,0 +1,39 @@
+{
+  "installedBuild": "27",
+  "observedAt": "2026-10-04T01:39:30.448783+08:00",
+  "status": "PASS",
+  "nativeQuitAfterInstall": true,
+  "nativeColdRestart": true,
+  "automaticReconnectWithoutKeyEntry": true,
+  "stableSigningIdentityVerified": true,
+  "helpersUnchanged": true,
+  "credentialsEnteredByAgent": false,
+  "connectionRecordsModified": false,
+  "sameSourceIdentityAsBoundedCLI": true,
+  "sidebarTimestampComparison": {
+    "sampleA": {
+      "source": "10-04 01:29",
+      "native": "01:29",
+      "matches": true
+    },
+    "sampleB": {
+      "source": "10-04 00:57",
+      "native": "00:57",
+      "matches": true
+    },
+    "sampleC": {
+      "source": "10-03 22:00",
+      "native": "昨天 22:00",
+      "matches": true
+    }
+  },
+  "manualRefreshPreservesSelection": true,
+  "nativeHistoryScrollWorks": true,
+  "databaseAndWALMonitorsAttached": true,
+  "sourceMonitorDescriptors": 4,
+  "boundedObservationSeconds": 90,
+  "observedAutomaticHeadQueries": 0,
+  "syntheticAutoEventAndMinimumGap": "PASS",
+  "nativeSceneForegroundContinuity": "NOT_VERIFIED",
+  "privacy": "No credentials, source paths, real chat contents, identifiers or native screenshots retained."
+}

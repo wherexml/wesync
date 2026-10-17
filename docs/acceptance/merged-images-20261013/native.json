@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-13",
+  "build": "36",
+  "stableAppleDevelopmentIdentity": "PASS",
+  "exactBundledToolDigestMigration": "PASS",
+  "nativeQuitUpdateAndReopen": "PASS",
+  "automaticConnectionWithoutKeyEntry": "PASS",
+  "liveMergedImageThumbnail": "PASS",
+  "liveImageEnlargementPixels": "PASS",
+  "closeImageReturnsToRecord": "PASS",
+  "syntheticImageLoadAndDecode": "PASS",
+  "syntheticNativeThumbnail": "PASS",
+  "missingImageRetryUI": "NOT_RUN",
+  "cliAttachmentE2E": "8 passed",
+  "rustClippy": "PASS",
+  "privateScreenshotsOrMessageTextCommitted": false,
+  "remoteAttachmentRequests": false,
+  "limitations": "No cross-conversation search or CDN downloads; missing local copies remain unavailable. Voice/video/file children and nested records remain placeholders."
+}

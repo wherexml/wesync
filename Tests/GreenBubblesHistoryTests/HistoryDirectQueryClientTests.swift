@@ -55,7 +55,7 @@ struct HistoryDirectQueryClientTests {
       try fixture.arguments()
         == [
           "messages", "search", fixture.sourceURL.path, "--query-stdin", "--limit", "7",
-          "--conversation", "chat-a", "--cursor", "cursor-search", "--passphrase-stdin",
+          "--conversation", "chat-a", "--cursor", "cursor-search", "--passphrase-stdin", "--json",
         ])
     #expect(try fixture.standardInput() == Data("\(key)\n\(query)".utf8))
     let arguments = fixture.argumentsText()
@@ -178,7 +178,7 @@ struct HistoryDirectQueryClientTests {
 
     #expect(page.source.mode == "snapshotEncrypted")
     #expect(try fixture.standardInput() == Data("\(passphrase)\n\(query)".utf8))
-    #expect(try fixture.arguments().last == "--snapshot-passphrase-stdin")
+    #expect(try fixture.arguments().suffix(2) == ["--snapshot-passphrase-stdin", "--json"])
     #expect(!fixture.argumentsText().contains(passphrase))
     #expect(!fixture.argumentsText().contains(query))
   }

@@ -2,10 +2,35 @@ import AppKit
 import SwiftUI
 
 /// Explicitly activates the window before editing; preserves the native IME field editor.
-struct HistorySearchField: NSViewRepresentable {
+struct HistorySearchField: View {
   let prompt: String
   @Binding var text: String
+  var focusOnAppear = false
   var onSubmit: () -> Void = {}
+  var onCancel: (() -> Void)?
+
+  var body: some View {
+    HistoryNativeSearchField(
+      prompt: prompt, text: $text, focusOnAppear: focusOnAppear,
+      onSubmit: onSubmit, onCancel: onCancel
+    )
+    .padding(.horizontal, 8)
+    .frame(height: 32)
+    .background(HistoryDesign.card, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 9, style: .continuous)
+        .strokeBorder(HistoryDesign.border.opacity(0.65), lineWidth: 0.5)
+    }
+  }
+}
+
+private struct HistoryNativeSearchField: NSViewRepresentable {
+  let prompt: String
+  @Binding var text: String
+  let focusOnAppear: Bool
+  let onSubmit: () -> Void
+  let onCancel: (() -> Void)?
+
   func makeCoordinator() -> Coordinator { Coordinator(self) }
   func makeNSView(context: Context) -> NSSearchField {
     let field = ActivatingSearchField()
@@ -17,8 +42,12 @@ struct HistorySearchField: NSViewRepresentable {
     field.sendsWholeSearchString = true
     field.sendsSearchStringImmediately = false
     field.focusRingType = .none
-    field.bezelStyle = .roundedBezel
-    field.font = .systemFont(ofSize: 14)
+    // Borderless NSSearchField loses the native field-editor inset on macOS.
+    // Keep its search-cell layout; SwiftUI supplies the surrounding card.
+    field.isBezeled = true
+    field.drawsBackground = false
+    field.font = .systemFont(ofSize: 13)
+    field.focusOnAttach = focusOnAppear
     return field
   }
   func updateNSView(_ field: NSSearchField, context: Context) {
@@ -30,17 +59,60 @@ struct HistorySearchField: NSViewRepresentable {
       field.stringValue = text
     }
   }
-  final class Coordinator: NSObject, NSSearchFieldDelegate {
-    var parent: HistorySearchField
-    init(_ parent: HistorySearchField) { self.parent = parent }
+  @MainActor final class Coordinator: NSObject, NSSearchFieldDelegate {
+    var parent: HistoryNativeSearchField
+    init(_ parent: HistoryNativeSearchField) { self.parent = parent }
     func controlTextDidChange(_ obj: Notification) {
       guard let field = obj.object as? NSSearchField else { return }
       parent.text = field.stringValue
     }
-    @objc func submit() { parent.onSubmit() }
+    @objc func submit(_ field: NSSearchField) {
+      // AppKit also sends the action when its clear button is clicked, before
+      // SwiftUI has necessarily received the text-change notification.
+      parent.text = field.stringValue
+      guard !field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        return
+      }
+      parent.onSubmit()
+    }
+    func control(
+      _ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector
+    ) -> Bool {
+      guard commandSelector == #selector(NSResponder.cancelOperation(_:)),
+        let onCancel = parent.onCancel
+      else { return false }
+      onCancel()
+      return true
+    }
   }
 }
+/// Retain AppKit's bezeled text/editor geometry without drawing a second bezel.
+private final class HistorySearchFieldCell: NSSearchFieldCell {
+  override func draw(withFrame cellFrame: NSRect, in controlView: NSView) {
+    super.drawInterior(withFrame: cellFrame, in: controlView)
+  }
+}
+
 private final class ActivatingSearchField: NSSearchField {
+  override class var cellClass: AnyClass? {
+    get { HistorySearchFieldCell.self }
+    set {}
+  }
+
+  var focusOnAttach = false
+
+  override func viewDidMoveToWindow() {
+    super.viewDidMoveToWindow()
+    guard focusOnAttach, window != nil else { return }
+    focusOnAttach = false
+    DispatchQueue.main.async { [weak self] in
+      guard let self, let window = self.window else { return }
+      NSApp.activate(ignoringOtherApps: true)
+      window.makeKeyAndOrderFront(nil)
+      window.makeFirstResponder(self)
+    }
+  }
+
   override func mouseDown(with event: NSEvent) {
     NSApp.activate(ignoringOtherApps: true)
     window?.makeKeyAndOrderFront(nil)

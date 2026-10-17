@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-11",
+  "privacy": "Only scrubbed booleans; no contacts, IDs, messages, credentials, or live screenshots.",
+  "build28": {
+    "initialKeychainApprovalRequired": true,
+    "coldRestartWithoutKeyEntry": true,
+    "topOfConversationSettings": true,
+    "multiplePeopleAndGroupSelection": true,
+    "selectedTabAndSave": true,
+    "selectionPersistsAfterRestart": true,
+    "threeSelectedIDsDeniedAgainstSyntheticSource": true,
+    "originalEmptySelectionRestored": true
+  },
+  "syntheticUI": {
+    "searchRetainsSelection": true,
+    "cancelDoesNotSave": true
+  },
+  "build29": {
+    "sameLocalCertificateAndDR": true,
+    "keychainPromptRepeated": true,
+    "avatarUI": "implemented; pending final signed build acceptance"
+  },
+  "appleSigningMigration": "passed; native user-confirmed Full Disk Access rebinding",
+  "signingDiagnosis": {
+    "sameSelfSignedDRInsufficient": true,
+    "appleIssuedDevelopmentIdentityAvailable": true,
+    "credentialEnumeration": false,
+    "exactOwnedItemAccessMetadataOnly": true,
+    "partitionACLChanged": false
+  },
+  "build32": {
+    "sameAppleDevelopmentIdentityAsBuild31": true,
+    "installedViaVerifiedBundle": true,
+    "finderColdLaunchWithoutKeyEntry": true,
+    "noRepeatedKeychainPrompt": true,
+    "noRepeatedDiskPermissionPrompt": true,
+    "realNamesAndSourceAvatarsVisuallyVerified": true,
+    "userSavedSelectionPreserved": true,
+    "privateScreenshotsCommitted": false,
+    "savedSelectionsDeniedBeforeSyntheticSourceRead": true
+  }
+}

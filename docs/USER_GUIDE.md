@@ -1,3 +1,7 @@
+# WeSync 本机使用入口
+
+当前私有分支的桌面应用为 `/Applications/WeSync.app`。已有连接随同身份更新恢复，CLI 继续使用 `greenbubbles`；`/Applications/GreenBubbles.app` 是兼容软链接。以下保留的上游 Homebrew、发布链接与 GreenBubbles 包名仅适用于上游版本，不用于更新本机 WeSync。参见 [改名与验收](WESYNC_RENAME.md)。
+
 # User guide
 
 This guide walks you through the usual path:

@@ -1,0 +1,10 @@
+{
+  "baselineBuild": "17",
+  "candidateBuild": "18",
+  "sameDesignatedRequirement": true,
+  "helperBytesUnchanged": true,
+  "signature": "PASS",
+  "binarySHA256": "178e2c38b96932654d50e1bb6657d716381616e2973818f340fd5b19d9d8d8f1",
+  "installedRestart": "PASS",
+  "connectionDataTouched": false
+}

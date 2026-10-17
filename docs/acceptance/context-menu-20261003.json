@@ -1,0 +1,21 @@
+{
+  "baselineBuild": "20",
+  "candidateBuild": "21",
+  "sameDesignatedRequirement": true,
+  "helperBytesUnchanged": true,
+  "signature": "PASS",
+  "installedRestart": "BLOCKED: waiting for native Keychain confirmation",
+  "date": "2026-10-03",
+  "autoConnectWithoutCredentialEntry": "NOT_VERIFIED",
+  "releaseBuild": "PASS",
+  "syntheticNative": {
+    "moveToOther": "PASS",
+    "moveBackToPersonal": "PASS",
+    "leftClickSelectsConversation": "PASS",
+    "collapsedMenuOpens": "PASS",
+    "restoreAutomaticCategory": "NOT_VERIFIED",
+    "visualAnchorAndScroll": "NOT_VERIFIED: native popup not included in app-window capture"
+  },
+  "reproduction": "docs/DESIGN_SYSTEM.md#会话右键菜单定位",
+  "privacy": "No credentials, real contacts, message content or installed-app screenshots archived."
+}

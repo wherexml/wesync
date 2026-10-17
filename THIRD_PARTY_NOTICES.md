@@ -157,15 +157,15 @@ repository-level license checksum.
 - `aes 0.9.2` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/block-ciphers
 - `aho-corasick 1.1.5` — `Unlicense OR MIT` — https://github.com/BurntSushi/aho-corasick
 - `anyhow 1.0.104` — `MIT OR Apache-2.0` — https://github.com/dtolnay/anyhow
-- `argon2 0.5.3` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/password-hashes/tree/master/argon2
+- `argon2 0.6.0` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/password-hashes
 - `arrayvec 0.7.8` — `MIT OR Apache-2.0` — https://github.com/bluss/arrayvec
 - `base64 0.22.1` — `MIT OR Apache-2.0` — https://github.com/marshallpierce/rust-base64
 - `base64 0.23.1` — `MIT OR Apache-2.0` — https://github.com/marshallpierce/rust-base64
 - `base64ct 1.8.3` — `Apache-2.0 OR MIT` — https://github.com/RustCrypto/formats
-- `bip39 2.2.2` — `CC0-1.0` — https://github.com/rust-bitcoin/rust-bip39/
+- `bip39 3.0.0` — `CC0-1.0` — https://github.com/rust-bitcoin/rust-bip39/
 - `bitcoin_hashes 0.14.101` — `CC0-1.0` — https://github.com/rust-bitcoin/rust-bitcoin
 - `bitflags 2.13.1` — `MIT OR Apache-2.0` — https://github.com/bitflags/bitflags
-- `blake2 0.10.6` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/hashes
+- `blake2 0.11.0` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/hashes
 - `block-buffer 0.10.4` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/utils
 - `block-buffer 0.12.1` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/utils
 - `block-padding 0.3.3` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/utils
@@ -251,9 +251,10 @@ repository-level license checksum.
 - `once_cell 1.21.4` — `MIT OR Apache-2.0` — https://github.com/matklad/once_cell
 - `option-ext 0.2.0` — `MPL-2.0` — https://github.com/soc/option-ext.git
 - `parking_lot_core 0.9.12` — `MIT OR Apache-2.0` — https://github.com/Amanieu/parking_lot
-- `password-hash 0.5.0` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/traits/tree/master/password-hash
+- `password-hash 0.6.1` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/traits
 - `pbkdf2 0.12.2` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/password-hashes/tree/master/pbkdf2
 - `percent-encoding 2.3.2` — `MIT OR Apache-2.0` — https://github.com/servo/rust-url/
+- `phc 0.6.1` — `Apache-2.0 OR MIT` — https://github.com/RustCrypto/formats
 - `phf 0.12.1` — `MIT` — https://github.com/rust-phf/rust-phf
 - `phf_shared 0.12.1` — `MIT` — https://github.com/rust-phf/rust-phf
 - `pin-project-lite 0.2.17` — `Apache-2.0 OR MIT` — https://github.com/taiki-e/pin-project-lite
@@ -265,7 +266,6 @@ repository-level license checksum.
 - `prost-derive 0.13.5` — `Apache-2.0` — https://github.com/tokio-rs/prost
 - `prost-derive 0.14.4` — `Apache-2.0` — https://github.com/tokio-rs/prost
 - `quote 1.0.47` — `MIT OR Apache-2.0` — https://github.com/dtolnay/quote
-- `rand_core 0.6.4` — `MIT OR Apache-2.0` — https://github.com/rust-random/rand
 - `rand_core 0.10.1` — `MIT OR Apache-2.0` — https://github.com/rust-random/rand_core
 - `rayon 1.12.0` — `MIT OR Apache-2.0` — https://github.com/rayon-rs/rayon
 - `rayon-core 1.13.0` — `MIT OR Apache-2.0` — https://github.com/rayon-rs/rayon
@@ -277,7 +277,7 @@ repository-level license checksum.
 - `rusqlite 0.40.2` — `MIT` — https://github.com/rusqlite/rusqlite
 - `rust-stemmers 1.2.0` — `MIT OR BSD-3-Clause` — https://github.com/CurrySoftware/rust-stemmers
 - `rustix 1.1.4` — `Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT` — https://github.com/bytecodealliance/rustix
-- `rustls 0.23.45` — `Apache-2.0 OR ISC OR MIT` — https://github.com/rustls/rustls
+- `rustls 0.23.46` — `Apache-2.0 OR ISC OR MIT` — https://github.com/rustls/rustls
 - `rustls-pki-types 1.15.1` — `MIT OR Apache-2.0` — https://github.com/rustls/pki-types
 - `rustls-webpki 0.103.15` — `ISC` — https://github.com/rustls/webpki
 - `same-file 1.0.6` — `Unlicense OR MIT` — https://github.com/BurntSushi/same-file
@@ -310,9 +310,7 @@ repository-level license checksum.
 - `tinyvec_macros 0.1.1` — `MIT OR Apache-2.0 OR Zlib` — https://github.com/Soveu/tinyvec_macros
 - `tokio 1.53.1` — `MIT` — https://github.com/tokio-rs/tokio
 - `tokio-macros 2.7.2` — `MIT` — https://github.com/tokio-rs/tokio
-- `toml 0.9.12+spec-1.1.0` — `MIT OR Apache-2.0` — https://github.com/toml-rs/toml
 - `toml 1.1.4+spec-1.1.0` — `MIT OR Apache-2.0` — https://github.com/toml-rs/toml
-- `toml_datetime 0.7.5+spec-1.1.0` — `MIT OR Apache-2.0` — https://github.com/toml-rs/toml
 - `toml_datetime 1.1.1+spec-1.1.0` — `MIT OR Apache-2.0` — https://github.com/toml-rs/toml
 - `toml_parser 1.1.3+spec-1.1.0` — `MIT OR Apache-2.0` — https://github.com/toml-rs/toml
 - `toml_writer 1.1.2+spec-1.1.0` — `MIT OR Apache-2.0` — https://github.com/toml-rs/toml
@@ -327,7 +325,6 @@ repository-level license checksum.
 - `walkdir 2.5.0` — `Unlicense OR MIT` — https://github.com/BurntSushi/walkdir
 - `webpki-roots 0.26.11` — `CDLA-Permissive-2.0` — https://github.com/rustls/webpki-roots
 - `webpki-roots 1.0.9` — `CDLA-Permissive-2.0` — https://github.com/rustls/webpki-roots
-- `winnow 0.7.15` — `MIT` — https://github.com/winnow-rs/winnow
 - `winnow 1.0.4` — `MIT` — https://github.com/winnow-rs/winnow
 - `writeable 0.6.4` — `Unicode-3.0` — https://github.com/unicode-org/icu4x
 - `wx-context 0.7.4` — `MIT`
@@ -347,8 +344,10 @@ repository-level license checksum.
 - `zerovec-derive 0.11.6` — `Unicode-3.0` — https://github.com/unicode-org/icu4x
 - `zmij 1.0.23` — `MIT` — https://github.com/dtolnay/zmij
 - `zstd 0.13.3` — `MIT` — https://github.com/gyscos/zstd-rs
+- `zstd 0.14.0` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
 - `zstd-safe 7.2.4` — `MIT OR Apache-2.0` — https://github.com/gyscos/zstd-rs
-- `zstd-sys 2.0.16+zstd.1.5.7` — `MIT OR Apache-2.0` — https://github.com/gyscos/zstd-rs
+- `zstd-safe 8.0.0` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
+- `zstd-sys 2.1.0+zstd.1.5.7` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
 
 ## Rust license texts
 
@@ -856,6 +855,86 @@ limitations under the License.
 
 Used by:
 
+- `zstd-safe 8.0.0`
+- `zstd-sys 2.1.0+zstd.1.5.7`
+- `zstd 0.14.0`
+
+```text
+BSD 3-Clause License
+
+Copyright (c) 2026, Alexandre Bury
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+```
+
+### BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License
+
+Used by:
+
+- `zstd-sys 2.1.0+zstd.1.5.7`
+
+```text
+BSD License
+
+For Zstandard software
+
+Copyright (c) Meta Platforms, Inc. and affiliates. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+ * Neither the name Facebook, nor Meta, nor the names of its contributors may
+   be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+```
+
+### BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License
+
+Used by:
+
 - `subtle 2.6.1`
 
 ```text
@@ -947,6 +1026,48 @@ Redistribution and use in source and binary forms, with or without modification,
 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+```
+
+### BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License
+
+Used by:
+
+- `zstd-sys 2.1.0+zstd.1.5.7`
+
+```text
+The auto-generated bindings are under the 3-clause BSD license:
+
+BSD License
+
+For Zstandard software
+
+Copyright (c) Meta Platforms, Inc. and affiliates. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+ * Neither the name Facebook, nor Meta, nor the names of its contributors may
+   be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
@@ -1085,7 +1206,7 @@ express Statement of Purpose.
 
 Used by:
 
-- `bip39 2.2.2`
+- `bip39 3.0.0`
 - `hex-conservative 0.2.2`
 
 ```text
@@ -2479,42 +2600,6 @@ SOFTWARE.
 
 Used by:
 
-- `blake2 0.10.6`
-
-```text
-Copyright (c) 2015-2016 The blake2-rfc Developers, Cesar Barros
-Copyright (c) 2017 Artyom Pavlov
-
-Permission is hereby granted, free of charge, to any
-person obtaining a copy of this software and associated
-documentation files (the "Software"), to deal in the
-Software without restriction, including without
-limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software
-is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice
-shall be included in all copies or substantial portions
-of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
-ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-
-```
-
-### MIT License
-
-Used by:
-
 - `hkdf 0.13.0`
 
 ```text
@@ -2622,7 +2707,7 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `rustls 0.23.45`
+- `rustls 0.23.46`
 
 ```text
 Copyright (c) 2016 Joseph Birr-Pixton <jpixton@gmail.com>
@@ -3012,6 +3097,43 @@ Used by:
 ```text
 Copyright (c) 2017-2025 RustCrypto Developers
 Copyright (c) 2017 Artyom Pavlov
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+```
+
+### MIT License
+
+Used by:
+
+- `blake2 0.11.0`
+
+```text
+Copyright (c) 2017-2026 The RustCrypto Project Developers
+Copyright (c) 2017 Artyom Pavlov
+Copyright (c) 2015-2016 The blake2-rfc Developers, Cesar Barros
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -3643,10 +3765,11 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `password-hash 0.5.0`
+- `cpufeatures 0.2.17`
+- `cpufeatures 0.3.0`
 
 ```text
-Copyright (c) 2020-2023 RustCrypto Developers
+Copyright (c) 2020-2025 The RustCrypto Project Developers
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -3678,11 +3801,10 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `cpufeatures 0.2.17`
-- `cpufeatures 0.3.0`
+- `password-hash 0.6.1`
 
 ```text
-Copyright (c) 2020-2025 The RustCrypto Project Developers
+Copyright (c) 2020-2026 RustCrypto Developers
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -3784,10 +3906,10 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `argon2 0.5.3`
+- `crypto-common 0.2.2`
 
 ```text
-Copyright (c) 2021-2024 The RustCrypto Project Developers
+Copyright (c) 2021-2026 RustCrypto Developers
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -3819,10 +3941,11 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `crypto-common 0.2.2`
+- `argon2 0.6.0`
+- `phc 0.6.1`
 
 ```text
-Copyright (c) 2021-2026 RustCrypto Developers
+Copyright (c) 2021-2026 The RustCrypto Project Developers
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -4068,9 +4191,7 @@ DEALINGS IN THE SOFTWARE.
 Used by:
 
 - `serde_spanned 1.1.1`
-- `toml 0.9.12+spec-1.1.0`
 - `toml 1.1.4+spec-1.1.0`
-- `toml_datetime 0.7.5+spec-1.1.0`
 - `toml_datetime 1.1.1+spec-1.1.0`
 - `toml_parser 1.1.3+spec-1.1.0`
 - `toml_writer 1.1.2+spec-1.1.0`
@@ -4217,42 +4338,6 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-```
-
-### MIT License
-
-Used by:
-
-- `rand_core 0.6.4`
-
-```text
-Copyright 2018 Developers of the Rand project
-Copyright (c) 2014 The Rust Project Developers
-
-Permission is hereby granted, free of charge, to any
-person obtaining a copy of this software and associated
-documentation files (the "Software"), to deal in the
-Software without restriction, including without
-limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software
-is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice
-shall be included in all copies or substantial portions
-of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
-ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
 
 ```
 
@@ -4795,7 +4880,6 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `winnow 0.7.15`
 - `winnow 1.0.4`
 
 ```text
@@ -5130,7 +5214,6 @@ THE SOFTWARE.
 Used by:
 
 - `zstd-safe 7.2.4`
-- `zstd-sys 2.0.16+zstd.1.5.7`
 - `zstd 0.13.3`
 
 ```text

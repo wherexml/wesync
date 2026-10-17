@@ -23,8 +23,8 @@
         "licenseMetadata" : "MIT OR Apache-2.0",
         "name" : "argon2",
         "optional" : false,
-        "requirement" : "^0.5",
-        "resolvedVersion" : "0.5.3",
+        "requirement" : "^0.6",
+        "resolvedVersion" : "0.6.0",
         "source" : "registry+https://github.com/rust-lang/crates.io-index",
         "usesDefaultFeatures" : true
       },
@@ -49,8 +49,8 @@
         "licenseMetadata" : "CC0-1.0",
         "name" : "bip39",
         "optional" : false,
-        "requirement" : "^2.2",
-        "resolvedVersion" : "2.2.2",
+        "requirement" : "^3.0",
+        "resolvedVersion" : "3.0.0",
         "source" : "registry+https://github.com/rust-lang/crates.io-index",
         "usesDefaultFeatures" : true
       },
@@ -287,8 +287,8 @@
         "licenseMetadata" : "MIT OR Apache-2.0",
         "name" : "toml",
         "optional" : false,
-        "requirement" : "^0.9",
-        "resolvedVersion" : "0.9.12+spec-1.1.0",
+        "requirement" : "^1.1",
+        "resolvedVersion" : "1.1.4+spec-1.1.0",
         "source" : "registry+https://github.com/rust-lang/crates.io-index",
         "usesDefaultFeatures" : true
       },
@@ -388,11 +388,11 @@
 
         ],
         "kind" : "normal",
-        "licenseMetadata" : "MIT",
+        "licenseMetadata" : "BSD-3-Clause",
         "name" : "zstd",
         "optional" : false,
-        "requirement" : "^0.13",
-        "resolvedVersion" : "0.13.3",
+        "requirement" : "^0.14",
+        "resolvedVersion" : "0.14.0",
         "source" : "registry+https://github.com/rust-lang/crates.io-index",
         "usesDefaultFeatures" : true
       }
@@ -451,9 +451,9 @@
         "version" : "0.2.0"
       },
       {
-        "licenseMetadata" : "MIT/Apache-2.0",
+        "licenseMetadata" : "BSD-3-Clause",
         "name" : "zstd-sys",
-        "version" : "2.0.16+zstd.1.5.7"
+        "version" : "2.1.0+zstd.1.5.7"
       }
     ],
     "package" : {

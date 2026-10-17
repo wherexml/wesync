@@ -1,0 +1,23 @@
+{
+  "syntheticScroll": {
+    "firstAutomaticPage": "PASS: numbered messages 40-79 visible",
+    "secondAutomaticPage": "PASS: numbered messages 80-119 visible",
+    "loadMoreButtonRemoved": true,
+    "readPosition": "continued in historical messages without return to latest",
+    "conversationListBeyondFirstPage": "PASS: native AX list showing 201-214 of 230 items after downward scroll"
+  },
+  "installedApp": {
+    "baselineAtTaskStart": "connected with old load-more UI",
+    "currentBuild": "15",
+    "status": "BLOCKED_SYSTEM_KEYCHAIN_CONSENT",
+    "newVersionInstalled": false,
+    "restartVerified": false,
+    "reason": "Main thread blocked in existing HistoryConnectionVault.load / SecItemCopyMatching; native accessibility timed out. User must respond to macOS security prompt."
+  },
+  "privacy": {
+    "realMessageBodiesStored": false,
+    "realScreenshotsStored": false,
+    "credentialValuesRead": false
+  },
+  "importedTimelineNativeAcceptance": "NOT_RUN"
+}

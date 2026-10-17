@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-03",
+  "releaseBuild": "PASS",
+  "swiftFormat": "PASS",
+  "nativeSynthetic": {
+    "collapsedWidthPoints": 76,
+    "avatarOnlyVisual": "PASS",
+    "avatarSelection": "PASS",
+    "expandPreservesChat": "PASS",
+    "filterRetainedOnCollapse": "PASS",
+    "restartRestoresCollapsedState": "PASS"
+  },
+  "installed": {
+    "build": 20,
+    "signatureVerified": true,
+    "sameDesignatedRequirement": true,
+    "helpersUnchanged": true,
+    "restartAcceptance": "BLOCKED",
+    "reason": "Native remembered-connection read awaits macOS Keychain confirmation; no credential entered or altered."
+  },
+  "repeat": "docs/DESIGN_SYSTEM.md#会话头像折叠栏",
+  "privacy": "No personal contacts, messages, credentials or installed screenshots retained."
+}

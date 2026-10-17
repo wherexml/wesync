@@ -56,7 +56,7 @@ final class HistoryPDFPreview: Identifiable {
 
 struct HistoryPDFCard: View {
   let filename: String
-  let load: () async throws -> HistoryPDFPreview
+  let load: @MainActor () async throws -> HistoryPDFPreview
   @State private var preview: HistoryPDFPreview?
   @State private var loading = false
   @State private var error: String?
