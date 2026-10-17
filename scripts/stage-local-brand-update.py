@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Stage a signed icon-only update. Never installs or touches connection data."""
+"""Stage a signed WeSync presentation update without changing connection tools.
+
+An optional rebuilt main executable may update UI copy. Never installs or
+touches connection data, and requires the installed signing identity.
+"""
 import argparse
 import hashlib
 import json
@@ -28,7 +32,9 @@ def requirement(app):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', type=Path, default=Path('/Applications/GreenBubbles.app'))
+    parser.add_argument('--source', type=Path, default=Path('/Applications/WeSync.app'))
+    parser.add_argument('--main-executable', type=Path,
+                        help='Optional rebuilt greenbubbles-history; all helpers stay unchanged')
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--identity', required=True, help='Exact SHA-1 certificate fingerprint')
     args = parser.parse_args()
@@ -39,21 +45,26 @@ def main():
     if output.exists() or output == source or source in output.parents:
         parser.error('Output must be a new directory outside the installed bundle.')
     run('/usr/bin/codesign', '--verify', '--deep', '--strict', str(source))
+    source_requirement = requirement(source)
     original = {str(p.relative_to(source)): digest(p)
                 for p in source.rglob('*') if p.is_file()}
     output.mkdir(parents=True, mode=0o700)
     baseline = output / 'Baseline.app'
-    candidate = output / 'GreenBubbles.app'
+    candidate = output / 'WeSync.app'
     # ditto preserves macOS metadata. The baseline also proves stable identity
     # across two different resource envelopes; both copies stay outside /Applications.
     for target in (baseline, candidate):
         run('/usr/bin/ditto', str(source), str(target))
+    if args.main_executable:
+        shutil.copy2(args.main_executable, candidate / 'Contents/MacOS/greenbubbles-history')
     resources = candidate / 'Contents/Resources'
     for name in ('GreenBubbles.icns', 'GreenBubbles-black.png'):
         shutil.copy2(ROOT / 'Resources/Brand' / name, resources / name)
     plist = candidate / 'Contents/Info.plist'
     info = plistlib.loads(plist.read_bytes())
     info['CFBundleIconFile'] = 'GreenBubbles'
+    info['CFBundleName'] = 'WeSync'
+    info['CFBundleDisplayName'] = 'WeSync'
     info['CFBundleVersion'] = str(int(info['CFBundleVersion']) + 1)
     plist.write_bytes(plistlib.dumps(info))
     for target in (baseline, candidate):
@@ -64,12 +75,17 @@ def main():
         run('/usr/bin/codesign', '--verify', '--deep', '--strict', str(target))
     baseline_requirement = requirement(baseline)
     candidate_requirement = requirement(candidate)
-    if baseline_requirement != candidate_requirement or 'cdhash' in candidate_requirement:
+    if (source_requirement != baseline_requirement
+            or baseline_requirement != candidate_requirement or 'cdhash' in candidate_requirement):
         raise RuntimeError('Signing identity is not stable across the resource update.')
-    for name in ('greenbubbles', 'greenbubbles-send'):
-        rel = 'Contents/MacOS/' + name
-        if digest(candidate / rel) != original[rel]:
-            raise RuntimeError('A preserved helper changed: ' + name)
+    for rel, expected in original.items():
+        if rel.startswith('Contents/MacOS/') and rel != 'Contents/MacOS/greenbubbles-history':
+            if digest(candidate / rel) != expected:
+                raise RuntimeError('A preserved helper changed: ' + rel)
+    source_info = plistlib.loads((source / 'Contents/Info.plist').read_bytes())
+    for key in ('CFBundleIdentifier', 'CFBundleExecutable', 'GBStickerQuerySHA256'):
+        if info.get(key) != source_info.get(key):
+            raise RuntimeError('A preserved application identity field changed: ' + key)
     for rel, expected in original.items():
         if digest(source / rel) != expected:
             raise RuntimeError('Installed app changed while staging; do not install this candidate.')
@@ -81,6 +97,9 @@ def main():
         'sameIdentityAcrossResourceUpdate': True,
         'signatureVerification': 'PASS',
         'queryAndSendBinariesUnchanged': True,
+        'allHelperBinariesUnchanged': True,
+        'applicationDisplayName': info['CFBundleDisplayName'],
+        'mainExecutableRebuilt': bool(args.main_executable),
         'installedBundleUnchanged': True,
         'sourceFilesSHA256': original,
         'installedRestartAcceptance': 'PENDING',

@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-11",
+  "installedBuild": "34",
+  "nativeFinderColdStartWithoutKeyEntry": true,
+  "noRepeatedPermissionPrompts": true,
+  "personalFirstSixMatchChatSidebar": true,
+  "groupFirstSixMatchChatSidebar": true,
+  "searchPreservesRelativeChatOrder": true,
+  "savedSelectionUnchanged": true,
+  "privacy": "Only boolean evidence; no real names, IDs, messages or screenshots",
+  "repeat": "Cold launch installed app; compare visible personal/group sidebar rows with corresponding blacklist tabs; search a displayed name fragment and verify relative order."
+}

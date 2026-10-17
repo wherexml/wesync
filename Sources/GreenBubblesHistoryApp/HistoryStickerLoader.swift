@@ -51,7 +51,16 @@ actor HistoryStickerLoader {
       configuration: config, delegate: StickerRedirectPolicy(), delegateQueue: nil)
   }
 
-  func load(_ sticker: HistorySticker) async throws -> LoadedSticker {
+  func load(_ sticker: HistorySticker, localSource: URL? = nil) async throws -> LoadedSticker {
+    if let source = localSource, let md5 = sticker.md5 {
+      do {
+        let data = try HistoryLocalStickerStore.load(md5: md5, sourceRoot: source)
+        try validate(data, expectedMD5: md5)
+        return LoadedSticker(data: data, kind: .original, fromCache: true)
+      } catch is CancellationError { throw CancellationError() } catch {
+        try Task.checkCancellation()
+      }
+    }
     for resource in sticker.resources {
       try Task.checkCancellation()
       guard resource.url.scheme == "https",
@@ -65,7 +74,7 @@ actor HistoryStickerLoader {
       do {
         var data = try await download(resource.url)
         if let key = resource.aesKey { data = try decrypt(data, key: key) }
-        try validate(data, resource: resource)
+        try validate(data, expectedMD5: resource.md5)
         try Task.checkCancellation()
         // Cache failure must not prevent displaying a successfully decoded resource.
         try? persist(data, at: file)
@@ -113,9 +122,9 @@ actor HistoryStickerLoader {
     return output
   }
 
-  private func validate(_ data: Data, resource: HistoryStickerResource) throws {
+  private func validate(_ data: Data, expectedMD5: String?) throws {
     guard !data.isEmpty, data.count <= maxBytes else { throw StickerLoadError.invalidResource }
-    if let expected = resource.md5 {
+    if let expected = expectedMD5 {
       let digest = Insecure.MD5.hash(data: data).map { String(format: "%02x", $0) }.joined()
       guard digest == expected else { throw StickerLoadError.invalidResource }
     }
@@ -159,7 +168,7 @@ actor HistoryStickerLoader {
         age < (resource.kind == .thumbnail ? 300 : 30 * 86400)
       else { return nil }
       let data = try Data(contentsOf: file)
-      try validate(data, resource: resource)
+      try validate(data, expectedMD5: resource.md5)
       return data
     } catch {
       try? FileManager.default.removeItem(at: file)

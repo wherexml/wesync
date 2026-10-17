@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-16",
+  "app": "WeSync",
+  "build": "41",
+  "scope": "Native settings layout only; isolated HEAD archive plus HistoryDirectViews.swift",
+  "checks": {
+    "releaseBuild": "PASS",
+    "sameSigningIdentity": "PASS",
+    "helperBytesUnchanged": "PASS",
+    "coldStartAutomaticConnectionTwice": "PASS",
+    "collapsedSettingsLayout": "PASS",
+    "expandedScrollAndFixedHeaderFooter": "PASS",
+    "blacklistOpenCancel": "PASS",
+    "doneDismiss": "PASS",
+    "policyAndCredentialsUnmodified": "PASS"
+  },
+  "notRun": [
+    "Changing connection credentials",
+    "Changing blacklist or time range",
+    "Dark appearance",
+    "First-time connection without remembered credentials"
+  ],
+  "repeat": [
+    "Quit installed WeSync and confirm process exit; reopen using native app entry.",
+    "Confirm automatic connection without key/password prompts.",
+    "Open Advanced Settings; verify blacklist, time range and collapsed connection summary.",
+    "Expand Connection Settings, scroll to bottom; verify fixed header/footer and remember/forget controls.",
+    "Return to top; open blacklist and cancel without saving.",
+    "Collapse connection settings and click Done; verify chat remains.",
+    "Quit and reopen; open settings again and confirm collapsed connected state."
+  ],
+  "privacy": "No contact names, messages, credential values or native screenshots archived."
+}

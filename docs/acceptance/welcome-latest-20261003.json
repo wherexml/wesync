@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-03",
+  "installedBuild": "22",
+  "releaseBuild": "PASS",
+  "stableDesignatedRequirement": "PASS",
+  "bundledHelpersUnchanged": "PASS",
+  "installedQuitAndNativeReopen": "PASS",
+  "automaticConnectionWithoutKeyEntry": "PASS",
+  "welcomePreview": {
+    "primaryIconAndLabel": "PASS",
+    "bottomTwoLinesRemoved": "PASS",
+    "backupHelpClick": "PASS",
+    "exportHelpClick": "PASS"
+  },
+  "installedTimeline": {
+    "firstConversationBottom": 0.998508390304537,
+    "secondConversationBottom": 0.9891978105629463,
+    "cachedReturnBottom": 0.9984739943198677,
+    "latestVisible": "PASS",
+    "historyScrollRegression": "BLOCKED: native scroll tool noWindowsAvailable",
+    "importedAndSearchNavigation": "NOT_RUN"
+  },
+  "privacy": "No credential values, conversation identities, message contents or native screenshots retained.",
+  "repeat": "Follow docs/DESIGN_SYSTEM.md and docs/MESSAGE_CACHE.md."
+}

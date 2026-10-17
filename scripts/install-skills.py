@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy portable GreenBubbles skills into a host's discovery directory.
+"""Copy portable WeChatSync skills into a host's discovery directory.
 
 No host settings, credentials, permissions, or binaries are changed.
 """
@@ -11,7 +11,7 @@ from pathlib import Path
 import shutil
 import tempfile
 
-NAMES = ("greenbubbles-setup", "greenbubbles-context", "greenbubbles-personal-memory")
+NAMES = ("wechatsync-setup", "wechatsync-context", "wechatsync-personal-memory")
 AGENT_DIRECTORIES = {
     "codex": ".agents",
     "claude": ".claude",
@@ -20,7 +20,7 @@ AGENT_DIRECTORIES = {
     "gemini": ".gemini",
     "grok": ".grok",
 }
-RECEIPT = ".greenbubbles-skill-install.json"
+RECEIPT = ".wechatsync-skill-install.json"
 
 
 def discovery_directory(agent, project=None):
@@ -70,7 +70,7 @@ def install(source, destination, update=False):
         plans.append((src, dst, files))
     destination.mkdir(parents=True, exist_ok=True)
     for src, dst, files in plans:
-        with tempfile.TemporaryDirectory(prefix=".greenbubbles-install-", dir=destination) as scratch:
+        with tempfile.TemporaryDirectory(prefix=".wechatsync-install-", dir=destination) as scratch:
             stage, backup = Path(scratch) / "new", Path(scratch) / "old"
             shutil.copytree(src, stage, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", RECEIPT))
             (stage / RECEIPT).write_text(json.dumps({"version": 1, "files": files}, indent=2) + "\n")
@@ -115,13 +115,13 @@ def main():
                                     ignore=shutil.ignore_patterns("__pycache__", "*.pyc", RECEIPT))
                 shutil.copy2(root / "LICENSE", staged / "LICENSE")
                 (staged / "README.md").write_text(
-                    "# GreenBubbles portable skills\n\nRequires Python 3 and a separately installed GreenBubbles Rust CLI.\n\n"
-                    "No skill installation is required: ask your agent to read `skills/greenbubbles-personal-memory/SKILL.md`.\n"
-                    "For setup, read `skills/greenbubbles-setup/SKILL.md`; references and helpers remain alongside each skill.\n"
+                    "# WeChatSync portable skills\n\nRequires Python 3 and a separately installed GreenBubbles Rust CLI.\n\n"
+                    "No skill installation is required: ask your agent to read `skills/wechatsync-personal-memory/SKILL.md`.\n"
+                    "For setup, read `skills/wechatsync-setup/SKILL.md`; references and helpers remain alongside each skill.\n"
                     "Optional discovery: `python3 scripts/install-skills.py --agent codex`\n"
                     "Targets: codex, claude, opencode, kimi, gemini, grok (Grok Build).\n"
                     "Add `--project /path/to/project` for project scope. Use `--update` for unmodified managed copies.\n"
-                    "Start with greenbubbles-setup in your agent. No embedded agent is required.\n")
+                    "Start with wechatsync-setup in your agent. No embedded agent is required.\n")
                 staged.rename(output)
             print(json.dumps({"bundle": str(output)}))
             return

@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-16",
+  "sourceBuild": "42",
+  "installedBuild": "43",
+  "build": "PASS",
+  "signatureAndIdentity": "PASS",
+  "helpersUnchanged": true,
+  "baseline": "Window menu showed two chat entries after reopen and menu open",
+  "nativeAcceptance": {
+    "coldStartAutoConnection": "PASS",
+    "secondColdStartAutoConnection": "PASS",
+    "messageLoadAndRefresh": "PASS",
+    "finderReopenFiveTimes": "PASS",
+    "menuOpenThreeTimes": "PASS",
+    "minimizeAndReopen": "PASS",
+    "closeAndReopen": "PASS",
+    "hideAndReopen": "PASS",
+    "directDockClick": "BLOCKED: Dock accessibility interface timed out; Finder native reopen exercises the application reopen path"
+  },
+  "credentialEntryRequired": false,
+  "privacy": "No credentials, chat contents, contacts or native screenshots retained in this artifact. No TCC/ACL changes.",
+  "source": "git archive b7f1614 plus GreenBubblesHistoryApp.swift only; existing search field changes excluded",
+  "repeatSteps": [
+    "Quit WeSync with Command-Q; verify process exits. Open /Applications/WeSync.app using Finder. Verify connection restores without credential input.",
+    "Open a conversation and refresh; verify messages load without errors.",
+    "Open the selected app in Finder five times, then use Control-Option-M > 打开 WeSync three times. Confirm the same history window remains.",
+    "Minimize, reopen; hide via menu, reopen; close the main window, reopen. Verify one usable main window each time.",
+    "Quit fully and cold-start again; verify automatic connection and refresh.",
+    "Repeat directly by clicking Dock icon when Dock automation is available."
+  ]
+}

@@ -82,6 +82,8 @@ struct HistoryOverviewView: View {
 struct ConversationTimelineView: View {
   @Bindable var model: HistoryBrowserModel
   let conversation: HistoryConversation
+  @State private var readingPosition: String?
+  @State private var paginationAnchor: String?
 
   var body: some View {
     VStack(spacing: 0) {
@@ -103,7 +105,7 @@ struct ConversationTimelineView: View {
       }
       timeline
     }
-    .background(Color(nsColor: .textBackgroundColor).opacity(0.45))
+    .background(HistoryChatPalette.timeline)
   }
 
   private var conversationHeader: some View {
@@ -132,7 +134,7 @@ struct ConversationTimelineView: View {
     }
     .padding(.horizontal, 18)
     .padding(.vertical, 12)
-    .background(.bar)
+    .background(HistoryChatPalette.timeline)
   }
 
   private var timeline: some View {
@@ -143,35 +145,32 @@ struct ConversationTimelineView: View {
             Button("返回最新消息") {
               model.returnToLatestMessages()
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(HistoryActionStyle())
             .padding(.vertical, 8)
           } else if model.timelineCursor != nil {
-            Button {
-              model.loadOlderMessages()
-            } label: {
-              if model.isLoadingTimeline {
-                ProgressView().controlSize(.small)
-              } else {
-                Label("加载更早的 100 条消息", systemImage: "arrow.up.circle")
-              }
-            }
-            .buttonStyle(.bordered)
-            .padding(.vertical, 8)
+            HStack {
+              if model.isLoadingTimeline { ProgressView().controlSize(.small) }
+              Text(model.isLoadingTimeline ? "正在加载更早消息…" : "向上滚动查看更早消息")
+                .font(.caption).foregroundStyle(.secondary)
+            }.padding(.vertical, 8)
+
           }
 
           let messages = Array(model.timelineMessages.reversed())
           ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
-            if let date = message.createdAt as Date?,
-              HistoryMessageTime.showsSeparator(
-                for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
-            {
-              HistoryMessageTimestamp(date: date)
+            VStack(spacing: 10) {
+              if let date = message.createdAt as Date?,
+                HistoryMessageTime.showsSeparator(
+                  for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
+              {
+                HistoryMessageTimestamp(date: date)
+              }
+              MessageBubble(
+                model: model,
+                message: message,
+                highlighted: message.canonicalID == model.highlightedMessageID
+              )
             }
-            MessageBubble(
-              model: model,
-              message: message,
-              highlighted: message.canonicalID == model.highlightedMessageID
-            )
             .id(message.canonicalID)
           }
 
@@ -191,14 +190,33 @@ struct ConversationTimelineView: View {
             .padding(40)
           }
         }
+        .scrollTargetLayout()
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
+        .background(
+          HistoryScrollPrefetch {
+            guard !model.isLoadingTimeline, model.timelineCursor != nil else { return }
+            paginationAnchor = readingPosition ?? model.timelineMessages.last?.canonicalID
+            model.loadOlderMessages()
+          })
       }
-      .onChange(of: model.timelineMessages.count) { previousCount, currentCount in
-        guard currentCount > 0 else { return }
+      .defaultScrollAnchor(.bottom)
+      .scrollPosition(id: $readingPosition, anchor: .top)
+      .onChange(of: model.timelineMessages.last?.canonicalID) { _, _ in
+        if let anchor = paginationAnchor {
+          proxy.scrollTo(anchor, anchor: .top)
+          paginationAnchor = nil
+        }
+      }
+      .task(id: [
+        conversation.conversationID, model.timelineMessages.first?.canonicalID ?? "",
+        model.highlightedMessageID ?? "",
+      ]) {
+        guard !model.timelineMessages.isEmpty else { return }
+        do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
         if let highlighted = model.highlightedMessageID {
           proxy.scrollTo(highlighted, anchor: .center)
-        } else if previousCount == 0, let newest = model.timelineMessages.first {
+        } else if let newest = model.timelineMessages.first {
           proxy.scrollTo(newest.canonicalID, anchor: .bottom)
         }
       }
@@ -207,6 +225,7 @@ struct ConversationTimelineView: View {
 }
 
 private struct MessageBubble: View {
+  @Environment(\.colorScheme) private var colorScheme
   let model: HistoryBrowserModel
   let message: HistoryMessage
   let highlighted: Bool
@@ -215,13 +234,21 @@ private struct MessageBubble: View {
     HStack {
       if resolvedDirection == "outgoing" { Spacer(minLength: 90) }
       bubbleContent
+        .foregroundStyle(
+          resolvedDirection == "outgoing" ? HistoryChatPalette.outgoingText : Color.primary
+        )
+        .environment(\.colorScheme, resolvedDirection == "outgoing" ? .light : colorScheme)
         .padding(.horizontal, 13)
         .padding(.vertical, 10)
         .frame(maxWidth: 650, alignment: .leading)
-        .background(bubbleColor, in: RoundedRectangle(cornerRadius: 14))
+        .background(
+          bubbleColor, in: RoundedRectangle(cornerRadius: HistoryDesign.radius, style: .continuous)
+        )
         .overlay {
-          RoundedRectangle(cornerRadius: 14)
-            .stroke(highlighted ? Color.accentColor : .clear, lineWidth: 3)
+          RoundedRectangle(cornerRadius: HistoryDesign.radius, style: .continuous)
+            .strokeBorder(
+              highlighted ? HistoryDesign.accent : HistoryDesign.border.opacity(0.6),
+              lineWidth: highlighted ? 2 : 0.5)
         }
         .contextMenu {
           Button("复制消息文字") {
@@ -240,7 +267,7 @@ private struct MessageBubble: View {
   private var bubbleContent: some View {
     VStack(alignment: .leading, spacing: 7) {
       senderHeader
-      Text(message.displayText)
+      Text(HistoryEmojiText.render(message.displayText))
         .font(.body)
         .textSelection(.enabled)
       if message.payloadSummaryTruncated == true {
@@ -298,8 +325,8 @@ private struct MessageBubble: View {
 
   private var bubbleColor: Color {
     switch resolvedDirection {
-    case "outgoing": .green.opacity(0.18)
-    case "incoming": Color(nsColor: .controlBackgroundColor)
+    case "outgoing": HistoryChatPalette.outgoing
+    case "incoming": HistoryChatPalette.incoming
     default: .orange.opacity(0.10)
     }
   }
@@ -373,7 +400,7 @@ private struct ArtifactReferenceView: View {
           Button("预览") {
             model.requestMediaPreview(artifact)
           }
-          .buttonStyle(.bordered)
+          .buttonStyle(HistoryActionStyle())
           .controlSize(.small)
         }
       }

@@ -48,25 +48,18 @@ root:
 ```sh
 git config core.hooksPath scripts/git-hooks
 
-swift format lint --strict --recursive Package.swift Sources Tests
-swift test
-swift build -c release
-
-swift scripts/check-distribution-inventory.swift
-swift scripts/check-secret-hygiene.swift
-swift scripts/check-pinned-build-profile.swift
-
-cd Native/GreenBubbles
-cargo fmt --check
-cargo clippy --locked --all-targets -- -D warnings
-cargo test --locked --all-targets
 cargo install cargo-audit --locked --version 0.22.2
-cargo audit --file Cargo.lock
+cargo install cargo-about --locked --features cli --version 0.9.2
+python3 scripts/local-ci.py
 ```
 
-The first line turns on a check that stops you from committing secrets; run
-it once per clone. The rest are the formatting, test, and safety checks CI
-runs. If this list and CI ever disagree, CI is right.
+The hook setup stops secrets from being committed; run it once per clone.
+GitHub Actions are disabled for this private repository. Run the complete local
+checks before committing and pushing. The script is the single source of truth
+for formatting, existing tests, release builds, audits and synthetic E2E checks.
+Logs and a JSON result remain under `.build/local-ci/`. See
+[local checks](docs/LOCAL_CI.md), including the blacklist E2E policy-restoration
+boundary and the separate installed-app restart acceptance.
 
 ## Test data: made-up only
 

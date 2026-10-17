@@ -13,7 +13,7 @@ this page. See the [agent skills guide](AGENT_SKILLS.md).
 
 Everything here uses the `greenbubbles` command. Each command runs once and
 exits: there is no background service, no SQL, and no access to your backup
-recovery secrets. The skill in `skills/greenbubbles-context` gives an agent a
+recovery secrets. The skill in `skills/wechatsync-context` gives an agent a
 short version of these instructions.
 
 ## Pick an approach
@@ -375,7 +375,7 @@ again into a new folder, then compare the two and keep the one you've reviewed.
 
 `ai-summarize-direct` reads a limited number of messages per chat. To build
 notes from your whole history, most people should let their coding agent follow
-the [personal-memory skill](../skills/greenbubbles-personal-memory/SKILL.md),
+the [personal-memory skill](../skills/wechatsync-personal-memory/SKILL.md),
 which reads live messages directly. The [personal memory guide](PERSONAL_MEMORY.md)
 explains it.
 

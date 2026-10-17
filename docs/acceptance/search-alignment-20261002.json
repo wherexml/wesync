@@ -1,0 +1,43 @@
+{
+  "baselineBuild": "18",
+  "candidateBuild": "19",
+  "sameDesignatedRequirement": true,
+  "helperBytesUnchanged": true,
+  "signature": "PASS",
+  "binarySHA256": "6af4408b295f96a8a34f0323c3343c120a003e1316766a09f237a0a202d35e08",
+  "installedRestart": "PASS",
+  "date": "2026-10-02",
+  "autoConnectWithoutCredentialEntry": "PASS",
+  "connectionDataTouched": false,
+  "nativeSynthetic": {
+    "placeholderAndFocusedCaretAlignment": "PASS: sidebar and expanded chat field visually inspected",
+    "chinesePaste": "PASS",
+    "clearWithoutSubmitting": "PASS",
+    "emptyReturn": "PASS",
+    "returnSearchHitAndBack": "PASS",
+    "escapeCollapse": "PASS",
+    "sidebarFilterAndClear": "PASS"
+  },
+  "installed": {
+    "placeholderAlignmentBothFields": "PASS: native screenshot inspected without archiving",
+    "chinesePasteAndClear": "PASS",
+    "returnOpensResults": "PASS",
+    "searchCompleteness": "NOT_ASSERTED: existing partial-read notice shown for an unmatched synthetic query",
+    "escapeCollapse": "PASS",
+    "sidebarFilterClearAndRestore": "PASS"
+  },
+  "validation": {
+    "releaseBuild": "PASS",
+    "swiftFormat": "PASS",
+    "secretHygiene": "PASS",
+    "minimumWidth120": "NOT_RUN",
+    "lightAppearance": "NOT_RUN",
+    "IMEComposition": "NOT_RUN: Chinese paste verified; no input-method switching performed"
+  },
+  "evidence": {
+    "syntheticPlaceholderScreenshot": ".local-install/search-alignment/placeholder.png",
+    "syntheticSidebarFocusedScreenshot": ".local-install/search-alignment/sidebar-focused.png"
+  },
+  "reproduction": "docs/SEARCH.md#搜索图标与文字对齐回归",
+  "privacy": "No credentials, real chat text, contacts, or production screenshots archived."
+}

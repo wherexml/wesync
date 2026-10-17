@@ -1,5 +1,5 @@
 ---
-name: greenbubbles-setup
+name: wechatsync-setup
 description: Install or diagnose the local GreenBubbles CLI and read-only WeChat access. Use for a missing CLI, failed database access, source selection, or initial owner-operated key capture.
 ---
 
@@ -36,8 +36,8 @@ requirements for steps that re-sign WeChat.
 
 ## Continue the requested task
 
-After `source status` succeeds, use [context](../greenbubbles-context/SKILL.md)
-for a query or [personal memory](../greenbubbles-personal-memory/SKILL.md) for
+After `source status` succeeds, use [context](../wechatsync-context/SKILL.md)
+for a query or [personal memory](../wechatsync-personal-memory/SKILL.md) for
 maintained notes. Reading messages across all chats is unnecessary to verify
 setup. Keep the complete sibling skill package available; installation into
 host discovery folders is optional.

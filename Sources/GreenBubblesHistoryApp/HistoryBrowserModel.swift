@@ -72,6 +72,14 @@ final class HistoryBrowserModel {
   var selectedSection: HistorySection? = .overview
   var selectedConversationID: String?
   var selectedContactID: String?
+  var conversationRangeReferenceDate = Date()
+  var conversationRange: HistoryConversationRange = .month {
+    didSet {
+      UserDefaults.standard.set(
+        conversationRange.rawValue, forKey: HistoryConversationRange.defaultsKey)
+      clearConversationOutsideRange()
+    }
+  }
   var conversationFilter = ""
   var contactFilter = ""
   var searchQuery = ""
@@ -111,7 +119,7 @@ final class HistoryBrowserModel {
   var directMessages: [HistoryDirectMessage] = []
   var directImagePreviews: [String: NSImage] = [:]
   private var directImagePreviewOrder: [String] = []
-  private struct CachedTimeline {
+  private struct CachedTimeline: Codable {
     let messages: [HistoryDirectMessage]
     let cursor: String?
     let warnings: [HistoryDirectWarning]
@@ -120,6 +128,36 @@ final class HistoryBrowserModel {
     var accessedAt: Date
   }
   private var directMessagePageCache: [String: CachedTimeline] = [:]
+  private struct DiskHistory: Codable {
+    var conversations: [HistoryDirectConversation]
+    var cursor: String?
+    var timelines: [String: CachedTimeline]
+  }
+  @ObservationIgnored private var persistentHistory: HistoryPersistentCache?
+  private var conversationRefreshItems: [HistoryDirectConversation] = []
+  private var conversationRefreshCursors: Set<String> = []
+  private var pendingFullConversationRefresh = false
+  @ObservationIgnored private var conversationChangeMonitor: HistoryConversationChangeMonitor?
+  private var conversationChangeTask: Task<Void, Never>?
+  private var conversationSourceChanged = false
+  private var conversationSceneActive = false
+  private let conversationRefreshClock = ContinuousClock()
+  private var lastDirectConversationRead: ContinuousClock.Instant?
+
+  var isMonitoringDirectConversationChanges: Bool { conversationChangeMonitor != nil }
+
+  private func saveHistoryCache() {
+    guard let persistentHistory else { return }
+    do {
+      try persistentHistory.write(
+        DiskHistory(
+          conversations: directConversations,
+          cursor: directConversationCursor, timelines: directMessagePageCache))
+    } catch {
+      connectionPersistenceNotice = "本地缓存暂时无法保存，下次打开将重新加载。"
+    }
+  }
+
   var directMessageCursor: String?
   var directMessageWarnings: [HistoryDirectWarning] = []
   var directMessageConsistency: HistoryDirectConsistency?
@@ -131,6 +169,7 @@ final class HistoryBrowserModel {
   var directSearchWarnings: [HistoryDirectWarning] = []
   var isDirectConnecting = false
   var isLoadingDirectConversations = false
+  var isRefreshingDirectConversations = false
   var isLoadingDirectMessages = false
   var isSearchingDirect = false
   var directConversationError: String?
@@ -149,10 +188,12 @@ final class HistoryBrowserModel {
   private var activeArtifactID = UUID()
   private var directLoadTask: Task<Void, Never>?
   private var directConversationTask: Task<Void, Never>?
+  private var directConversationRefreshTask: Task<Void, Never>?
   private var directMessageTask: Task<Void, Never>?
   private var directSearchTask: Task<Void, Never>?
   private var activeDirectLoadID = UUID()
   private var activeDirectConversationID = UUID()
+  private var activeDirectConversationRefreshID = UUID()
   private var activeDirectMessageID = UUID()
   private var activeDirectSearchID = UUID()
   @ObservationIgnored private var directKeyUTF8: [UInt8] = []
@@ -183,6 +224,9 @@ final class HistoryBrowserModel {
       liveExecutablePath = executable.path
     }
     let defaults = UserDefaults.standard
+    conversationRange =
+      defaults.string(forKey: HistoryConversationRange.defaultsKey)
+      .flatMap(HistoryConversationRange.init(rawValue:)) ?? .month
     directCategoryOverrides =
       defaults.dictionary(forKey: "history.direct.categoryOverrides.v1") as? [String: String] ?? [:]
     rememberDirectConnection = defaults.object(forKey: "history.direct.remember") as? Bool ?? true
@@ -226,7 +270,7 @@ final class HistoryBrowserModel {
   }
 
   var isDirectHistoryOpen: Bool {
-    directConfiguration != nil && directStatus != nil
+    directConfiguration != nil && (directStatus != nil || !directConversations.isEmpty)
   }
 
   var selectedConversation: HistoryConversation? {
@@ -242,8 +286,13 @@ final class HistoryBrowserModel {
   var filteredConversations: [HistoryConversation] {
     guard let session else { return [] }
     let query = conversationFilter.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !query.isEmpty else { return session.conversations }
-    return session.conversations.filter { conversation in
+    let visible = session.conversations.filter {
+      conversationRange.includes(
+        session.conversationStatistics[$0.id]?.latestMessageDate,
+        relativeTo: conversationRangeReferenceDate)
+    }
+    guard !query.isEmpty else { return visible }
+    return visible.filter { conversation in
       conversation.humanLabel.localizedCaseInsensitiveContains(query)
         || conversation.participants.contains {
           $0.displayName.localizedCaseInsensitiveContains(query)
@@ -254,8 +303,16 @@ final class HistoryBrowserModel {
   var filteredContacts: [HistoryContact] {
     guard let session else { return [] }
     let query = contactFilter.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !query.isEmpty else { return session.contacts }
-    return session.contacts.filter { contact in
+    let visible = session.contacts.filter { contact in
+      conversationRange == .all
+        || contact.enabledConversationIDs.contains {
+          conversationRange.includes(
+            session.conversationStatistics[$0]?.latestMessageDate,
+            relativeTo: conversationRangeReferenceDate)
+        }
+    }
+    guard !query.isEmpty else { return visible }
+    return visible.filter { contact in
       contact.displayName.localizedCaseInsensitiveContains(query)
         || contact.conversationProfiles.contains {
           $0.conversationLabel.localizedCaseInsensitiveContains(query)
@@ -311,12 +368,49 @@ final class HistoryBrowserModel {
     let query = conversationFilter.trimmingCharacters(in: .whitespacesAndNewlines)
     let visible = directConversations.filter { item in
       directCategory(for: item) == directChatCategory
+        && conversationRange.includes(item.sortDate, relativeTo: conversationRangeReferenceDate)
     }
     guard !query.isEmpty else { return visible }
     return visible.filter { conversation in
       conversation.displayName.localizedCaseInsensitiveContains(query)
         || (conversation.summary?.localizedCaseInsensitiveContains(query) == true)
         || (conversation.lastSenderDisplayName?.localizedCaseInsensitiveContains(query) == true)
+    }
+  }
+
+  func refreshConversationRangeClock() {
+    conversationRangeReferenceDate = Date()
+    clearConversationOutsideRange()
+    if conversationSceneActive { conversationChangeMonitor?.checkForChanges() }
+  }
+
+  private func clearConversationOutsideRange() {
+    if let conversation = selectedDirectConversation,
+      !conversationRange.includes(conversation.sortDate, relativeTo: conversationRangeReferenceDate)
+    {
+      directMessageTask?.cancel()
+      activeDirectMessageID = UUID()
+      isLoadingDirectMessages = false
+      directSelectedConversationID = nil
+      directMessages = []
+      directMessageCursor = nil
+      directMessageError = nil
+      directIsSearchContext = false
+    }
+    if let id = selectedConversationID, let session,
+      !conversationRange.includes(
+        session.conversationStatistics[id]?.latestMessageDate,
+        relativeTo: conversationRangeReferenceDate)
+    {
+      timelineTask?.cancel()
+      activeTimelineID = UUID()
+      isLoadingTimeline = false
+      selectedConversationID = nil
+      timelineMessages = []
+      timelineCursor = nil
+    }
+    if let id = selectedContactID, !filteredContacts.contains(where: { $0.id == id }) {
+      selectedContactID = nil
     }
   }
 
@@ -375,7 +469,8 @@ final class HistoryBrowserModel {
     keyUTF8: [UInt8],
     recoveryKitURL: URL? = nil,
     localCredentialURL: URL? = nil,
-    restoring: Bool = false
+    restoring: Bool = false,
+    migratingTool: Bool = false
   ) {
     connectionPersistenceNotice = nil
     let shouldRemember = rememberDirectConnection
@@ -434,11 +529,20 @@ final class HistoryBrowserModel {
     }
     directConfiguration = configuration
     replaceDirectKey(with: keyUTF8)
+    persistentHistory = HistoryPersistentCache(
+      configuration: configuration,
+      secret: keyUTF8, enabled: shouldRemember)
+    if let cached = persistentHistory?.read(DiskHistory.self) {
+      directConversations = cached.conversations
+      directMessagePageCache = cached.timelines
+      directSection = .chats
+    }
     showsDirectConnection = false
     isDirectConnecting = true
     libraryError = nil
     let loadID = UUID()
     activeDirectLoadID = loadID
+    startDirectConversationChangeMonitor(configuration: configuration, sessionID: loadID)
     directLoadTask = Task { [weak self] in
       guard let self else { return }
       var key = directKeyUTF8
@@ -449,6 +553,7 @@ final class HistoryBrowserModel {
           keyUTF8: key
         )
         try Task.checkCancellation()
+        lastDirectConversationRead = conversationRefreshClock.now
         let page = try await directClient.conversations(
           configuration: configuration,
           keyUTF8: key,
@@ -457,13 +562,19 @@ final class HistoryBrowserModel {
         try Task.checkCancellation()
         guard activeDirectLoadID == loadID, directConfiguration == configuration else { return }
         directStatus = status
-        directConversations = page.items
+        conversationRefreshItems = page.items
+        let freshIDs = Set(page.items.map(\.id))
+        directConversations = page.items + directConversations.filter { !freshIDs.contains($0.id) }
+        if page.page.nextCursor == nil { directConversations = page.items }
         directConversationCursor = page.page.nextCursor
         directConversationWarnings = page.warnings
         directConversationConsistency = page.consistency
         directSection = .chats
         isDirectConnecting = false
-        if shouldRemember && rememberDirectConnection && !restoring {
+        saveHistoryCache()
+        loadMoreDirectConversations()
+        refreshDirectConversationsIfNeeded()
+        if shouldRemember && rememberDirectConnection && (!restoring || migratingTool) {
           do {
             let record = HistoryRememberedConnection(
               executablePath: configuration.executableURL.path,
@@ -480,7 +591,11 @@ final class HistoryBrowserModel {
         guard activeDirectLoadID == loadID else { return }
         isDirectConnecting = false
         libraryError = historyUserError(error)
-        clearDirectState()
+        if directConversations.isEmpty {
+          clearDirectState()
+        } else {
+          directConversationError = "连接暂不可用，显示本地缓存。"
+        }
       }
     }
   }
@@ -536,7 +651,38 @@ final class HistoryBrowserModel {
     return HistoryPDFPreview(url: output, document: document)
   }
 
-  func previewDirectImage(_ message: HistoryDirectMessage) async throws -> NSImage {
+  func resolveDirectSticker(_ message: HistoryDirectMessage) async throws -> HistorySticker {
+    guard message.isSticker, let configuration = directConfiguration,
+      let executable = Bundle.main.executableURL?.deletingLastPathComponent()
+        .appending(path: "greenbubbles-sticker-query"),
+      FileManager.default.isExecutableFile(atPath: executable.path),
+      let expected = Bundle.main.object(forInfoDictionaryKey: "GBStickerQuerySHA256") as? String,
+      try HistoryRememberedConnection.digest(executable) == expected
+    else { throw StickerLoadError.unavailable }
+    let sessionID = activeDirectLoadID
+    var key = directKeyUTF8
+    defer { key.resetBytes(in: 0..<key.count) }
+    let metadataConfiguration = HistoryDirectConfiguration(
+      executableURL: executable,
+      sourceURL: configuration.sourceURL, accessMode: configuration.accessMode,
+      recoveryKitURL: configuration.recoveryKitURL,
+      localCredentialURL: configuration.localCredentialURL)
+    let resource = try await directClient.message(
+      configuration: metadataConfiguration, keyUTF8: key,
+      conversationID: message.conversationID, messageID: message.id)
+    try Task.checkCancellation()
+    guard directConfiguration == configuration, activeDirectLoadID == sessionID,
+      resource.source.identity == directStatus?.source.identity,
+      resource.item.id == message.id, let sticker = resource.item.sticker,
+      sticker.md5 == message.sticker?.md5
+    else { throw StickerLoadError.unavailable }
+    return sticker
+  }
+
+  func previewDirectImage(_ message: HistoryDirectMessage, mergedIndex: Int? = nil) async throws
+    -> NSImage
+  {
+    let imageID = mergedIndex.map { message.id + "~merged-image~" + String($0) } ?? message.id
     guard let configuration = directConfiguration else { throw PresentationError.sourceChanged }
     let sessionID = activeDirectLoadID
     while directImageLoads >= 2 {
@@ -551,7 +697,7 @@ final class HistoryBrowserModel {
     var key = directKeyUTF8
     defer { key.resetBytes(in: 0..<key.count) }
     let inspection = try await directClient.inspectImage(
-      configuration: configuration, keyUTF8: key, message: message)
+      configuration: configuration, keyUTF8: key, message: message, attachmentMessageID: imageID)
     guard inspection.kind == "image", let attachment = inspection.preferredAttachmentId,
       (inspection.preferredSourceByteCount ?? 0) <= 32 * 1_024 * 1_024
     else { throw PresentationError.unavailable }
@@ -565,7 +711,7 @@ final class HistoryBrowserModel {
     defer { try? FileManager.default.removeItem(at: output) }
     let report = try await directClient.materializeImage(
       configuration: configuration, keyUTF8: key,
-      message: message, attachmentID: attachment, output: output)
+      message: message, attachmentMessageID: imageID, attachmentID: attachment, output: output)
     try Task.checkCancellation()
     guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
       throw PresentationError.sourceChanged
@@ -586,18 +732,170 @@ final class HistoryBrowserModel {
     guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
       throw PresentationError.sourceChanged
     }
-    directImagePreviewOrder.removeAll { $0 == message.id }
-    directImagePreviewOrder.append(message.id)
+    directImagePreviewOrder.removeAll { $0 == imageID }
+    directImagePreviewOrder.append(imageID)
     while directImagePreviewOrder.count > 20 {
       directImagePreviews.removeValue(forKey: directImagePreviewOrder.removeFirst())
     }
-    directImagePreviews[message.id] = image
+    directImagePreviews[imageID] = image
     return image
+  }
+
+  /// Refresh only the bounded latest page automatically; a user refresh also
+  /// reconciles the complete catalog so removed source conversations disappear.
+  func refreshDirectConversations(reloadAll: Bool = false) {
+    guard let configuration = directConfiguration, !isDirectConnecting
+    else { return }
+    if isRefreshingDirectConversations {
+      if reloadAll { pendingFullConversationRefresh = true }
+      return
+    }
+    if !reloadAll {
+      guard directConversationCursor == nil, !isLoadingDirectConversations else { return }
+    } else {
+      directConversationTask?.cancel()
+      activeDirectConversationID = UUID()
+      isLoadingDirectConversations = false
+    }
+    let requestID = UUID()
+    activeDirectConversationRefreshID = requestID
+    conversationChangeTask?.cancel()
+    conversationChangeTask = nil
+    conversationSourceChanged = false
+    lastDirectConversationRead = conversationRefreshClock.now
+    isRefreshingDirectConversations = true
+    directConversationError = nil
+    directConversationRefreshTask = Task { [weak self] in
+      guard let self else { return }
+      var key = directKeyUTF8
+      defer {
+        key.resetBytes(in: 0..<key.count)
+        if activeDirectConversationRefreshID == requestID && pendingFullConversationRefresh {
+          pendingFullConversationRefresh = false
+          refreshDirectConversations(reloadAll: true)
+        } else if activeDirectConversationRefreshID == requestID {
+          refreshDirectConversationsIfNeeded()
+        }
+      }
+      do {
+        let page = try await directClient.conversations(
+          configuration: configuration, keyUTF8: key, limit: 100)
+        try Task.checkCancellation()
+        guard activeDirectConversationRefreshID == requestID,
+          directConfiguration == configuration
+        else { return }
+        let freshIDs = Set(page.items.map(\.id))
+        let refreshedCatalog: [HistoryDirectConversation]
+        if page.page.nextCursor == nil {
+          refreshedCatalog = page.items
+        } else {
+          refreshedCatalog =
+            (page.items + directConversations.filter { !freshIDs.contains($0.id) }).sorted {
+              let left = $0.sortDate ?? .distantPast
+              let right = $1.sortDate ?? .distantPast
+              return left == right ? $0.id < $1.id : left > right
+            }
+        }
+        let catalogChanged = refreshedCatalog != directConversations
+        if catalogChanged { directConversations = refreshedCatalog }
+        directConversationWarnings = page.warnings
+        directConversationConsistency = page.consistency
+        isRefreshingDirectConversations = false
+        if reloadAll {
+          conversationRefreshItems = page.items
+          conversationRefreshCursors = []
+          directConversationCursor = page.page.nextCursor
+          loadMoreDirectConversations()
+        }
+        if reloadAll || catalogChanged { saveHistoryCache() }
+      } catch is CancellationError {
+        if activeDirectConversationRefreshID == requestID {
+          isRefreshingDirectConversations = false
+        }
+      } catch {
+        if activeDirectConversationRefreshID == requestID {
+          isRefreshingDirectConversations = false
+          directConversationError = historyUserError(error)
+        }
+      }
+    }
+  }
+
+  func refreshDirectConversationsIfNeeded() {
+    guard conversationSceneActive, conversationSourceChanged,
+      directConfiguration != nil, conversationChangeMonitor != nil,
+      directConversationError == nil, !isDirectConnecting,
+      directConversationCursor == nil, !isLoadingDirectConversations,
+      !isRefreshingDirectConversations, conversationChangeTask == nil
+    else { return }
+    var delay: Duration = .seconds(2)
+    if let lastDirectConversationRead {
+      delay = max(
+        delay, .seconds(60) - lastDirectConversationRead.duration(to: conversationRefreshClock.now))
+    }
+    let sessionID = activeDirectLoadID
+    conversationChangeTask = Task { [weak self] in
+      do { try await Task.sleep(for: delay) } catch { return }
+      guard let self, activeDirectLoadID == sessionID else { return }
+      conversationChangeTask = nil
+      guard conversationSceneActive, conversationSourceChanged,
+        directConversationError == nil, !isDirectConnecting,
+        directConversationCursor == nil, !isLoadingDirectConversations,
+        !isRefreshingDirectConversations
+      else { return }
+      refreshDirectConversations()
+    }
+  }
+
+  func setDirectConversationMonitoringActive(_ active: Bool) {
+    conversationSceneActive = active
+    if active {
+      conversationChangeMonitor?.checkForChanges()
+      refreshDirectConversationsIfNeeded()
+    } else {
+      conversationChangeTask?.cancel()
+      conversationChangeTask = nil
+    }
+  }
+
+  private func startDirectConversationChangeMonitor(
+    configuration: HistoryDirectConfiguration, sessionID: UUID
+  ) {
+    guard configuration.accessMode == .liveEncrypted || configuration.accessMode == .decrypted
+    else { return }
+    do {
+      conversationChangeMonitor = try HistoryConversationChangeMonitor(
+        sourceRoot: configuration.sourceURL
+      ) { [weak self] in
+        Task { @MainActor [weak self] in
+          guard let self, self.activeDirectLoadID == sessionID,
+            self.directConfiguration == configuration
+          else { return }
+          self.conversationSourceChanged = true
+          self.refreshDirectConversationsIfNeeded()
+        }
+      }
+    } catch {
+      connectionPersistenceNotice = "暂时无法自动检测会话变化，请使用刷新按钮更新。"
+    }
+  }
+
+  func refreshDirectHistory() {
+    refreshDirectConversations(reloadAll: true)
+    returnToLatestDirectMessages()
+  }
+
+  func retryDirectConversations() {
+    if directConversationCursor != nil {
+      loadMoreDirectConversations()
+    } else {
+      refreshDirectConversations(reloadAll: true)
+    }
   }
 
   func loadMoreDirectConversations() {
     guard let configuration = directConfiguration, let cursor = directConversationCursor,
-      !isLoadingDirectConversations
+      !isLoadingDirectConversations, !isRefreshingDirectConversations
     else { return }
     directConversationTask?.cancel()
     let requestID = UUID()
@@ -620,15 +918,33 @@ final class HistoryBrowserModel {
           directConfiguration == configuration,
           directConversationCursor == cursor
         else { return }
-        let existing = Set(directConversations.map(\.id))
-        directConversations.append(contentsOf: page.items.filter { !existing.contains($0.id) })
+        guard !conversationRefreshCursors.contains(cursor), page.page.nextCursor != cursor else {
+          isLoadingDirectConversations = false
+          directConversationError = "会话分页未前进，请重新连接后重试。"
+          return
+        }
+        conversationRefreshCursors.insert(cursor)
+        let existing = Set(conversationRefreshItems.map(\.id))
+        conversationRefreshItems.append(contentsOf: page.items.filter { !existing.contains($0.id) })
+        let freshIDs = Set(conversationRefreshItems.map(\.id))
+        directConversations =
+          conversationRefreshItems + directConversations.filter { !freshIDs.contains($0.id) }
         directConversationCursor = page.page.nextCursor
+        if directConversationCursor == nil { directConversations = conversationRefreshItems }
         directConversationWarnings = mergeDirectWarnings(
           directConversationWarnings,
           page.warnings
         )
         directConversationConsistency = page.consistency
         isLoadingDirectConversations = false
+        saveHistoryCache()
+        // One bounded page at a time; yield between pages so chat reads remain responsive.
+        try await Task.sleep(for: .milliseconds(150))
+        guard activeDirectConversationID == requestID, directConfiguration == configuration else {
+          return
+        }
+        loadMoreDirectConversations()
+        refreshDirectConversationsIfNeeded()
       } catch is CancellationError {
         if activeDirectConversationID == requestID { isLoadingDirectConversations = false }
       } catch {
@@ -814,6 +1130,7 @@ final class HistoryBrowserModel {
         directMessages = [resource.item]
         directMessageWarnings = resource.warnings
         directMessageConsistency = resource.consistency
+        saveHistoryCache()
         isLoadingDirectMessages = false
       } catch is CancellationError {
         if activeDirectMessageID == requestID { isLoadingDirectMessages = false }
@@ -861,11 +1178,17 @@ final class HistoryBrowserModel {
         executableURL: configuration.executableURL,
         sourceURL: configuration.sourceURL, accessMode: configuration.accessMode,
         keyUTF8: Array(record.secret), recoveryKitURL: configuration.recoveryKitURL,
-        localCredentialURL: configuration.localCredentialURL, restoring: true)
+        localCredentialURL: configuration.localCredentialURL, restoring: true,
+        migratingTool: try HistoryRememberedConnection.digest(configuration.executableURL)
+          != record.executableDigest)
+    } catch let error as RememberedConnectionError {
+      libraryError = error.localizedDescription
     } catch { libraryError = historyUserError(error) }
   }
 
   func forgetRememberedConnection() {
+    if let url = persistentHistory?.url { try? FileManager.default.removeItem(at: url) }
+    persistentHistory = nil
     rememberDirectConnection = false
     UserDefaults.standard.set(false, forKey: "history.direct.remember")
     do {
@@ -1243,6 +1566,11 @@ final class HistoryBrowserModel {
           directConfiguration == configuration
         else { return }
         if appending {
+          guard page.page.nextCursor != cursor else {
+            isLoadingDirectMessages = false
+            directMessageError = "历史分页未前进，请刷新后重试。"
+            return
+          }
           let existing = Set(directMessages.map(\.id))
           directMessages.append(contentsOf: page.items.filter { !existing.contains($0.id) })
           directMessageWarnings = mergeDirectWarnings(directMessageWarnings, page.warnings)
@@ -1283,6 +1611,7 @@ final class HistoryBrowserModel {
             directMessagePageCache.removeValue(forKey: oldest)
           }
         }
+        saveHistoryCache()
         isLoadingDirectMessages = false
       } catch is CancellationError {
         if activeDirectMessageID == requestID { isLoadingDirectMessages = false }
@@ -1302,16 +1631,25 @@ final class HistoryBrowserModel {
   }
 
   private func clearDirectState() {
+    conversationChangeMonitor?.stop()
+    conversationChangeMonitor = nil
+    conversationChangeTask?.cancel()
+    conversationChangeTask = nil
+    conversationSourceChanged = false
+    lastDirectConversationRead = nil
     directLoadTask?.cancel()
     directConversationTask?.cancel()
+    directConversationRefreshTask?.cancel()
     directMessageTask?.cancel()
     directSearchTask?.cancel()
     activeDirectLoadID = UUID()
     activeDirectConversationID = UUID()
+    activeDirectConversationRefreshID = UUID()
     activeDirectMessageID = UUID()
     activeDirectSearchID = UUID()
     directLoadTask = nil
     directConversationTask = nil
+    directConversationRefreshTask = nil
     directMessageTask = nil
     directSearchTask = nil
     directKeyUTF8.resetBytes(in: 0..<directKeyUTF8.count)
@@ -1319,6 +1657,10 @@ final class HistoryBrowserModel {
     directConfiguration = nil
     directImagePreviews.removeAll()
     directImagePreviewOrder.removeAll()
+    persistentHistory = nil
+    conversationRefreshItems = []
+    conversationRefreshCursors = []
+    pendingFullConversationRefresh = false
     directMessagePageCache.removeAll()
     directStatus = nil
     directSection = .overview
@@ -1337,6 +1679,7 @@ final class HistoryBrowserModel {
     directSearchWarnings = []
     isDirectConnecting = false
     isLoadingDirectConversations = false
+    isRefreshingDirectConversations = false
     isLoadingDirectMessages = false
     isSearchingDirect = false
     directConversationError = nil

@@ -1,0 +1,53 @@
+{
+  "commit": "fc59e9d11eee55ed2d4723b6cae3871ec6ae269b",
+  "rustlsVersion": "0.23.46",
+  "previousBuild": 37,
+  "candidateBuild": 38,
+  "mainExecutableCodeUnchanged": true,
+  "sameSigningCertificate": true,
+  "sameDesignatedRequirement": true,
+  "sendHelperBytesUnchanged": true,
+  "previousCLI_SHA256": "361057f154a92c20a2ae553753c31d356735ed35b15a0194ac5b5d2e4030b910",
+  "currentCLI_SHA256": "704eaddaf34819a5ebfa9b9c3301b587da2468e60b30a362e1eaa6e4a9b02e1b",
+  "migrationManifestVerified": true,
+  "stickerDigestVerified": true,
+  "searchWorkInProgressExcluded": true,
+  "date": "2026-10-16",
+  "installedBuild": 38,
+  "installedSignatureVerification": "PASS",
+  "installedCLIDigestVerified": true,
+  "commandSymlinkPointsToInstalledCLI": true,
+  "syntheticReleaseMetadataE2E": "6 PASS",
+  "installedCLIMetadataE2E": "6 PASS",
+  "nativeAcceptance": {
+    "beforeUpgradeRefresh": "PASS",
+    "quitBeforeInstallProcessAbsent": true,
+    "firstColdLaunchAutoConnect": "PASS",
+    "firstMessageReadAndRefresh": "PASS",
+    "quitBeforeSecondLaunchProcessAbsent": true,
+    "secondColdLaunchAutoConnect": "PASS",
+    "secondMessageReadAndRefresh": "PASS",
+    "keychainPasswordPromptObserved": false,
+    "diskPermissionPromptObserved": false,
+    "passwordOrKeyEntered": false,
+    "launchMethod": "Native CUA app launch; Finder left unchanged because another task was using it"
+  },
+  "privacy": {
+    "credentialValuesReadOrExported": false,
+    "keychainACLChanged": false,
+    "TCCChanged": false,
+    "privateScreenshotsSaved": false
+  },
+  "rollbackBundle": ".build/rustls-install-20261016/installed-build37-backup.app",
+  "limitations": [
+    "Remembered credential item was not read for inspection; exact signed migration manifest and successful native reconnect were verified.",
+    "Same signing identity on this Mac; certificate expiry, locked keychain or identity changes are outside this acceptance."
+  ],
+  "repeatSteps": [
+    "Export committed Native/GreenBubbles and staging script with git archive; copy installed main executable into staging source .build/release.",
+    "Build CLI with cargo build --release --locked; run synthetic metadata E2E.",
+    "Stage with existing certificate; verify main code unchanged, exact predecessor/successor CLI hashes, sticker digest, certificate and designated requirement.",
+    "Quit via native UI, confirm process absent, back up old bundle and install verified candidate.",
+    "Launch using native UI, open a conversation and refresh; repeat full quit and cold launch without entering credentials."
+  ]
+}
