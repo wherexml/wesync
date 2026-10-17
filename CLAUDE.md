@@ -61,3 +61,5 @@ AI 读取黑名单位于高级设置的“会话显示”之前，支持个人/�
 主窗口使用唯一 `Window(id: "history")`，Dock/Finder 重开与菜单栏打开须复用窗口，隐藏、最小化和关闭后可恢复；规范与原生验收见 `docs/SINGLE_WINDOW.md`。
 
 GitHub Actions 已按用户要求停用，日常检查统一先运行 `python3 scripts/local-ci.py`，本机全部通过后再提交推送；不得擅自重新启用云端 CI 或购买额度。范围、复验和报告见 [docs/LOCAL_CI.md](docs/LOCAL_CI.md)。应用改动仍执行既有签名与原生重启验收。
+
+依赖升级须同步分发基线与许可证清单，运行完整本机检查；加密/压缩依赖验证旧数据兼容，安装仍使用同身份工具摘要迁移及原生冷启动。见 [docs/DEPENDENCY_UPGRADES.md](docs/DEPENDENCY_UPGRADES.md)。
