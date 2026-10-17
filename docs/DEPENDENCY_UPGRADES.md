@@ -33,3 +33,7 @@ python3 scripts/dependency-upgrade-e2e.py OLD_CLI NEW_CLI REPORT.json --fixture-
 ### #2 argon2 0.5 → 0.6
 
 现有 `Argon2::new`、`Params::new` 和 `hash_password_into` 可编译；固定 Argon2id v19、64 MiB、3 次、并行度 1、32 字节输出，未改格式标识与口令边界。更新 blake2/password-hash 和新增 phc 的许可证条目，同步分发基线；需通过跨版本快照互读后才合并。
+
+### #3 bip39 2.2 → 3.0
+
+应用使用系统随机熵、`from_entropy_in` 和 `parse_in_normalized`，不调用新版改变的助记词生成接口；继续固定英语 24 词与 zeroize。分发基线和 CC0 许可条目随版本更新，快照格式及恢复保护器标识不变。跨版本验收覆盖旧新恢复词双向解锁与错误恢复词拒绝。
