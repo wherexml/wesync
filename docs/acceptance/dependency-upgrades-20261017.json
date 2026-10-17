@@ -409,8 +409,192 @@
         }
       ],
       "crossVersionE2E": "docs/acceptance/dependency-pr4-e2e-20261017.json"
+    },
+    "5": {
+      "originalHead": "2ee8e879913c43913fd70376a2de2f8e2c821254",
+      "base": "6b060e8ecd50d036fb38198f7f595e395d0b349f",
+      "localCI": ".build/local-ci/20261017T022730.798432Z/summary.json",
+      "localCIStatus": "PASS",
+      "sourceSHA256": "9a6c8e084454b7c270aab0c7601117698f8e9a7b2a4e9bc14c84acf5f8fdd2a8",
+      "checks": [
+        {
+          "name": "Verify pinned audit tools",
+          "status": "PASS"
+        },
+        {
+          "name": "Show Swift version",
+          "status": "PASS"
+        },
+        {
+          "name": "Check formatting",
+          "status": "PASS"
+        },
+        {
+          "name": "Run tests",
+          "status": "PASS"
+        },
+        {
+          "name": "Verify text emoji and bounded local stickers end to end",
+          "status": "PASS"
+        },
+        {
+          "name": "Build release executable",
+          "status": "PASS"
+        },
+        {
+          "name": "Check distribution dependency baseline",
+          "status": "PASS"
+        },
+        {
+          "name": "Check secret hygiene",
+          "status": "PASS"
+        },
+        {
+          "name": "Check cross-language pinned build profile",
+          "status": "PASS"
+        },
+        {
+          "name": "Test the personal-memory driver",
+          "status": "PASS"
+        },
+        {
+          "name": "Check Homebrew formula syntax",
+          "status": "PASS"
+        },
+        {
+          "name": "Check packaging manifests",
+          "status": "PASS"
+        },
+        {
+          "name": "Check the release helper contains no diagnostic bypass",
+          "status": "PASS"
+        },
+        {
+          "name": "Check the send path ships closed",
+          "status": "PASS"
+        },
+        {
+          "name": "Show Rust version",
+          "status": "PASS"
+        },
+        {
+          "name": "Audit Rust dependencies",
+          "status": "PASS"
+        },
+        {
+          "name": "Reproduce the third-party notice bundle",
+          "status": "PASS"
+        },
+        {
+          "name": "Check Rust formatting",
+          "status": "PASS"
+        },
+        {
+          "name": "Lint restoration engine",
+          "status": "PASS"
+        },
+        {
+          "name": "Run restoration-engine tests",
+          "status": "PASS"
+        },
+        {
+          "name": "Verify exact-message sticker metadata end to end",
+          "status": "PASS"
+        },
+        {
+          "name": "Verify AI read blacklist end to end",
+          "status": "PASS"
+        },
+        {
+          "name": "Check the cross-language send vectors are current",
+          "status": "PASS"
+        }
+      ],
+      "crossVersionE2E": "docs/acceptance/dependency-pr5-e2e-20261017.json"
     }
   },
-  "installedAcceptance": "PENDING",
-  "privateDataRecorded": false
+  "installedAcceptance": {
+    "status": "PASS",
+    "app": "/Applications/WeSync.app",
+    "fromBuild": "43",
+    "toBuild": "44",
+    "beforeUpgrade": {
+      "installedBuild": "43",
+      "stableIdentityVerified": true,
+      "nativeQuitConfirmedProcessAbsent": true,
+      "nativeRelaunchAutomaticConnection": true,
+      "conversationOpened": true,
+      "manualRefresh": true,
+      "credentialEntry": false,
+      "privacyPromptsObserved": false,
+      "privateDataRecorded": false
+    },
+    "staging": {
+      "status": "PASS",
+      "sourceCommit": "cf6cdb0274b86bd834cedee2a3fc7838afe1047d",
+      "fromBuild": "43",
+      "toBuild": "44",
+      "checks": {
+        "exactPreviousToolDigest": true,
+        "exactNewToolDigest": true,
+        "stickerDigest": true,
+        "noticesCurrent": true,
+        "inventoryCurrent": true,
+        "sourceCommitCurrent": true,
+        "sourceClean": true,
+        "localDistributionAccurate": true,
+        "teamUnchanged": true,
+        "sendHelperUnchanged": true,
+        "entitlementsUnchanged": true
+      },
+      "privateDataRecorded": false
+    },
+    "strictSignature": "PASS",
+    "installedMatchesStaged": "PASS",
+    "sameSigningIdentity": true,
+    "identityMigration": false,
+    "backup": ".build/dependency-review-20261017/installed-build43-backup.app",
+    "coldStarts": [
+      {
+        "nativeQuit": true,
+        "processAbsentBeforeLaunch": true,
+        "nativeRelaunch": true,
+        "automaticConnection": true,
+        "messageTimelineLoaded": true,
+        "manualRefresh": "PASS",
+        "credentialEntry": false,
+        "permissionPromptObserved": false
+      },
+      {
+        "nativeQuit": true,
+        "processAbsentBeforeLaunch": true,
+        "nativeRelaunch": true,
+        "automaticConnection": true,
+        "messageTimelineLoaded": true,
+        "manualRefresh": "PASS",
+        "credentialEntry": false,
+        "permissionPromptObserved": false
+      }
+    ],
+    "aiReadBlacklistCountPreserved": true,
+    "installedCliCrossVersionReport": "docs/acceptance/dependency-installed-e2e-20261017.json",
+    "compatibilitySymlinkPreserved": true,
+    "privateDataRecorded": false
+  },
+  "privateDataRecorded": false,
+  "limitations": [
+    "Existing plaintext SQLite source snapshot creation failed in both baseline and candidate during initial fixture setup; encrypted-source compatibility was exercised instead. No plaintext-conversion fix is claimed.",
+    "Rust audit retains three pre-existing allowed warnings; no new audit exemptions were added.",
+    "The pre-existing manual performance test remains ignored.",
+    "This is a local Apple Development installation, not a notarized public release."
+  ],
+  "repeatNativeAcceptance": [
+    "Quit WeSync using its native application menu.",
+    "Confirm pgrep -x greenbubbles-history returns no process.",
+    "Open /Applications/WeSync.app through native UI and verify the catalog loads without entering a key or password.",
+    "Select a conversation, wait for the message timeline, click Refresh, and verify no load or connection failure.",
+    "Open Advanced Settings and verify connected state and unchanged blacklist count without exposing credentials.",
+    "Quit fully and repeat launch, message loading and Refresh."
+  ],
+  "stagingReproduction": "python3 scripts/stage-local-tool-update.py --identity EXISTING_CERTIFICATE_SHA1 --output NEW_STAGING_DIRECTORY"
 }

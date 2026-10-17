@@ -302,9 +302,9 @@ repository-level license checksum.
 - `synstructure 0.13.2` — `MIT` — https://github.com/mystor/synstructure
 - `tempfile 3.27.0` — `MIT OR Apache-2.0` — https://github.com/Stebalien/tempfile
 - `thiserror 1.0.69` — `MIT OR Apache-2.0` — https://github.com/dtolnay/thiserror
-- `thiserror 2.0.20` — `MIT OR Apache-2.0` — https://github.com/dtolnay/thiserror
+- `thiserror 2.0.21` — `MIT OR Apache-2.0` — https://github.com/dtolnay/thiserror
 - `thiserror-impl 1.0.69` — `MIT OR Apache-2.0` — https://github.com/dtolnay/thiserror
-- `thiserror-impl 2.0.20` — `MIT OR Apache-2.0` — https://github.com/dtolnay/thiserror
+- `thiserror-impl 2.0.21` — `MIT OR Apache-2.0` — https://github.com/dtolnay/thiserror
 - `tinystr 0.8.4` — `Unicode-3.0` — https://github.com/unicode-org/icu4x
 - `tinyvec 1.12.0` — `Zlib OR Apache-2.0 OR MIT` — https://github.com/Lokathor/tinyvec
 - `tinyvec_macros 0.1.1` — `MIT OR Apache-2.0 OR Zlib` — https://github.com/Soveu/tinyvec_macros
@@ -4843,9 +4843,9 @@ Used by:
 - `syn 2.0.119`
 - `syn 3.0.4`
 - `thiserror-impl 1.0.69`
-- `thiserror-impl 2.0.20`
+- `thiserror-impl 2.0.21`
 - `thiserror 1.0.69`
-- `thiserror 2.0.20`
+- `thiserror 2.0.21`
 - `unicode-ident 1.0.24`
 - `zmij 1.0.23`
 

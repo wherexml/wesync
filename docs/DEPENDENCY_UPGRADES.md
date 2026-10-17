@@ -41,3 +41,17 @@ python3 scripts/dependency-upgrade-e2e.py OLD_CLI NEW_CLI REPORT.json --fixture-
 ### #4 zstd 0.13 → 0.14
 
 主 CLI 使用 0.14，上游固定 wx-db 仍使用 0.13，保留两个 Rust 封装且共用 zstd-sys 2.1.0；底层 zstd 仍为 1.5.7。不修改 wx-cli 固定来源。新版 zstd/zstd-safe/zstd-sys 的许可声明变为 BSD-3-Clause，已核对包内 LICENSE 并重新生成许可证清单与原生依赖基线。现有压缩暂存往返、加密 WAL 恢复及 CLI 快照验收覆盖构建与运行兼容性。
+
+### #5 thiserror 2.0.20 → 2.0.21 与集成安装
+
+补丁升级仅改变错误派生宏及对应锁定包，保持原错误枚举和错误码；同步分发基线与许可证清单。
+
+安装脚本修复前的失败场景：更新 CLI 后仍携带旧许可证/SBOM；本机 Apple Development 包继续显示旧 Developer ID 构建来源；记录本次源码时误将保留的发送工具称为重新构建。处理方式是在最终签名前同步仓库许可证和已审查 SBOM，记录本机更新来源、构建输入摘要、签名团队与保留工具摘要，并明确本机证书更新不代表 Developer ID 分发。验收使用真实 staging、严格签名校验、资源比对及安装冷启动，不新增单元测试。
+
+## 集成验收结果
+
+五个升级候选逐一通过完整 23 项本机检查，每个候选的 14 项跨版本 CLI 检查均通过。原有 3 条允许审计警告和 1 项手动性能 ignored 保持原状，没有增加豁免。
+
+最终 build 43 → 44 沿用同一 Apple Development 身份，严格签名、DR 稳定、精确工具摘要迁移、11 项 staging 检查及安装包与候选资源比对通过。原生两次完整退出并确认进程消失后重开，自动连接、消息加载和主动刷新均通过，未输入密钥/密码，未观察到权限弹窗，黑名单数量保持。已安装 release CLI 的额外 14 项跨版本检查通过。旧包在忽略目录 `.build/dependency-review-20261017/installed-build43-backup.app`，未提交本机包或私人界面内容。
+
+新旧 CLI 的加密来源快照兼容已验证；初版明文 SQLite 夹具在升级前后均无法创建快照，属于已有行为，本次未声称修复。安装为本机开发证书更新，不是公证公开发行。完整状态和复验步骤见 [脱敏验收记录](acceptance/dependency-upgrades-20261017.json)。

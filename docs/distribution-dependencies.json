@@ -275,7 +275,7 @@
         "name" : "thiserror",
         "optional" : false,
         "requirement" : "^2",
-        "resolvedVersion" : "2.0.20",
+        "resolvedVersion" : "2.0.21",
         "source" : "registry+https://github.com/rust-lang/crates.io-index",
         "usesDefaultFeatures" : true
       },
