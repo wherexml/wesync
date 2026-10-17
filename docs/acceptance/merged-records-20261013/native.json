@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-13",
+  "build": "35",
+  "scope": "User-selected live merged record; scrubbed observations only",
+  "stableAppleDevelopmentIdentity": "PASS",
+  "querySendStickerHelperBytesUnchanged": "PASS",
+  "installedNativeQuitAndReopen": "PASS",
+  "automaticConnectionWithoutCredentialEntry": "PASS",
+  "secondColdStartWithoutPermissionPrompt": "PASS",
+  "syntheticCardClickAndSheet": "PASS",
+  "liveCardClickAndSheet": "PASS",
+  "liveEntries": 4,
+  "liveTextEntries": 3,
+  "liveImagePlaceholders": 1,
+  "liveSenderTimeOrderText": "PASS",
+  "nativeVisualLayout": "PASS",
+  "closeReturnsToConversation": "PASS",
+  "embeddedImagePreview": "NOT_IMPLEMENTED",
+  "nestedRecordExpansion": "NOT_IMPLEMENTED",
+  "privateScreenshotsCommitted": false,
+  "credentialsReadOrChangedByAgent": false
+}

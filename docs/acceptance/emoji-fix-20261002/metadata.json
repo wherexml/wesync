@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checks": {
+    "missing-database-keeps-message": true,
+    "exact-md5-row": true,
+    "raw-message-preserved": true,
+    "database-accounted": true,
+    "oversized-field-rejected": true,
+    "unrelated-row-not-used": true
+  },
+  "privateDataRecorded": false
+}

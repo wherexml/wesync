@@ -975,6 +975,7 @@ impl<'a> ConnectorService<'a> {
         request: &ConnectorRequest,
         verify_checkpoint: bool,
     ) -> Result<ConnectorResult, ConnectorErrorBody> {
+        crate::ai_read_policy::check_connector()?;
         self.validate_request(request)?;
         // The connector may outlive a separately managed replica follower.
         // Serialize checkpoint-bound reads, invalidate hydrated metadata when

@@ -1,0 +1,155 @@
+{
+  "date": "2026-10-17",
+  "repository": "wherexml/wesync",
+  "githubActionsEnabled": false,
+  "automaticCITriggers": [],
+  "releaseAndHomebrewWorkflows": "Paused by repository-level Actions disablement",
+  "repeatCommand": "python3 scripts/local-ci.py",
+  "localReport": ".build/local-ci/20261017T011050.569625Z/summary.json",
+  "sourceBaseRevision": "71b22958768eb893c44c7255634b9b21b7575b5d",
+  "sourceSHA256": "e8733b4991aa004cb46f4cf9ca7a3d33d920ddd0ad61255f101ba25e8535c2d0",
+  "workingTreeChangedAtRun": true,
+  "pythonVersion": "3.12.12",
+  "localChecksStatus": "PASS",
+  "checks": [
+    {
+      "name": "Verify pinned audit tools",
+      "status": "PASS",
+      "durationSeconds": 0.07
+    },
+    {
+      "name": "Show Swift version",
+      "status": "PASS",
+      "durationSeconds": 0.13
+    },
+    {
+      "name": "Check formatting",
+      "status": "PASS",
+      "durationSeconds": 1.59
+    },
+    {
+      "name": "Run tests",
+      "status": "PASS",
+      "durationSeconds": 6.6
+    },
+    {
+      "name": "Verify text emoji and bounded local stickers end to end",
+      "status": "PASS",
+      "durationSeconds": 3.09
+    },
+    {
+      "name": "Build release executable",
+      "status": "PASS",
+      "durationSeconds": 22.42
+    },
+    {
+      "name": "Check distribution dependency baseline",
+      "status": "PASS",
+      "durationSeconds": 1.52
+    },
+    {
+      "name": "Check secret hygiene",
+      "status": "PASS",
+      "durationSeconds": 0.73
+    },
+    {
+      "name": "Check cross-language pinned build profile",
+      "status": "PASS",
+      "durationSeconds": 0.4
+    },
+    {
+      "name": "Test the personal-memory driver",
+      "status": "PASS",
+      "durationSeconds": 1.99
+    },
+    {
+      "name": "Check Homebrew formula syntax",
+      "status": "PASS",
+      "durationSeconds": 0.06
+    },
+    {
+      "name": "Check packaging manifests",
+      "status": "PASS",
+      "durationSeconds": 0.23
+    },
+    {
+      "name": "Check the release helper contains no diagnostic bypass",
+      "status": "PASS",
+      "durationSeconds": 1.57
+    },
+    {
+      "name": "Check the send path ships closed",
+      "status": "PASS",
+      "durationSeconds": 0.01
+    },
+    {
+      "name": "Show Rust version",
+      "status": "PASS",
+      "durationSeconds": 0.06
+    },
+    {
+      "name": "Audit Rust dependencies",
+      "status": "PASS",
+      "durationSeconds": 2.74
+    },
+    {
+      "name": "Reproduce the third-party notice bundle",
+      "status": "PASS",
+      "durationSeconds": 3.06
+    },
+    {
+      "name": "Check Rust formatting",
+      "status": "PASS",
+      "durationSeconds": 0.7
+    },
+    {
+      "name": "Lint restoration engine",
+      "status": "PASS",
+      "durationSeconds": 0.48
+    },
+    {
+      "name": "Run restoration-engine tests",
+      "status": "PASS",
+      "durationSeconds": 89.05
+    },
+    {
+      "name": "Verify exact-message sticker metadata end to end",
+      "status": "PASS",
+      "durationSeconds": 1.12
+    },
+    {
+      "name": "Verify AI read blacklist end to end",
+      "status": "PASS",
+      "durationSeconds": 0.28
+    },
+    {
+      "name": "Check the cross-language send vectors are current",
+      "status": "PASS",
+      "durationSeconds": 0.92
+    }
+  ],
+  "existingRustTests": {
+    "passed": 342,
+    "failed": 0,
+    "ignored": 1
+  },
+  "syntheticArtifacts": {
+    "emoji": true,
+    "metadata": true,
+    "blacklist": true,
+    "blacklistPolicyRestored": true
+  },
+  "failureHandling": {
+    "missingAuditToolStopsWithNonzeroExitAnd22NotRunChecks": true,
+    "existingCLIProcessFixtureUsesTemporaryConfiguration": true,
+    "operatorConfigurationNotModified": true
+  },
+  "existingAuditWarnings": [
+    "RUSTSEC-2021-0139",
+    "RUSTSEC-2024-0375",
+    "RUSTSEC-2021-0145"
+  ],
+  "newAuditIgnoresAdded": false,
+  "installedAppAcceptance": "NOT_RUN: development workflow and existing process-test fixture only; no app installation",
+  "privacy": "Synthetic test data only; no credentials, personal chats, production screenshots or local logs committed"
+}

@@ -1,0 +1,20 @@
+{
+  "build": "15",
+  "installed": true,
+  "nativeQuitBeforeInstall": "PASS",
+  "nativeReopenAfterInstall": "PASS",
+  "automaticConnection": "BLOCKED",
+  "affectedLiveUI": "BLOCKED",
+  "secondRestart": "NOT_RUN",
+  "blocker": "Application-owned remembered connection awaits native macOS Keychain confirmation.",
+  "databaseKeyEntered": false,
+  "connectionDataModified": false,
+  "realChatScreenshotsSaved": false,
+  "previewChecks": {
+    "outgoingBodyDarkText": "PASS",
+    "incomingContrast": "PASS",
+    "quoteBodyDarkText": "PASS",
+    "sidebarAndTimelineSurfaces": "PASS",
+    "lightAndDarkRenders": "PASS"
+  }
+}

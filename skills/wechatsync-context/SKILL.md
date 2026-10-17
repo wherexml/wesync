@@ -1,6 +1,6 @@
 ---
-name: greenbubbles-context
-description: Find chats by name, read or search WeChat messages with the local GreenBubbles CLI. Use for bounded live or snapshot queries; route setup problems to greenbubbles-setup and maintained notes to greenbubbles-personal-memory.
+name: wechatsync-context
+description: Find chats by name, read or search WeChat messages with the local GreenBubbles CLI. Use for bounded live or snapshot queries; route setup problems to wechatsync-setup and maintained notes to wechatsync-personal-memory.
 ---
 
 # Query WeChat history
@@ -36,8 +36,8 @@ claims; distinguish the account holder's words from other people's claims.
 
 ## Route another task
 
-- Access or installation failure: [setup](../greenbubbles-setup/SKILL.md).
-- Build or revise maintained notes: [personal memory](../greenbubbles-personal-memory/SKILL.md).
+- Access or installation failure: [setup](../wechatsync-setup/SKILL.md).
+- Build or revise maintained notes: [personal memory](../wechatsync-personal-memory/SKILL.md).
 - Owner-requested policies, replica-only resources, or exports:
   [references/advanced.md](references/advanced.md).
 

@@ -1,6 +1,6 @@
-# GreenBubbles documentation
+# WeSync documentation
 
-GreenBubbles reads your own WeChat history on your Mac and lets you choose
+WeSync reads your own WeChat history on your Mac and lets you choose
 which parts, if any, an AI gets to see. Start with the
 [repository README](../README.md). Use this page to find the right guide next.
 
@@ -9,7 +9,7 @@ which parts, if any, an AI gets to see. Start with the
 | I want to… | Read |
 | --- | --- |
 | Install the command-line tool or check a download | [CLI releases and Homebrew](HOMEBREW.md) |
-| Set up the key GreenBubbles needs | [Key setup guide](PASSPHRASE_ACQUISITION.md) |
+| Set up the key WeSync needs | [Key setup guide](PASSPHRASE_ACQUISITION.md) |
 | Install and browse my history | [User guide](USER_GUIDE.md) |
 | Have my coding agent write notes from my chats | [Agent skills](AGENT_SKILLS.md) |
 | Understand how those notes are organized | [Personal memory](PERSONAL_MEMORY.md) |
@@ -24,6 +24,11 @@ which parts, if any, an AI gets to see. Start with the
 | Contribute | [Contributing](../CONTRIBUTING.md) |
 
 ## Everyday use
+
+- [AI 读取黑名单](AI_READ_BLACKLIST.md)：使用真实名称和头像多选个人/群聊，限制 AI 读取，保留本人查看。
+
+- [会话时间范围](CONVERSATION_RANGE.md)：设置联系人和群聊的显示期限、持久化及重复验收。
+- [会话列表刷新](CONVERSATION_REFRESH.md)：前台持续更新左侧时间、摘要与排序，主动核对全目录及失败重试。
 
 - [User guide](USER_GUIDE.md): first run, finding your WeChat data, browsing,
   and making and opening backups.
@@ -40,9 +45,9 @@ which parts, if any, an AI gets to see. Start with the
 - [Key setup guide](PASSPHRASE_ACQUISITION.md): copying the database key from
   your own WeChat app, checking it, and fixing problems.
 
-## Using GreenBubbles with AI
+## Using WeSync with AI
 
-- [Agent skills](AGENT_SKILLS.md): use GreenBubbles from the coding agent you
+- [Agent skills](AGENT_SKILLS.md): use WeSync from the coding agent you
   already have (Claude Code, Codex, and others), including keeping notes up to
   date.
 - [Personal memory](PERSONAL_MEMORY.md): how the agent turns your chats into a
@@ -55,16 +60,16 @@ which parts, if any, an AI gets to see. Start with the
 - [AI memory integration](AI_MEMORY_INTEGRATION.md): feeding cited messages into
   local memory and search systems.
 - [Connector API](CONNECTOR_API.md): the request and response format for
-  programs that integrate with GreenBubbles.
+  programs that integrate with WeSync.
 
 ## How it works
 
-- [Architecture](ARCHITECTURE.md): why GreenBubbles reads WeChat's data in
+- [Architecture](ARCHITECTURE.md): why WeSync reads WeChat's data in
   place instead of exporting all of it, with the measurements behind that
   choice.
 - [Database format](WECHAT_DATABASE_FORMAT.md): the live directory layout, table discovery, message fields, media, XML, and CLI normalization.
 - [Storage format](STORAGE_FORMAT.md): what WeChat 4.1 writes to disk, how much
-  of it GreenBubbles understands, and how gaps are reported.
+  of it WeSync understands, and how gaps are reported.
 - [Restoration specification](RESTORATION_SPEC.md): the full, lossless export
   format.
 - [Replica specification](REPLICA_SPEC.md) and
@@ -77,7 +82,7 @@ which parts, if any, an AI gets to see. Start with the
   date, and method, and what it doesn't prove.
 - [Auditing](AUDITING.md): independently checking exports, replicas, backups,
   key captures, and the AI access log.
-- [Known limitations](KNOWN_LIMITATIONS.md): everything GreenBubbles doesn't
+- [Known limitations](KNOWN_LIMITATIONS.md): everything WeSync doesn't
   support or hasn't proven yet, in one place.
 - [Operational response plan](OPERATIONAL_RESPONSE_PLAN.md): what to do if a
   key, a backup, or a Mac is compromised.
@@ -87,7 +92,7 @@ which parts, if any, an AI gets to see. Start with the
 
 ## Safety boundaries
 
-- [Threat model](THREAT_MODEL.md): what GreenBubbles protects, from whom, and
+- [Threat model](THREAT_MODEL.md): what WeSync protects, from whom, and
   what it doesn't try to do.
 - [Action safety contract](ACTION_SAFETY_CONTRACT.md): the rules any action
   visible to other people would have to follow.
@@ -97,7 +102,7 @@ which parts, if any, an AI gets to see. Start with the
 ## Where it's going
 
 - [Roadmap](ROADMAP.md): what's next, and what each step must prove first.
-- [Comparison](COMPARISON.md): how GreenBubbles differs from WeChat export and
+- [Comparison](COMPARISON.md): how WeSync differs from WeChat export and
   forensic tools, including when those are the better choice.
 
 ## Old documents
@@ -108,4 +113,11 @@ notes for the record. They may be out of date; read
 
 - [消息浏览缓存](MESSAGE_CACHE.md)：内存缓存容量、历史页保留、刷新行为及可重复验收。
 
-- [私有 GitHub 仓库维护](REPOSITORY.md)：远端、隐私边界和 CI 验证。
+- [私有 GitHub 仓库维护](REPOSITORY.md)：远端、隐私边界和 Actions 停用范围。
+- [本机检查](LOCAL_CI.md)：替代云端 CI 的完整命令、失败处理与可重复验收报告。
+
+- [正文表情与无网址图片表情](EMOJI_DISPLAY.md)：别名展示、单消息资源补全、TLS 兼容与可重复 E2E。
+
+- [图片消息对齐](IMAGE_ALIGNMENT.md)：缩略图边界、与同侧文字气泡的对齐规则及原生验收证据。
+
+- [WeSync rename](WESYNC_RENAME.md): display name, repository, legacy paths and permission continuity.

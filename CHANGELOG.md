@@ -389,14 +389,14 @@ Notable changes to GreenBubbles are documented here. The project follows
   user project as a git repository. The agent writes executable constraints
   (`constraints/*.py`) that produce `ACTIVE_ALERTS` in `manifest.py`, and
   invariant tests (`tests/test_*.py`) runnable with `pytest`.
-- Added `skills/greenbubbles-personal-memory/references/format-python.md` and
+- Added `skills/wechatsync-personal-memory/references/format-python.md` and
   `references/format-markdown.md` with format-specific agent guidance for the
   UserAsCode methodology: ontology taxonomy, CRUD-patch deduplication rules,
   schema and state structure, constraint lifecycle, and manifest regeneration.
 
 ### Changed
 
-- Rewrote `skills/greenbubbles-personal-memory/SKILL.md` for the UserAsCode
+- Rewrote `skills/wechatsync-personal-memory/SKILL.md` for the UserAsCode
   methodology. The skill now covers both Python and Markdown output formats,
   two-phase fact extraction, domain ontology classification, CRUD-patch
   semantics, and constraint-driven alerting.
@@ -480,7 +480,7 @@ Notable changes to GreenBubbles are documented here. The project follows
   `--context-window` rather than a fixed 512 KiB, so a 200K-context harness gets
   a batch it can actually hold, and `--language` keeps every shard writing one
   language so a line-by-line merge does not state each fact twice in two.
-- Added a Pi-discoverable `greenbubbles-personal-memory` Agent Skill and
+- Added a Pi-discoverable `wechatsync-personal-memory` Agent Skill and
   project `.pi/settings.json` integration. Pi remains the default ReAct runtime
   and the one the examples use, but the skill is the whole contract: no
   extension, custom tool, or daemon is required of any agent that runs it.

@@ -249,7 +249,7 @@ struct HistorySnapshotCreationSheet: View {
         .keyboardShortcut(.cancelAction)
         Spacer()
         Button("生成恢复词", action: startRecoveryKitCreation)
-          .buttonStyle(.borderedProminent)
+          .buttonStyle(HistoryActionStyle(prominent: true))
           .keyboardShortcut(.defaultAction)
       }
     }
@@ -332,7 +332,7 @@ struct HistorySnapshotCreationSheet: View {
         .keyboardShortcut(.cancelAction)
         Spacer()
         Button("确认恢复词并创建备份", action: startSnapshotCreation)
-          .buttonStyle(.borderedProminent)
+          .buttonStyle(HistoryActionStyle(prominent: true))
           .keyboardShortcut(.defaultAction)
       }
     }
@@ -401,7 +401,7 @@ struct HistorySnapshotCreationSheet: View {
       HStack {
         Spacer()
         Button("完成") { dismiss() }
-          .buttonStyle(.borderedProminent)
+          .buttonStyle(HistoryActionStyle(prominent: true))
           .keyboardShortcut(.defaultAction)
       }
     }
@@ -435,7 +435,7 @@ struct HistorySnapshotCreationSheet: View {
       HStack {
         Spacer()
         Button("关闭") { dismiss() }
-          .buttonStyle(.borderedProminent)
+          .buttonStyle(HistoryActionStyle(prominent: true))
           .keyboardShortcut(.defaultAction)
       }
     }

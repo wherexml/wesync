@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "syntheticOnly": true,
+  "privateDataRecorded": false,
+  "checks": {
+    "binary-0-toml-json-output": "PASS",
+    "binary-0-toml-reject-syntax": "PASS",
+    "binary-0-toml-reject-unknown": "PASS",
+    "binary-1-toml-json-output": "PASS",
+    "binary-1-toml-reject-syntax": "PASS",
+    "binary-1-toml-reject-unknown": "PASS",
+    "writer-0-reader-1-words-verify-and-read": "PASS",
+    "writer-0-reader-1-passphrase-verify-and-read": "PASS",
+    "writer-0-wrong-passphrase-rejected": "PASS",
+    "writer-0-wrong-recovery-words-rejected": "PASS",
+    "writer-1-reader-0-words-verify-and-read": "PASS",
+    "writer-1-reader-0-passphrase-verify-and-read": "PASS",
+    "writer-1-wrong-passphrase-rejected": "PASS",
+    "writer-1-wrong-recovery-words-rejected": "PASS"
+  },
+  "binarySHA256": [
+    "9bd7c06e30056dcd24a01da39de2ad5c07f76cb4eba11bda33b2970ccd40f75c",
+    "8c096436bd33f5cea798667cd426e2fe551e941136c180d58b12fb18aec25ec8"
+  ]
+}

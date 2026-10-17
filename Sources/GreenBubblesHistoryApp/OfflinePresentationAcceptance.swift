@@ -12,7 +12,7 @@
     guard
       [
         "me.greenbubbles.PresentationPreview", "me.greenbubbles.PolishPreview",
-        "me.greenbubbles.ChinesePreview",
+        "me.greenbubbles.ChinesePreview", "me.greenbubbles.DarkModePreview",
       ].contains(Bundle.main.bundleIdentifier ?? ""),
       let resources = Bundle.main.resourceURL, let binary = Bundle.main.executableURL
     else { return }
@@ -35,7 +35,301 @@
       throw NSError(
         domain: "OfflineAcceptance", code: 2, userInfo: [NSLocalizedDescriptionKey: "Timed out"])
     }
+    if FileManager.default.fileExists(atPath: root.appending(path: "ai-blacklist-acceptance").path)
+    {
+      model.rememberDirectConnection = false
+      model.connectDirectSource(
+        executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+      do {
+        try await waitFor { !model.isDirectConnecting && !model.directConversations.isEmpty }
+        model.showsDirectConnection = true
+      } catch {
+        try? Data("Synthetic blacklist setup failed".utf8).write(to: reportURL)
+      }
+      return
+    }
     var failure: String?
+    if FileManager.default.fileExists(
+      atPath: root.appending(path: "conversation-refresh-acceptance").path)
+    {
+      func waitForRefresh(_ ready: @escaping () -> Bool) async throws {
+        for _ in 0..<2400 {
+          if ready() { return }
+          try await Task.sleep(for: .milliseconds(50))
+        }
+        throw NSError(
+          domain: "OfflineAcceptance", code: 2,
+          userInfo: [NSLocalizedDescriptionKey: "Conversation refresh timed out"])
+      }
+      func stage(_ value: Int, replaceWAL: Bool = false) throws {
+        try Data(String(value).utf8).write(to: root.appending(path: "conversation-refresh-stage"))
+        try Data("Synthetic WAL stage \(value) \(UUID().uuidString)".utf8).write(
+          to: root.appending(path: "session/session.db-wal"), options: replaceWAL ? .atomic : [])
+      }
+      func catalogReadCount() throws -> Int {
+        let text = try String(contentsOf: root.appending(path: "requests.jsonl"), encoding: .utf8)
+        return text.split(separator: "\n").filter { $0.contains("conversations.list") }.count
+      }
+      func catalogReadTimes() throws -> [Double] {
+        let text = try String(contentsOf: root.appending(path: "requests.jsonl"), encoding: .utf8)
+        return try text.split(separator: "\n").compactMap { line in
+          let value = try JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any]
+          return value?["operation"] as? String == "conversations.list"
+            ? value?["observedAtUnixSeconds"] as? Double : nil
+        }
+      }
+      func captureTimestampWindow(_ name: String) throws {
+        guard let view = NSApp.windows.first(where: { $0.isVisible })?.contentView,
+          let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds)
+        else { throw PresentationError.invalidImage }
+        view.cacheDisplay(in: view.bounds, to: bitmap)
+        guard let png = bitmap.representation(using: .png, properties: [:]) else {
+          throw PresentationError.invalidImage
+        }
+        try png.write(to: root.appending(path: "conversation-timestamp-\(name).png"))
+      }
+      do {
+        model.rememberDirectConnection = false
+        model.conversationRange = .month
+        try FileManager.default.createDirectory(
+          at: root.appending(path: "session"), withIntermediateDirectories: true)
+        try Data("Synthetic database event fixture".utf8).write(
+          to: root.appending(path: "session/session.db"))
+        try Data(String(Int(Date().timeIntervalSince1970)).utf8).write(
+          to: root.appending(path: "conversation-refresh-clock"))
+        try stage(0)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitForRefresh {
+          !model.isDirectConnecting && model.directConversationCursor == nil
+            && !model.isLoadingDirectConversations
+        }
+        try require(model.directConversations.count == 230, "initial-full-catalog")
+        try require(model.isMonitoringDirectConversationChanges, "file-monitor-attached")
+        let quietReadCount = try catalogReadCount()
+        let initialQueryTime = try catalogReadTimes().suffix(3).first!
+        try Data("Synthetic shared memory".utf8).write(
+          to: root.appending(path: "session/session.db-shm"))
+        try await Task.sleep(for: .seconds(20))
+        try require(try catalogReadCount() == quietReadCount, "idle-source-does-not-poll")
+        try require(try catalogReadCount() == quietReadCount, "shared-memory-noise-does-not-query")
+        model.selectDirectConversation("demo-room")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.loadOlderDirectMessages()
+        try await waitFor { !model.isLoadingDirectMessages }
+        let historyIDs = model.directMessages.map(\.id)
+        let historyCursor = model.directMessageCursor
+        try require(historyIDs.count == 80, "history-loaded-before-refresh")
+        model.conversationFilter = "Synthetic"
+        let existingRowDate = model.directConversations.first { $0.id == "demo-room" }!.sortDate!
+        try await Task.sleep(for: .milliseconds(200))
+        try captureTimestampWindow("before")
+        let oldTime = model.directConversations.first { $0.id == "synthetic-229" }!.sortTimestamp
+        model.setDirectConversationMonitoringActive(false)
+        try stage(1, replaceWAL: true)
+        try stage(1)
+        try stage(1)
+        try await Task.sleep(for: .seconds(5))
+        try require(try catalogReadCount() == quietReadCount, "inactive-scene-defers-changes")
+        model.setDirectConversationMonitoringActive(true)
+        // Real filesystem notifications must trigger a throttled read, without a button call.
+        try await waitForRefresh {
+          model.directConversations.first?.summary == "Synthetic refreshed stage 1"
+        }
+        try require(model.directConversations.count == 231, "automatic-refresh-discovers-new-chat")
+        try require(
+          model.directConversations.first?.id == "synthetic-229"
+            && model.directConversations.first!.sortTimestamp > oldTime,
+          "automatic-refresh-updates-time-summary-and-order")
+        try require(
+          model.directConversations.contains { $0.id == "synthetic-200" },
+          "bounded-refresh-keeps-catalog-tail")
+        try require(
+          model.directSelectedConversationID == "demo-room"
+            && model.directMessages.map(\.id) == historyIDs
+            && model.directMessageCursor == historyCursor,
+          "automatic-refresh-keeps-selection-and-history")
+        try require(
+          model.conversationFilter == "Synthetic" && model.directChatCategory == "personal"
+            && model.conversationRange == .month,
+          "automatic-refresh-keeps-filters")
+        try require(
+          try catalogReadCount() == quietReadCount + 1, "event-burst-coalesces-to-one-read")
+        try require(
+          try catalogReadTimes().last! - initialQueryTime >= 59,
+          "automatic-query-minimum-sixty-second-gap")
+        try require(
+          model.directConversations.first?.summary == "Synthetic refreshed stage 1",
+          "wal-replacement-still-delivers-changes")
+        let updatedRowDate = model.directConversations.first { $0.id == "demo-room" }!.sortDate!
+        try require(
+          updatedRowDate.timeIntervalSince(existingRowDate) == 60,
+          "existing-row-timestamp-advances-one-minute")
+        try await Task.sleep(for: .milliseconds(200))
+        try captureTimestampWindow("after")
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let evidence = [
+          "source": "synthetic-only", "row": "Synthetic conversation 0",
+          "expectedBefore": formatter.string(from: existingRowDate),
+          "expectedAfter": formatter.string(from: updatedRowDate),
+          "categorySwitch": "none",
+        ]
+        try JSONSerialization.data(
+          withJSONObject: evidence, options: [.prettyPrinted, .sortedKeys]
+        )
+        .write(to: root.appending(path: "conversation-timestamp-evidence.json"))
+        try stage(1)
+        try await Task.sleep(for: .seconds(5))
+        try require(
+          try catalogReadCount() == quietReadCount + 1, "automatic-read-cooldown-enforced")
+        let oldCatalog = model.directConversations
+        try Data().write(to: root.appending(path: "conversation-refresh-fail"))
+        model.refreshDirectConversations()
+        try await waitForRefresh { !model.isRefreshingDirectConversations }
+        try require(
+          model.directConversationError != nil && model.directConversations == oldCatalog,
+          "refresh-failure-keeps-readable-catalog")
+        model.refreshDirectConversationsIfNeeded()
+        try require(!model.isRefreshingDirectConversations, "automatic-error-does-not-retry")
+        try FileManager.default.removeItem(at: root.appending(path: "conversation-refresh-fail"))
+        try stage(2)
+        model.refreshDirectHistory()
+        try await waitForRefresh {
+          !model.isRefreshingDirectConversations && !model.isLoadingDirectConversations
+            && model.directConversationCursor == nil && !model.isLoadingDirectMessages
+        }
+        try require(
+          model.directConversations.first?.summary == "Synthetic refreshed stage 2"
+            && model.directConversationError == nil,
+          "manual-refresh-retries-catalog-and-updates-summary")
+        try require(
+          model.directConversations.count == 230
+            && !model.directConversations.contains { $0.id == "synthetic-100" },
+          "complete-manual-refresh-reconciles-deletion")
+        try require(
+          model.directMessages.map(\.id) == historyIDs
+            && model.directMessageCursor == historyCursor,
+          "manual-refresh-keeps-contiguous-history")
+        try Data().write(to: root.appending(path: "conversation-refresh-slow"))
+        try stage(3)
+        model.refreshDirectConversations()
+        model.refreshDirectHistory()
+        try await waitForRefresh {
+          !model.isRefreshingDirectConversations && !model.isLoadingDirectConversations
+            && model.directConversationCursor == nil && !model.isLoadingDirectMessages
+        }
+        try require(
+          !model.directConversations.contains { $0.id == "synthetic-200" }
+            && model.directConversations.count == 229,
+          "manual-during-automatic-refresh-still-reconciles-full-catalog")
+        try stage(4)
+        model.refreshDirectConversations()
+        try await Task.sleep(for: .milliseconds(150))
+        model.closeBundle()
+        try require(
+          !model.isRefreshingDirectConversations && model.directConversations.isEmpty,
+          "disconnect-cancels-refresh")
+        try stage(5)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitForRefresh {
+          !model.isDirectConnecting && model.directConversationCursor == nil
+            && !model.isLoadingDirectConversations
+        }
+        try require(
+          model.directConversations.first?.summary == "Synthetic refreshed stage 5",
+          "cancelled-refresh-cannot-overwrite-new-connection")
+        try FileManager.default.removeItem(at: root.appending(path: "conversation-refresh-slow"))
+        model.conversationFilter = ""
+        model.directChatCategory = "group"
+        model.selectDirectConversation("synthetic-new@chatroom")
+        try await waitFor { !model.isLoadingDirectMessages }
+      } catch { failure = error.localizedDescription }
+      let report: [String: Any] = [
+        "checks": checks, "passed": failure == nil, "error": failure ?? "",
+        "source": "synthetic-only", "wechatRead": false,
+      ]
+      if let data = try? JSONSerialization.data(
+        withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+      {
+        try? data.write(to: root.appending(path: "conversation-refresh-acceptance.json"))
+      }
+      return
+    }
+    if FileManager.default.fileExists(
+      atPath: root.appending(path: "conversation-range-acceptance").path)
+    {
+      do {
+        model.rememberDirectConnection = false
+        model.conversationRangeReferenceDate = Date(timeIntervalSince1970: 1_790_942_400)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
+        try require(model.directConversations.count == 21, "full-source-retained")
+        for category in ["personal", "group", "other"] {
+          model.directChatCategory = category
+          for (range, count) in [
+            (HistoryConversationRange.week, 1), (.month, 3), (.threeMonths, 4), (.year, 5),
+            (.all, 7),
+          ] {
+            model.conversationRange = range
+            try require(
+              model.filteredDirectConversations.count == count, "\(category)-\(range.rawValue)")
+            model.conversationFilter = "Synthetic"
+            try require(
+              model.filteredDirectConversations.count == count,
+              "search-intersection-\(category)-\(range.rawValue)")
+            model.conversationFilter = ""
+          }
+        }
+        model.directChatCategory = "personal"
+        model.selectDirectConversation("range-personal-4")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.conversationRange = .month
+        try require(
+          model.directSelectedConversationID == nil && model.directMessages.isEmpty,
+          "hidden-selection-cleared")
+        model.conversationRange = .all
+        try require(
+          model.filteredDirectConversations.count == 7, "expansion-restores-unknown-and-old")
+        try require(model.directConversations.count == 21, "filter-never-deletes-source")
+        model.conversationRange = .threeMonths
+        let restored = HistoryBrowserModel(arguments: [])
+        try require(restored.conversationRange == .threeMonths, "preference-persisted")
+        let calendar = Calendar(identifier: .gregorian)
+        let monthEnd = Date(timeIntervalSince1970: 1_743_422_400)
+        let cutoff = HistoryConversationRange.month.cutoff(
+          relativeTo: monthEnd, calendar: calendar)!
+        try require(
+          calendar.dateComponents([.month, .day], from: cutoff).month == 2
+            && calendar.component(.day, from: cutoff) == 28, "calendar-month-end")
+        for range in HistoryConversationRange.allCases where range != .all {
+          let cutoff = range.cutoff(relativeTo: model.conversationRangeReferenceDate)!
+          try require(
+            range.includes(cutoff, relativeTo: model.conversationRangeReferenceDate),
+            "inclusive-boundary-\(range.rawValue)")
+          try require(
+            !range.includes(
+              cutoff.addingTimeInterval(-1), relativeTo: model.conversationRangeReferenceDate),
+            "older-than-boundary-\(range.rawValue)")
+          try require(
+            !range.includes(nil, relativeTo: model.conversationRangeReferenceDate),
+            "unknown-time-hidden-\(range.rawValue)")
+        }
+        model.conversationRange = .month
+      } catch { failure = error.localizedDescription }
+      let report: [String: Any] = [
+        "checks": checks, "passed": failure == nil, "error": failure ?? "",
+        "source": "synthetic-only", "wechatRead": false,
+      ]
+      if let data = try? JSONSerialization.data(
+        withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+      {
+        try? data.write(to: root.appending(path: "conversation-range-acceptance.json"))
+      }
+      return
+    }
     if FileManager.default.fileExists(atPath: root.appending(path: "message-cache-acceptance").path)
     {
       do {
@@ -44,6 +338,11 @@
           executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
         try await waitFor { !model.isDirectConnecting }
         try require(model.isDirectHistoryOpen, "fixture-connected")
+        try await waitFor {
+          model.directConversationCursor == nil && !model.isLoadingDirectConversations
+        }
+        try require(
+          model.directConversations.count == 230, "all-conversations-loaded-without-click")
         model.selectDirectConversation("demo-room")
         try await waitFor { !model.isLoadingDirectMessages }
         try require(model.directMessages.count == 40, "first-page")
@@ -92,6 +391,43 @@
         try require(
           model.directMessages.isEmpty && model.isLoadingDirectMessages,
           "reconnect-does-not-reuse-prior-session")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.closeBundle()
+        model.rememberDirectConnection = true
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root,
+          accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
+        model.selectDirectConversation("demo-room")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.loadOlderDirectMessages()
+        try await waitFor { !model.isLoadingDirectMessages }
+        let configuration = model.directConfiguration!
+        let disk = HistoryPersistentCache(configuration: configuration, secret: [], enabled: true)!
+        let encrypted = try Data(contentsOf: disk.url)
+        try require(
+          encrypted.range(of: Data("Synthetic cache message".utf8)) == nil,
+          "disk-has-no-plaintext-chat")
+        model.closeBundle()
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root,
+          accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try require(
+          model.directConversations.count == 230, "reconnect-restores-full-list-synchronously")
+        model.selectDirectConversation("demo-room")
+        try require(
+          model.directMessages.count == 80 && !model.isLoadingDirectMessages,
+          "reconnect-restores-history-and-cursor")
+        try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
+        model.closeBundle()
+        try Data("corrupt".utf8).write(to: disk.url)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root,
+          accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try require(model.directConversations.isEmpty, "corrupt-cache-is-ignored")
+        try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
+        try require(model.directConversations.count == 230, "corrupt-cache-rebuilt-from-source")
+        model.selectDirectConversation("demo-room")
         try await waitFor { !model.isLoadingDirectMessages }
       } catch { failure = error.localizedDescription }
       let report: [String: Any] = [
@@ -211,7 +547,21 @@
         "same-name-human-and-enterprise-remain-personal")
       model.selectDirectConversation("demo-room")
       try await waitFor { !model.isLoadingDirectMessages }
-      try require(model.directMessages.count == 12, "typed-json-messages")
+      try require(model.directMessages.count == 15, "typed-json-messages")
+      let merged = model.directMessages.first { $0.id == "demo-12" }!.content.mergedRecord!
+      try require(
+        merged.entries.count == 2 && merged.entries[0].text == "第一条 & 完整正文"
+          && merged.entries[0].sender == "合成甲" && merged.entries[1].text == "[图片]",
+        "merged-record-ordered-text-and-media")
+      try require(
+        model.directMessages.filter { ["demo-13", "demo-14"].contains($0.id) }
+          .allSatisfy { $0.content.mergedRecord?.entries.isEmpty == true },
+        "merged-record-malformed-and-entity-safe")
+      let mergedImage = try await model.previewDirectImage(
+        model.directMessages.first { $0.id == "demo-12" }!, mergedIndex: 1)
+      try require(
+        mergedImage.size.width > 0 && mergedImage.size.height > 0,
+        "merged-image-production-load-and-decode")
       let emoji = model.directMessages.first { $0.id == "demo-9" }!
       let unsafeEmoji = model.directMessages.first { $0.id == "demo-10" }!
       let malformedEmoji = model.directMessages.first { $0.id == "demo-11" }!
@@ -226,7 +576,7 @@
         "sticker-rejects-entities-and-malformed-xml")
       model.selectDirectConversation("demo-room")
       try require(
-        !model.isLoadingDirectMessages && model.directMessages.count == 12,
+        !model.isLoadingDirectMessages && model.directMessages.count == 15,
         "recent-chat-memory-cache-immediate")
 
       try require(
@@ -331,7 +681,7 @@
           && assets.avatar(source: "synthetic-presentation-v1", person: "demo-lin") != nil,
         "bad-avatar-preserves-existing")
       let content = VStack(alignment: .leading, spacing: 16) {
-        Text("GreenBubbles · 离线验收").font(.title.bold())
+        Text("WeSync · 离线验收").font(.title.bold())
         Text("仅使用合成消息和应用图标，未连接微信").foregroundStyle(.secondary)
         ForEach(Array(model.directMessages.reversed())) { message in
           HistoryDirectMessageBubble(model: model, message: message, highlighted: false)
@@ -347,9 +697,44 @@
       }
       try png.write(to: root.appending(path: "presentation.png"))
       try require(true, "native-swiftui-render")
+      // Repeat the production bubble render in both appearances using synthetic data only.
+      for (name, scheme, appearanceName) in [
+        ("light", ColorScheme.light, NSAppearance.Name.aqua),
+        ("dark", ColorScheme.dark, NSAppearance.Name.darkAqua),
+      ] {
+        let appearance = NSAppearance(named: appearanceName)!
+        var imageData: Data?
+        appearance.performAsCurrentDrawingAppearance {
+          let themed = HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 16) {
+              Text("聊天").font(.title2.bold())
+              Text("合成会话").font(.headline)
+              Text("仅用于配色验收").foregroundStyle(.secondary)
+              Spacer()
+            }.padding(20).frame(width: 220).frame(maxHeight: .infinity)
+              .background(HistoryChatPalette.sidebar)
+            VStack(alignment: .leading, spacing: 16) {
+              Text("明暗配色 · 合成消息").font(.title2.bold())
+              ForEach(Array(model.directMessages.reversed())) { message in
+                HistoryDirectMessageBubble(model: model, message: message, highlighted: false)
+              }
+            }.padding(24).frame(width: 820).background(HistoryChatPalette.timeline)
+          }.fixedSize().environment(\.colorScheme, scheme)
+          let themedRenderer = ImageRenderer(content: themed)
+          themedRenderer.scale = 1
+          if let image = themedRenderer.nsImage, let tiff = image.tiffRepresentation,
+            let bitmap = NSBitmapImageRep(data: tiff)
+          {
+            imageData = bitmap.representation(using: .png, properties: [:])
+          }
+        }
+        try require(imageData != nil, "native-\(name)-palette-render")
+        try imageData?.write(to: root.appending(path: "presentation-\(name).png"))
+      }
+
       model.returnToLatestDirectMessages()
       try await waitFor { !model.isLoadingDirectMessages }
-      try require(model.directMessages.count == 12, "refresh-restores-message-page")
+      try require(model.directMessages.count == 15, "refresh-restores-message-page")
       let personal = model.directConversations.first { $0.id == "demo-room" }!
       let group = model.directConversations.first { $0.id == "demo@chatroom" }!
       let official = model.directConversations.first { $0.id == "cmb4008205555" }!

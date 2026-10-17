@@ -1,0 +1,11 @@
+{
+  "categorySwitch": "none",
+  "expectedAfter": "01:35",
+  "expectedBefore": "01:34",
+  "row": "Synthetic conversation 0",
+  "source": "synthetic-only",
+  "observedBefore": "01:34",
+  "observedAfter": "01:35",
+  "nativeWindowPixelsReviewed": true,
+  "passed": true
+}

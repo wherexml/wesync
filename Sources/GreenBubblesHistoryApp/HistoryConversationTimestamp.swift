@@ -9,6 +9,7 @@ struct HistoryConversationTimestamp: View {
       Text(label(for: date, now: context.date))
         .fixedSize(horizontal: true, vertical: false)
     }
+    .id(date)
   }
 
   private func label(for date: Date, now: Date) -> String {

@@ -19,7 +19,9 @@
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>GreenBubbles</string>
+  <string>WeSync</string>
+  <key>CFBundleDisplayName</key>
+  <string>WeSync</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

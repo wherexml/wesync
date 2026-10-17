@@ -1,0 +1,15 @@
+{
+  "scope": "WeChatSync skill rename; no app install or message access",
+  "python": "3.14.7",
+  "command": "/opt/homebrew/bin/python3 -m unittest discover -s scripts -p 'test_*.py' -v",
+  "testsRun": 85,
+  "failures": 0,
+  "errors": 0,
+  "passed": true,
+  "packagingE2E": "relocated bundle installed twice for codex, claude, opencode, kimi, gemini, grok",
+  "systemPython39": "84/85 passed; existing clamp_lower Z timestamp compatibility error",
+  "skillValidation": "all three passed",
+  "releasePrerequisites": "passed",
+  "installedCopiesMatchSource": true,
+  "legacyDiscoveryEntriesRemoved": true
+}

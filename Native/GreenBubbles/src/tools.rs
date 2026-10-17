@@ -1382,12 +1382,11 @@ impl ConversationToolScope {
     pub(crate) fn includes_message(&self, message: &CanonicalMessage) -> bool {
         match message.created_at_unix {
             Some(created_at) => {
-                !self
-                    .not_before_unix
-                    .is_some_and(|not_before| created_at < not_before)
-                    && !self
+                self.not_before_unix
+                    .is_none_or(|not_before| created_at >= not_before)
+                    && self
                         .not_after_unix
-                        .is_some_and(|not_after| created_at > not_after)
+                        .is_none_or(|not_after| created_at <= not_after)
             }
             None => self.not_before_unix.is_none() && self.not_after_unix.is_none(),
         }

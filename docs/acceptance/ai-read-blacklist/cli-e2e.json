@@ -1,0 +1,27 @@
+{
+  "syntheticOnly": true,
+  "policyRestored": true,
+  "checks": {
+    "catalog-excludes-denied-summary": true,
+    "filtered-pagination-continuity": true,
+    "contacts-excluded": true,
+    "name-lookup-no-leak": true,
+    "denied-person": true,
+    "denied-group": true,
+    "allowed-chat-still-readable": true,
+    "mixed-batch-no-partial-disclosure": true,
+    "global-search-fails-closed": true,
+    "bulk-guard-ai-export": true,
+    "bulk-guard-ai-query": true,
+    "bulk-guard-memory": true,
+    "bulk-guard-replica-query": true,
+    "bulk-guard-connector-serve": true,
+    "bulk-guard-chats": true,
+    "attachment-denied-before-read": true,
+    "environment-cannot-bypass": true,
+    "corrupt-policy-fails-closed": true,
+    "insecure-policy-fails-closed": true,
+    "unblocking-restores-read": true
+  },
+  "passed": true
+}

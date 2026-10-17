@@ -1,0 +1,22 @@
+{
+  "baselineBuild": "15",
+  "candidateBuild": "16",
+  "sameDesignatedRequirement": true,
+  "helperBytesUnchanged": true,
+  "signature": "PASS",
+  "binarySHA256": "f33d12c7890240629c10e45d5d28729c7a9ba0ec3241172035a312b532447200",
+  "installedRestart": "PASS: two native quit/reopen cycles; conversations restored without credential entry",
+  "connectionDataTouched": false,
+  "date": "2026-10-02",
+  "advancedSettings": "PASS: native gear button opens existing connection sheet directly",
+  "cancel": "PASS: sheet dismissed; conversation list remains available",
+  "visual": "PASS: screenshot inspected; single gear without dropdown arrow",
+  "privacy": "No credentials entered, connection forgotten, or settings submitted. No native screenshots archived.",
+  "reproduction": [
+    "Quit /Applications/GreenBubbles.app through its application menu.",
+    "Reopen through native UI; verify conversation rows and no key-entry sheet.",
+    "Click advanced settings gear; verify connection sheet.",
+    "Cancel; verify conversation list and gear without dropdown.",
+    "Quit and reopen; verify automatic connection again."
+  ]
+}

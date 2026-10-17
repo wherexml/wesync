@@ -1363,9 +1363,16 @@ fn write_private_file(path: &Path, bytes: &[u8]) {
 }
 
 fn run(arguments: &[&str], input: Option<&[u8]>) -> Output {
+    // Default-output fixtures must not inherit the operator's CLI preferences.
+    // This config override does not change the account-bound AI read policy.
+    let settings = tempfile::tempdir().unwrap();
     let mut command = Command::new(env!("CARGO_BIN_EXE_greenbubbles"));
     command
         .args(arguments)
+        .env(
+            "GREENBUBBLES_CONFIG_FILE",
+            settings.path().join("config.toml"),
+        )
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     if input.is_some() {
