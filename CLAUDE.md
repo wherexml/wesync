@@ -59,3 +59,5 @@ AI 读取黑名单位于高级设置的“会话显示”之前，支持个人/�
 连接配置展开默认只读，点击“修改连接”后才显示整行路径与凭据输入；忘记连接需确认。交互与验收见 `docs/DESIGN_SYSTEM.md`。
 
 主窗口使用唯一 `Window(id: "history")`，Dock/Finder 重开与菜单栏打开须复用窗口，隐藏、最小化和关闭后可恢复；规范与原生验收见 `docs/SINGLE_WINDOW.md`。
+
+GitHub Actions 已按用户要求停用，日常检查统一先运行 `python3 scripts/local-ci.py`，本机全部通过后再提交推送；不得擅自重新启用云端 CI 或购买额度。范围、复验和报告见 [docs/LOCAL_CI.md](docs/LOCAL_CI.md)。应用改动仍执行既有签名与原生重启验收。
