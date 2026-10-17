@@ -102,7 +102,12 @@
           "status": "PASS"
         }
       ],
-      "crossVersionE2E": "docs/acceptance/dependency-pr1-e2e-20261017.json"
+      "crossVersionE2E": "docs/acceptance/dependency-pr1-e2e-20261017.json",
+      "mergeStatus": "MERGED",
+      "reviewedFinalHead": "fe730e02c804826d951aaebb4235942394e354e2",
+      "mergeCommit": "36e1976a3516aa69f0e17545b7c0d75bf8a5a7f2",
+      "mergedAt": "2026-10-17T02:15:25Z",
+      "url": "https://github.com/wherexml/wesync/pull/1"
     },
     "2": {
       "originalHead": "8f5e7f4612cfce9712acdfe308e0acd3419a8972",
@@ -204,7 +209,12 @@
           "status": "PASS"
         }
       ],
-      "crossVersionE2E": "docs/acceptance/dependency-pr2-e2e-20261017.json"
+      "crossVersionE2E": "docs/acceptance/dependency-pr2-e2e-20261017.json",
+      "mergeStatus": "MERGED",
+      "reviewedFinalHead": "d41be1082e9b148143f82a5048b0f52a53dcb0fa",
+      "mergeCommit": "dd06f1f8f73be5c92724cdd99b9e0a3f07a31857",
+      "mergedAt": "2026-10-17T02:19:08Z",
+      "url": "https://github.com/wherexml/wesync/pull/2"
     },
     "3": {
       "originalHead": "a983489c5fe0bd16a41760ae95a6ffa801d42d79",
@@ -306,7 +316,12 @@
           "status": "PASS"
         }
       ],
-      "crossVersionE2E": "docs/acceptance/dependency-pr3-e2e-20261017.json"
+      "crossVersionE2E": "docs/acceptance/dependency-pr3-e2e-20261017.json",
+      "mergeStatus": "MERGED",
+      "reviewedFinalHead": "0c85f69c2484eeb1355985987904ba068584d01a",
+      "mergeCommit": "2b73ff0db05dbf19cd3376f3749ac18fe363113c",
+      "mergedAt": "2026-10-17T02:23:10Z",
+      "url": "https://github.com/wherexml/wesync/pull/3"
     },
     "4": {
       "originalHead": "6fdf4c1ca972f945f19bc65c4376a6cbffafcd7a",
@@ -408,7 +423,12 @@
           "status": "PASS"
         }
       ],
-      "crossVersionE2E": "docs/acceptance/dependency-pr4-e2e-20261017.json"
+      "crossVersionE2E": "docs/acceptance/dependency-pr4-e2e-20261017.json",
+      "mergeStatus": "MERGED",
+      "reviewedFinalHead": "e17386529cd2c7a16f2df648df39b521e1f0eb6f",
+      "mergeCommit": "6b060e8ecd50d036fb38198f7f595e395d0b349f",
+      "mergedAt": "2026-10-17T02:26:54Z",
+      "url": "https://github.com/wherexml/wesync/pull/4"
     },
     "5": {
       "originalHead": "2ee8e879913c43913fd70376a2de2f8e2c821254",
@@ -510,7 +530,12 @@
           "status": "PASS"
         }
       ],
-      "crossVersionE2E": "docs/acceptance/dependency-pr5-e2e-20261017.json"
+      "crossVersionE2E": "docs/acceptance/dependency-pr5-e2e-20261017.json",
+      "mergeStatus": "MERGED",
+      "reviewedFinalHead": "a1163c96cd7530e33a7e549b6529c45cd6cfe10d",
+      "mergeCommit": "61fc09ba2195091ef205035baa027c280008337b",
+      "mergedAt": "2026-10-17T02:35:11Z",
+      "url": "https://github.com/wherexml/wesync/pull/5"
     }
   },
   "installedAcceptance": {
@@ -596,5 +621,8 @@
     "Open Advanced Settings and verify connected state and unchanged blacklist count without exposing credentials.",
     "Quit fully and repeat launch, message loading and Refresh."
   ],
-  "stagingReproduction": "python3 scripts/stage-local-tool-update.py --identity EXISTING_CERTIFICATE_SHA1 --output NEW_STAGING_DIRECTORY"
+  "stagingReproduction": "python3 scripts/stage-local-tool-update.py --identity EXISTING_CERTIFICATE_SHA1 --output NEW_STAGING_DIRECTORY",
+  "cloudWorkflowNote": "Repository CI stays disabled. GitHub still records successful dynamic Dependabot Updates jobs; these are bot branch updates, not repository CI validation.",
+  "finalMergedMain": "61fc09ba2195091ef205035baa027c280008337b",
+  "installedCodeMatchesMergedMain": true
 }

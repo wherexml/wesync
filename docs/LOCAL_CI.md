@@ -41,6 +41,8 @@ gh run list --repo wherexml/wesync --limit 5
 
 权限返回 `enabled: false`。关闭范围仅为此私有仓库，不修改账户套餐、预算或其他仓库。远端旧失败记录保留为历史，不再要求 GitHub `test` 状态作为日常交付门槛。
 
+2026-10-17 合并依赖 PR 时，GitHub 仍记录 `workflowName: Dependabot Updates`、`event: dynamic` 的机器人分支更新。这不表示仓库 CI 被重新开启，也不能替代本机检查；检查新记录时同时核对工作流名称和事件，而非仅判断 run 列表是否变化。仓库权限仍须为 `enabled: false`，不得恢复 push/PR CI。
+
 ## 2026-10-17 验收
 
 本机完整 23 项检查通过，三项合成 E2E 成功，黑名单策略恢复。依赖审计保留原有三条允许警告，未新增忽略项；原有手动性能用例继续标记 ignored。既有 CLI 进程测试改用临时配置，避免个人默认 JSON 输出影响默认简洁格式断言，全部原断言保留。未修改应用功能或安装应用。脱敏结果见 [本机检查验收](acceptance/local-ci-20261017.json)。
