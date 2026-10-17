@@ -1,0 +1,14 @@
+{
+  "source": "synthetic-only",
+  "realChatScreenshotsSaved": false,
+  "checks": {
+    "conversationSelection": "PASS",
+    "chineseSearchEmptyState": "PASS",
+    "clearSearch": "PASS",
+    "connectionSheetShortcut": "PASS",
+    "primaryButtonDarkAppearance": "PASS",
+    "darkTimelineVisualInspection": "PASS"
+  },
+  "installedRestart": "NOT_RUN",
+  "commitAndPush": "PENDING concurrent edit coordination"
+}

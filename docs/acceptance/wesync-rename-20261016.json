@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-16",
+  "previousBuild": "38",
+  "candidateBuild": "39",
+  "bundleIdentifier": "me.greenbubbles.GreenBubbles",
+  "sameCertificate": true,
+  "sameDesignatedRequirement": true,
+  "sameEntitlements": true,
+  "allHelperBytesUnchanged": true,
+  "helperSHA256": {
+    "greenbubbles": "704eaddaf34819a5ebfa9b9c3301b587da2468e60b30a362e1eaa6e4a9b02e1b",
+    "greenbubbles-sticker-query": "f5d233cab1989bf5d55b5c25ac55f3c1d5307b697de867058b0d6fda8061f1bb",
+    "greenbubbles-send": "199fa75957423076706596078063323ee5fa5b65636f51bdb742e868a28b16a9"
+  },
+  "signedCandidateVerification": "PASS",
+  "searchWorkInProgressExcluded": true,
+  "productName": "WeSync",
+  "installedPath": "/Applications/WeSync.app",
+  "legacyPath": "/Applications/GreenBubbles.app",
+  "legacyPathIsCompatibilitySymlink": true,
+  "installedBuild": 39,
+  "installedSignatureVerification": "PASS",
+  "legacyCLICommand": "PASS",
+  "repository": {
+    "name": "wherexml/wesync",
+    "visibility": "PRIVATE",
+    "origin": "https://github.com/wherexml/wesync.git",
+    "upstream": "https://github.com/bojieli/greenbubbles.git"
+  },
+  "nativeAcceptance": {
+    "beforeUpgradeRefresh": "PASS",
+    "quitBeforeInstallProcessAbsent": true,
+    "firstColdLaunchAutoConnect": "PASS",
+    "firstMessageReadAndRefresh": "PASS",
+    "sidebarAndApplicationMenuWeSync": "PASS",
+    "statusMenuOpenAndQuitLabels": "PASS",
+    "statusMenuHideAndReopen": "PASS",
+    "quitBeforeSecondLaunchProcessAbsent": true,
+    "secondColdLaunchAutoConnect": "PASS",
+    "secondMessageReadAndRefresh": "PASS",
+    "keychainPromptObserved": false,
+    "diskPermissionPromptObserved": false,
+    "passwordOrKeyEntered": false,
+    "launchMethod": "Native CUA getApp with exact installed app path"
+  },
+  "privacy": {
+    "credentialValuesInspectedOrExported": false,
+    "keychainACLChanged": false,
+    "TCCChanged": false,
+    "realChatScreenshotsSaved": false,
+    "wechatOperatedDirectly": false
+  },
+  "rollbackBundle": ".build/wesync-rename-20261016/installed-build38-backup.app",
+  "repeatSteps": [
+    "Export git archive HEAD and overlay only the five rename-related Swift files listed in source-manifest.json; keep unfinished search field source excluded.",
+    "Build release greenbubbles-history; stage with stage-local-brand-update.py --source OLD_APP --identity EXISTING_CERT --main-executable REBUILT_MAIN --output NEW_DIRECTORY.",
+    "Compare old/candidate Bundle ID, certificate, designated requirement, entitlements and every CLI/helper SHA-256; run codesign --verify --deep --strict.",
+    "Quit through native UI and confirm process absence; back up old installed bundle, install WeSync.app and create GreenBubbles.app -> WeSync.app compatibility symlink.",
+    "Cold-launch exact /Applications/WeSync.app using native UI, select a conversation and refresh; check WeSync sidebar, application menu, status-menu open/quit and hide/reopen.",
+    "Quit via WeSync status menu, confirm process absence, cold-launch again and refresh without entering credentials.",
+    "Verify legacy app alias and command resolve to current bundled CLI; verify private repository and origin; wait for pushed-commit CI."
+  ],
+  "limitations": [
+    "Results cover this Mac and the existing signing identity; expiry, locked Keychain, different identity or another machine require their own acceptance.",
+    "Public Developer ID distribution/notarization and a future changed-CLI upgrade through the compatibility alias were not exercised."
+  ],
+  "installedMainSHA256": "d749b3ff71e4c301010e7593b7f3b323cd9a31b9ba94edaf5eb13dce0a9fba90",
+  "installedCLIMetadataE2E": "6 PASS",
+  "buildSource": {
+    "baseCommit": "fc59e9d11eee55ed2d4723b6cae3871ec6ae269b",
+    "overlaidFiles": [
+      "Sources/GreenBubblesHistoryApp/GreenBubblesHistoryApp.swift",
+      "Sources/GreenBubblesHistoryApp/HistoryViews.swift",
+      "Sources/GreenBubblesHistoryApp/HistoryDirectViews.swift",
+      "Sources/GreenBubblesHistoryApp/OfflinePresentationAcceptance.swift",
+      "Sources/GreenBubblesHistoryApp/HistoryRememberedConnection.swift"
+    ],
+    "searchWorkInProgressExcluded": true
+  }
+}

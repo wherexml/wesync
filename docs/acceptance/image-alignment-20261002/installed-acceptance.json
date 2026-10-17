@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-02",
+  "build": "12",
+  "installedExecutableSHA256": "c98d197bd2b7dd6b03f2995505612889aa117a5d3264b2045d4e8c290cb4d09d",
+  "releaseBuild": "PASS",
+  "stableSigningRequirement": "PASS",
+  "queryAndSendHelpersUnchanged": "PASS",
+  "nativeQuitReopen": "PASS",
+  "automaticConnectionWithoutKeyEntry": "PASS",
+  "originalReportedPortraitLeftAlignment": "PASS",
+  "observedImageLeftPixel": 884,
+  "observedAdjacentTextBubbleLeftPixel": 884,
+  "outgoingLandscapeRightAlignment": "PASS",
+  "openAndCloseImagePreview": "PASS",
+  "privateScreenshotSaved": false,
+  "reproduction": "docs/IMAGE_ALIGNMENT.md"
+}

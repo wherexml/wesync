@@ -1,0 +1,17 @@
+{
+  "checks" : {
+    "cdn-untrusted-host-rejected" : true,
+    "digest-mismatch" : true,
+    "directory-symlink-rejected" : true,
+    "file-symlink-rejected" : true,
+    "legacy-cdn-valid-tls-host" : true,
+    "local-original" : true,
+    "text-repeated-alias" : true,
+    "text-tears" : true,
+    "traversal-rejected" : true,
+    "unknown-preserved" : true,
+    "wrong-source" : true
+  },
+  "passed" : true,
+  "privateDataRecorded" : false
+}

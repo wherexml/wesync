@@ -45,3 +45,7 @@ For `failure-journeys.py`, use a sticker with available original, encrypted and 
 Production `HistoryStickerView` in the isolated native acceptance app: PASS. Two screenshots show distinct GIF frames (cat sitting, then lying down with caption), within the fixed 160-point bounds, with labels unobscured. Missing-resource fallback and invalid-resource Retry were exercised. Native Cmd-Q terminated the process; native reopening displayed the sticker again. `native-e2e.json` records screenshot hashes. This is the isolated sticker view, not the installed full-history app or remembered-connection acceptance.
 
 Haiku independent review found no confirmed security/correctness defect in supplied sources and reports, and declined unsupported product UI/journey scores. Its then-pending native layout observation is resolved by the final screenshots. Its statement that actor fetches necessarily queue serially is inaccurate: Swift actors are reentrant across network `await` points; no throughput claim is made. Review remains in `independent-review.md` unaltered.
+
+## 后续：仅 MD5 消息及旧 CDN
+
+原实现只覆盖带网址的消息。2026-10-02 后续补齐单条表情元数据、本机资源和旧 CDN 的有效 HTTPS 地址，详见 [EMOJI_DISPLAY.md](EMOJI_DISPLAY.md)。以该文档及新的脱敏验收报告为准。

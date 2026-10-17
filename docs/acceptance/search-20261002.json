@@ -1,0 +1,39 @@
+{
+  "baselineBuild": "16",
+  "candidateBuild": "17",
+  "sameDesignatedRequirement": true,
+  "helperBytesUnchanged": true,
+  "signature": "PASS",
+  "binarySHA256": "45bab34cebcba8d74c24970dac02d5768ef051538827ca7ee670f055ea818446",
+  "connectionDataTouched": false,
+  "date": "2026-10-02",
+  "syntheticAcceptance": {
+    "passed": true,
+    "checks": 51,
+    "report": "search-20261002-synthetic.json"
+  },
+  "nativeSynthetic": {
+    "sidebarChineseFilter": "PASS",
+    "defaultCollapsed": "PASS",
+    "expandLeftOfSearchAndRefresh": "PASS: native screenshot inspected",
+    "automaticFocus": "PASS",
+    "returnSubmitsAndShowsHit": "PASS",
+    "emptyReturnDoesNotSubmit": "PASS",
+    "escapeCollapses": "PASS",
+    "toggleCollapses": "PASS",
+    "clearDoesNotSubmitOldText": "PASS: repeated after action-order fix"
+  },
+  "installed": {
+    "nativeQuitReopenCycles": 2,
+    "autoConnectWithoutCredentialEntry": "PASS",
+    "messagesVisibleAfterRestart": "PASS",
+    "defaultSearchCollapsed": "PASS",
+    "expandAndFocus": "PASS",
+    "searchResultPage": "PASS",
+    "matchingMessages": "PASS: read-only bounded query; content omitted",
+    "returnToChat": "PASS",
+    "finalRefreshRecheck": "PASS: retried after concurrent interaction ended; message timeline, collapsed search toggle and automatic connection remain available"
+  },
+  "privacy": "No credentials entered or connection settings changed. No real chat screenshots, names, content or query terms archived.",
+  "reproduction": "docs/SEARCH.md"
+}

@@ -1,0 +1,9 @@
+{
+  "baselineBuild": "26",
+  "candidateBuild": "27",
+  "sameDesignatedRequirement": true,
+  "helpersUnchanged": true,
+  "signature": "PASS",
+  "connectionDataTouched": false,
+  "installedRestart": "PASS"
+}

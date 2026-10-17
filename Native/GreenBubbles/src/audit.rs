@@ -926,7 +926,7 @@ fn audit_messages(
                 .push((reference.artifact_id.clone(), reference.role));
         }
         let media_bearing = message_requires_artifact(&message);
-        if media_bearing != !message.artifact_references.is_empty() {
+        if media_bearing == message.artifact_references.is_empty() {
             return Err(integrity(
                 "message artifact references disagree with its logical media type",
             ));

@@ -1019,21 +1019,22 @@ extension HistoryDirectQueryClient {
 
   public func inspectImage(
     configuration: HistoryDirectConfiguration, keyUTF8: [UInt8],
-    message: HistoryDirectMessage
+    message: HistoryDirectMessage, attachmentMessageID: String? = nil
   ) async throws -> HistoryAttachmentInspection {
     try await request(
       configuration: configuration, keyUTF8: keyUTF8,
       operation: "attachment.inspect",
       arguments: [
         "attachment", "inspect", configuration.sourceURL.path,
-        "--conversation", message.conversationID, "--message", message.id, "--kind", "image",
+        "--conversation", message.conversationID, "--message", attachmentMessageID ?? message.id,
+        "--kind", "image",
       ],
       query: nil, type: HistoryAttachmentInspection.self)
   }
 
   public func materializeImage(
     configuration: HistoryDirectConfiguration, keyUTF8: [UInt8],
-    message: HistoryDirectMessage, attachmentID: String,
+    message: HistoryDirectMessage, attachmentMessageID: String? = nil, attachmentID: String,
     output: URL
   ) async throws -> HistoryAttachmentMaterialization {
     try await request(
@@ -1041,7 +1042,8 @@ extension HistoryDirectQueryClient {
       operation: "attachment.materialize",
       arguments: [
         "attachment", "materialize", configuration.sourceURL.path,
-        "--conversation", message.conversationID, "--message", message.id, "--kind", "image",
+        "--conversation", message.conversationID, "--message", attachmentMessageID ?? message.id,
+        "--kind", "image",
         "--attachment", attachmentID, "--output", output.path,
       ],
       query: nil, type: HistoryAttachmentMaterialization.self)

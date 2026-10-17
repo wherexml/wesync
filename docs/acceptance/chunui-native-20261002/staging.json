@@ -1,0 +1,10 @@
+{
+  "baselineBuild": "14",
+  "candidateBuild": "15",
+  "signature": "PASS",
+  "sameDesignatedRequirement": true,
+  "helperBytesUnchanged": true,
+  "releaseBinarySHA256": "3a3e2eb24619cc033fdc7b5a82f11b9bca3b29ec96dd0bc6cab8f12465350be3",
+  "installed": "NOT_RUN",
+  "reason": "Concurrent dark-mode work; awaiting installation owner coordination."
+}

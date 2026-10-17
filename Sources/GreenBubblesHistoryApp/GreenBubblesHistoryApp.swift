@@ -9,7 +9,8 @@ struct GreenBubblesHistoryApplication: App {
   @Environment(\.openWindow) private var openWindow
 
   var body: some Scene {
-    WindowGroup("微信聊天记录", id: "history") {
+    // Dock reopen and menu-bar actions must address the same main window.
+    Window("微信聊天记录", id: "history") {
       HistoryRootView(model: model)
         .environment(\.locale, Locale(identifier: "zh_CN"))
         .frame(minWidth: 980, minHeight: 680)
@@ -73,7 +74,7 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
       .flatMap { NSImage(contentsOf: $0) }
       ?? NSImage(
         systemSymbolName: "bubble.left.and.bubble.right.fill",
-        accessibilityDescription: "GreenBubbles")!
+        accessibilityDescription: "WeSync")!
     image.size = NSSize(width: 22, height: 22)
     image.isTemplate = true
     return image
@@ -86,7 +87,10 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
   func activateHistoryWindow() {
     DispatchQueue.main.async {
       NSApp.activate(ignoringOtherApps: true)
-      NSApp.windows.first(where: { $0.canBecomeKey && !$0.isSheet })?.makeKeyAndOrderFront(nil)
+      if let window = NSApp.windows.first(where: { $0.canBecomeKey && !$0.isSheet }) {
+        if window.isMiniaturized { window.deminiaturize(nil) }
+        window.makeKeyAndOrderFront(nil)
+      }
     }
   }
 
@@ -100,9 +104,9 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     applyDockPolicy()
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     item.button?.image = Self.menuIcon
-    item.button?.toolTip = "GreenBubbles"
-    item.button?.setAccessibilityLabel("GreenBubbles 菜单栏")
-    let menu = NSMenu(title: "GreenBubbles")
+    item.button?.toolTip = "WeSync"
+    item.button?.setAccessibilityLabel("WeSync 菜单栏")
+    let menu = NSMenu(title: "WeSync")
     menu.delegate = self
     func add(_ title: String, _ action: Selector) -> NSMenuItem {
       let entry = NSMenuItem(title: title, action: action, keyEquivalent: "")
@@ -110,12 +114,12 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
       menu.addItem(entry)
       return entry
     }
-    _ = add("打开 GreenBubbles", #selector(showHistory))
+    _ = add("打开 WeSync", #selector(showHistory))
     _ = add("隐藏窗口", #selector(hideHistory))
     menu.addItem(.separator())
     dockMenuItem = add("在程序坞中显示", #selector(toggleDock))
     menu.addItem(.separator())
-    _ = add("退出 GreenBubbles", #selector(quitHistory))
+    _ = add("退出 WeSync", #selector(quitHistory))
     item.menu = menu
     statusItem = item
     #if DEBUG
@@ -154,7 +158,9 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     activateHistoryWindow()
   }
   @objc private func hideHistory() {
-    NSApp.windows.filter { $0.canBecomeKey }.forEach { $0.orderOut(nil) }
+    for window in NSApp.windows where window.canBecomeKey {
+      window.orderOut(nil)
+    }
   }
   @objc private func toggleDock() {
     showDockIcon.toggle()
@@ -170,9 +176,9 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
 
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool
   {
-    showWindowHandler?()
-    activateHistoryWindow()
-    return true
+    showHistory()
+    // We handled the reopen; do not also request AppKit's default handling.
+    return false
   }
 
   func application(_ application: NSApplication, open urls: [URL]) {

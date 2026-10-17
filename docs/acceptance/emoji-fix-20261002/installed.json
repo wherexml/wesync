@@ -1,0 +1,7 @@
+{
+  "build": "14",
+  "sameSigningIdentity": true,
+  "queryAndSendUnchanged": true,
+  "signatureVerified": true,
+  "installedRestart": "PENDING"
+}

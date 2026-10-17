@@ -42,9 +42,12 @@ struct HistoryPersonAvatar: View {
 
 struct HistoryRichMessageBody: View {
   let message: HistoryDirectMessage
+  var localStickerSource: URL? = nil
+  var resolveStickerMetadata: (@MainActor () async throws -> HistorySticker)? = nil
   var cachedImage: NSImage? = nil
-  let loadImage: () async throws -> NSImage
-  var loadPDF: (() async throws -> HistoryPDFPreview)? = nil
+  let loadImage: @MainActor () async throws -> NSImage
+  var loadMergedImage: (@MainActor (Int) async throws -> NSImage)? = nil
+  var loadPDF: (@MainActor () async throws -> HistoryPDFPreview)? = nil
   @State private var image: NSImage?
   @State private var error: String?
   @State private var loading = false
@@ -53,17 +56,23 @@ struct HistoryRichMessageBody: View {
 
   var body: some View {
     Group {
-      if let sticker = message.sticker {
-        HistoryStickerView(sticker: sticker)
+      if let record = message.content.mergedRecord {
+        HistoryMergedRecordView(record: record, loadImage: loadMergedImage)
+      } else if let sticker = message.sticker {
+        HistoryStickerView(
+          sticker: sticker, localSource: localStickerSource, resolveMetadata: resolveStickerMetadata
+        )
       } else if let quote = message.content.quote {
         VStack(alignment: .leading, spacing: 10) {
-          if let reply = quote.reply { Text(reply).textSelection(.enabled) }
+          if let reply = quote.reply {
+            Text(HistoryEmojiText.render(reply)).textSelection(.enabled)
+          }
           HStack(alignment: .top, spacing: 10) {
             RoundedRectangle(cornerRadius: 2).fill(.green.opacity(0.65)).frame(width: 3)
             VStack(alignment: .leading, spacing: 4) {
               Label(quote.sender ?? "引用消息", systemImage: "quote.opening")
                 .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-              Text(quote.text ?? "引用原文未能解析")
+              Text(HistoryEmojiText.render(quote.text ?? "引用原文未能解析"))
                 .foregroundStyle(quote.text == nil ? .secondary : .primary)
                 .textSelection(.enabled)
             }
@@ -85,7 +94,7 @@ struct HistoryRichMessageBody: View {
         Label(message.displayText, systemImage: "info.circle")
           .font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
       } else {
-        Text(message.displayText).textSelection(.enabled)
+        Text(HistoryEmojiText.render(message.displayText)).textSelection(.enabled)
       }
     }
     .task(id: message.id) {

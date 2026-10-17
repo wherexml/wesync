@@ -1,12 +1,14 @@
 # 本机稳定签名与图标更新
 
+当前普通更新沿用已安装应用的 Apple Development 身份；不要重新生成自签证书或自动切换团队。2026-10-16 已验证构建签名、build 36 → 37 升级及两次冷启动无需输入密码，详见本文末尾两阶段记录。以下自签证书章节保留为历史迁移说明。
+
 ## 为什么旧更新会丢权限
 
 2026-10-02 检查：已安装 build 6 的 ad-hoc 签名以程序摘要 `cdhash` 标识身份。更新资源并重签会改变这个身份，因此不能把“签名校验通过”当成“下次更新仍保留权限”。
 
 Apple 支持使用自签代码签名证书，为本机应用建立固定的 designated requirement。它不等于 Developer ID 分发或 Apple 公证，也不需要把证书设为全系统受信任根。参考 [TN2206](https://developer.apple.com/library/archive/technotes/tn2206/) 和 [TN3127](https://developer.apple.com/documentation/technotes/tn3127-inside-code-signing-requirements)。
 
-## 专用身份
+## 历史专用身份（已迁移，不用于当前普通更新）
 
 通过系统 Certificate Assistant 创建 `GreenBubbles Local Code Signing`：RSA 2048、SHA-256、用途仅 Digital Signature / Code Signing、3650 天。私钥留在登录钥匙串，不导出，不写入代码仓库，不枚举其他钥匙串项目。后续更新重复使用同一证书，不为每次发布生成新证书。
 
@@ -29,3 +31,63 @@ Apple 支持使用自签代码签名证书，为本机应用建立固定的 desi
 build 6 → 7 建立固定证书身份；原权限开关关闭、重新选择应用仍未恢复连接。通过系统 `tccutil reset SystemPolicyAllFiles me.greenbubbles.GreenBubbles` 撤销仅该应用的旧授权，然后原生系统设置重新选择 `/Applications/GreenBubbles.app`，重开恢复连接。没有直接编辑权限数据库。
 
 build 7 → 8 安装此前准备好的菜单栏/中文界面 release 程序，同一固定证书签名，保留查询工具及发送工具字节。无需再次变更磁盘授权即自动连接。菜单隐藏/打开/退出通过，Finder 白底图标通过。最终冷启动待原生钥匙串确认后复验，结果以 `docs/acceptance/brand-20261002/installed-acceptance.json` 为准。
+
+## 同签名读取工具更新
+
+需要更新 bundled CLI 时，使用 `scripts/stage-local-tool-update.py`。签名封装中精确绑定旧/新摘要，验证主应用与工具同证书后由 App 自动迁移已记住连接。不会扫描钥匙串、导出凭据、放宽 TCC 或接受任意替换工具；外部工具仍须原摘要匹配。详细验收见 [AI_READ_BLACKLIST.md](AI_READ_BLACKLIST.md)。
+
+## 2026-10-11：钥匙串重复弹窗根因与更正
+
+此前“同一本机自签证书的 DR 稳定”只验证了代码签名要求，并不足以证明钥匙串访问跨构建稳定。实际 build 28 → 29 的证书/DR 均相同，仍再次停在应用自己连接条目的 `SecItemCopyMatching`。只读查询该精确条目的访问控制元数据，未读取凭据或枚举其他条目。
+
+Apple securityd 的 [partitionIdForProcess](https://github.com/apple-oss-distributions/Security/blob/main/securityd/src/clientid.cpp) 区分 Apple 颁发的开发/Developer ID 身份（teamid）与其他签名（cdhash）。本机自签证书没有 Apple Team ID，每次构建摘要变化仍可能再次授权。不能把“始终允许”解释为同一自签证书所有未来构建永久放行。
+
+本机已有 Apple Development 签名身份。后续优先沿用该身份；首次迁移使用 staging 脚本显式 `--migrate-signing-identity`，要求 `anchor apple generic` 和 TeamIdentifier，并通过第二个不同资源版本验证 DR 一致。Apple Development 用于本机开发，不等于 Developer ID 分发/公证。首次钥匙串/TCC 迁移仍遵循原生安全流程，不修改 partition list，不给所有程序访问权。需实际验证第二次更新和冷启动不再反复询问后，才声明此问题已解决。
+
+实机结果：用户完成系统设置确认后，原生删除旧条目并重新加入同一路径应用，build 31 自动连接。相同 Apple Development 身份更新至 build 32，Finder 冷启动自动连接，未再次出现钥匙串或磁盘权限弹窗，用户已保存的黑名单保持。证据见 `docs/acceptance/ai-read-blacklist/native-e2e.json`。
+
+## 2026-10-16：构建签名私钥授权复验
+
+本次范围仅为构建时 `/usr/bin/codesign` 使用签名私钥，不涉及应用连接凭据迁移、安装或 TCC。当前安装包仍使用原 Apple Development 身份，Team ID 为 `8T3JY8V9A9`；不要因为 Skylance 公司团队已激活就自动切换团队。
+
+证书 SHA-1 为 `0B6B2162D5FFBCE215565650413CE81575A025B6`，有效期至 2027-10-09。该指纹来自安装包内公开证书，不是私钥或凭据。实际签署一个独立可执行副本，再使用已有 staging 脚本签署两个资源不同的 App 副本，均直接成功返回，无需本次输入密码。DR 一致、签名校验通过、查询及发送 helper 字节未变、安装包未变。没有修改钥匙串 ACL/partition list，没有导出私钥。
+
+后续资源更新沿用此入口，输出目录须为尚不存在的新目录：
+
+```sh
+python3 scripts/stage-local-brand-update.py --identity 0B6B2162D5FFBCE215565650413CE81575A025B6 --output .build/brand-update-YYYYMMDD-N
+```
+
+工具更新继续使用 `scripts/stage-local-tool-update.py`，传入相同证书指纹及该脚本要求的其他参数；普通更新不加 `--migrate-signing-identity`。无需每次重建证书、导入私钥或重跑钥匙串授权。签名本身仍必须每次执行。
+
+失败边界：钥匙串锁定、私钥删除、证书过期/撤销、换机器或换身份均可能需要重新处理；不得承诺永久免密码。如系统要求 `codesign` 访问该签名私钥，由用户在原生安全对话框按需选择“始终允许”，而非仅“允许”；不采集登录密码，不放开所有应用访问权。Apple 说明：https://support.apple.com/en-ie/guide/keychain-access/kyca1243/mac 。
+
+第一阶段证据：[构建签名复验](acceptance/signing-20261016.json)。该阶段只签名副本，未安装，因此其重启验收标记为 NOT_RUN；同日随后完成的实际安装和重启见下一节及[升级验收记录](acceptance/reconnect-upgrade-20261016.json)。
+
+## 2026-10-16：已安装版本升级与两次冷启动
+
+实机完成 build 36 → 37 资源/版本号更新，沿用现有 Apple Development 身份；主程序逻辑及查询、发送工具未更新。升级前完整退出，确认进程不存在，再经 Finder 打开，自动恢复连接并主动刷新成功。旧进程起初有连接失败提示，重启后消失；未确定旧提示根因。
+
+候选包与安装包 DR 完全一致，签名严格校验通过，helper 字节相同。退出后将 build 36 保存在 `.build/reconnect-upgrade-20261016/installed-build36-backup.app`，安装 build 37。升级后 Finder 冷启动、打开会话、主动刷新均通过；再次完整退出并确认进程不存在，Finder 重开与刷新再次通过。全程未输入密钥/密码，未观察到钥匙串或磁盘权限确认，没有修改 ACL、TCC 或读取凭据。
+
+脱敏可重复验收：`docs/acceptance/reconnect-upgrade-20261016.json`。后续保持相同证书、团队、Bundle ID 和工具迁移校验，普通更新不重复做签名身份迁移。此结果覆盖资源更新；主程序/CLI 变更仍执行对应安装验收，不据此跳过工具摘要迁移或承诺换身份后免授权。
+
+## 2026-10-16：rustls CLI 更新与摘要迁移
+
+build 37 → 38 已安装提交 `fc59e9d` 的 rustls 0.23.46 CLI。使用 `git archive` 导出的已提交 Rust 源码执行 release/locked 构建，暂存主程序来自原安装包，不构建工作区 Swift；搜索框未完成修改未进入应用。沿用同一证书，不使用签名身份迁移开关。
+
+使用归档的 `stage-local-tool-update.py` 更新主 CLI 和表情查询 helper，签名 `ToolUpdate.json` 精确绑定已安装旧摘要与新摘要，并保留受旧包签名保护的前驱历史。验证两工具与 App 证书相同、DR 不变、表情摘要一致、发送 helper 字节不变；移除验证副本的签名后比较主程序代码，确认未混入 UI 变动。没有读取已记住连接的凭据内容。
+
+退出并确认进程不存在后安装 build 38；原 build 37 保留于 `.build/rustls-install-20261016/installed-build37-backup.app`。通过原生应用入口启动，首次连接及再次完整退出冷启动后的消息加载、主动刷新均通过，全程未输入密钥/密码，未观察到钥匙串或磁盘权限弹窗。Finder 当时被其他任务使用，未继续操作其窗口。已安装 CLI 的 6 项合成元数据 E2E 通过，命令行软链接仍指向安装包内工具。
+
+脱敏证据与复验步骤：[rustls 本机安装验收](acceptance/rustls-installed-20261016.json)。本次实测覆盖 CLI 摘要变化后的连接连续性，不承诺换身份、钥匙串锁定或证书到期后永久免授权。
+
+## 2026-10-16：WeSync 改名与权限连续性
+
+build 38 → 39 将应用展示名、菜单栏与侧栏改为 WeSync，安装到 `/Applications/WeSync.app`。沿用同一 Apple Development 证书、团队、Bundle ID、entitlements 和 designated requirement；安装包全部 CLI/helper 字节不变。旧路径 `/Applications/GreenBubbles.app` 保留为兼容软链接，因此已有连接中的工具路径和现有命令继续有效。后续工具摘要迁移对比解析软链接后的包内工具路径，原有完整签名、证书及确切摘要校验仍执行。
+
+主应用由 `git archive HEAD` 加五个改名相关 Swift 文件构建；原有搜索框未完成改动未进入安装包。使用 `stage-local-brand-update.py --source /Applications/GreenBubbles.app --main-executable REBUILT_MAIN --identity EXISTING_CERT --output NEW_DIRECTORY` 暂存；后续 staging 默认来源为 `/Applications/WeSync.app`。候选包与旧包证书、DR、entitlements 一致，严格签名验证及所有 helper 摘要比较通过。
+
+原生退出并确认进程消失后安装，连续两次原生冷启动均自动连接，打开会话与主动刷新通过。侧栏/应用菜单显示 WeSync，菜单栏“打开 WeSync / 退出 WeSync”及隐藏/重新打开窗口通过。全程未输入密钥或密码，未观察到钥匙串或磁盘权限提示，未修改 ACL 或 TCC。
+
+旧 build 38 位于 `.build/wesync-rename-20261016/installed-build38-backup.app`，回滚前须先退出应用并移除兼容软链接，再恢复原安装包。规范见 [WESYNC_RENAME.md](WESYNC_RENAME.md)，脱敏结果与重复步骤见 [改名验收](acceptance/wesync-rename-20261016.json)。

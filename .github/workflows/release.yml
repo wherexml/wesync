@@ -147,14 +147,14 @@ jobs:
             echo "name=$name"
             echo "staging=$staging"
             echo "archive=dist/$name.zip"
-            echo "dmg=dist/GreenBubbles-${version}-macos-arm64.dmg"
+            echo "dmg=dist/WeSync-${version}-macos-arm64.dmg"
             echo "sbom=dist/$name-sbom.json"
             echo "checksums=dist/SHA256SUMS-${version}.txt"
-            echo "app_notary_log=dist/GreenBubbles-${version}-app-notarization.json"
+            echo "app_notary_log=dist/WeSync-${version}-app-notarization.json"
             # GitHub release asset names are effectively case-insensitive.
             # Keep the CLI log distinct from the branded DMG log.
             echo "cli_notary_log=dist/$name-cli-notarization.json"
-            echo "dmg_notary_log=dist/GreenBubbles-${version}-macos-arm64-notarization.json"
+            echo "dmg_notary_log=dist/WeSync-${version}-macos-arm64-notarization.json"
           } >>"$GITHUB_OUTPUT"
 
       - name: Import the Developer ID certificate
@@ -244,7 +244,7 @@ jobs:
         run: |
           set -euo pipefail
           bash scripts/package-send-helper.sh
-          cp "$GREENBUBBLES_OUTPUT_DIRECTORY/GreenBubbles.dmg" \
+          cp "$GREENBUBBLES_OUTPUT_DIRECTORY/WeSync.dmg" \
             "${{ steps.archive.outputs.dmg }}"
 
       - name: Verify every application signature
@@ -253,7 +253,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
-          app="$RUNNER_TEMP/greenbubbles-app/GreenBubbles.app"
+          app="$RUNNER_TEMP/greenbubbles-app/WeSync.app"
           helper="$app/Contents/Library/LoginItems/GreenBubblesInputHelper.app"
 
           for executable in \
@@ -364,7 +364,7 @@ jobs:
               --issuer "$APPLE_NOTARY_ISSUER_ID"
           }
 
-          app="$RUNNER_TEMP/greenbubbles-app/GreenBubbles.app"
+          app="$RUNNER_TEMP/greenbubbles-app/WeSync.app"
           app_zip="$RUNNER_TEMP/GreenBubbles-app-notarize.zip"
           /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$app" "$app_zip"
 
@@ -398,10 +398,10 @@ jobs:
           dmg_staging="$RUNNER_TEMP/greenbubbles-dmg-root"
           rm -rf "$dmg_staging"
           mkdir -p "$dmg_staging"
-          /usr/bin/ditto "$app" "$dmg_staging/GreenBubbles.app"
+          /usr/bin/ditto "$app" "$dmg_staging/WeSync.app"
           /bin/ln -s /Applications "$dmg_staging/Applications"
           hdiutil create -quiet \
-            -volname GreenBubbles \
+            -volname WeSync \
             -srcfolder "$dmg_staging" \
             -ov \
             -format UDZO \
@@ -502,9 +502,9 @@ jobs:
             "${{ steps.archive.outputs.dmg }}"
           mounted=yes
 
-          mounted_app="$mount_point/GreenBubbles.app"
+          mounted_app="$mount_point/WeSync.app"
           [ -d "$mounted_app" ] || {
-            echo "error: the disk image does not contain GreenBubbles.app" >&2
+            echo "error: the disk image does not contain WeSync.app" >&2
             exit 1
           }
           [ -L "$mount_point/Applications" ] \
@@ -553,19 +553,19 @@ jobs:
           {
             echo "## Source"
             echo
-            echo "This tag is the complete MIT-licensed GreenBubbles source release."
+            echo "This tag is the complete MIT-licensed WeSync source release."
             echo "GitHub's source archives are attached automatically."
             echo
             echo "## Signed and notarized macOS binaries"
             echo
-            echo "- \`GreenBubbles-${{ steps.tag.outputs.version }}-macos-arm64.dmg\` — native history app; Developer ID signed, Apple notarized, and stapled."
+            echo "- \`WeSync-${{ steps.tag.outputs.version }}-macos-arm64.dmg\` — native history app; Developer ID signed, Apple notarized, and stapled."
             echo "- \`${{ steps.archive.outputs.name }}.zip\` — complete CLI/tool set; every Mach-O is Developer ID signed and Apple notarized. Bare CLI tickets resolve online and cannot be stapled."
             echo "- \`SHA256SUMS-${{ steps.tag.outputs.version }}.txt\` — checksums for every release artifact."
             echo "- The SBOM and Apple notarization logs are published beside the binaries."
             echo
             echo "Requirements: Apple silicon and macOS 14 or later. Verify the checksums before use."
             echo
-            echo "> **Research alpha:** GreenBubbles handles exceptionally sensitive data. Use only with data and accounts you are authorized to access, and read the acquisition/security guidance first."
+            echo "> **Research alpha:** WeSync handles exceptionally sensitive data. Use only with data and accounts you are authorized to access, and read the acquisition/security guidance first."
             echo
             echo "> **The send path ships closed.** No release verification key is committed, so release-signed calibration profiles are refused and sending remains in dry-run until an operator deliberately configures a separate trust root."
             echo
@@ -591,7 +591,7 @@ jobs:
         run: |
           set -euo pipefail
           gh release create "${{ steps.tag.outputs.tag }}" \
-            --title "GreenBubbles ${{ steps.tag.outputs.version }}" \
+            --title "WeSync ${{ steps.tag.outputs.version }}" \
             --notes-file release-notes.md \
             --prerelease \
             --verify-tag \

@@ -106,6 +106,7 @@ impl<'a> DirectConnectorService<'a> {
     }
 
     fn dispatch(&self, request: &ConnectorRequest) -> Result<ConnectorResult, ConnectorErrorBody> {
+        crate::ai_read_policy::check_connector()?;
         self.validate_request(request)?;
         match &request.operation {
             ConnectorOperation::Capabilities => {
@@ -1086,6 +1087,11 @@ fn query_error(error: LiveQueryError) -> ConnectorErrorBody {
         | LiveQueryError::InvalidCursor(message) => invalid(&message),
         LiveQueryError::NotFound(message) => crate::connector::not_found(&message),
         LiveQueryError::SearchUnavailable(message) => unavailable("searchUnavailable", &message),
+        LiveQueryError::AiReadDenied => crate::connector::ConnectorErrorBody {
+            code: crate::connector::ConnectorErrorCode::Unauthorized,
+            message: "AI read blacklist denies this operation".into(),
+            retryable: false,
+        },
         LiveQueryError::UnsafeSource(message) => {
             crate::connector::integrity_error(RestoreError::UnsafePath(message))
         }

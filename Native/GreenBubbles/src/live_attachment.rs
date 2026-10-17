@@ -348,7 +348,7 @@ pub fn materialize_image_attachment(
             )
         })?;
 
-    let encrypted = read_file_candidate(&candidate)?;
+    let encrypted = read_file_candidate(candidate)?;
     let v2_aes_key = if candidate.image_format == Some(wx_media::DatFormat::V2) {
         Some(
             wx_media::derive_v2_key_from_dir(&source.account_root).map_err(|_| {
@@ -449,7 +449,7 @@ pub fn materialize_message_attachment(
     let protected_root = account_root.unwrap_or_else(|| source.root());
     let (decoded_format, decoded_byte_count, decoded_sha256) = match kind {
         AttachmentKind::Image => {
-            let encrypted = read_file_candidate(&candidate)?;
+            let encrypted = read_file_candidate(candidate)?;
             let v2_aes_key = if candidate.image_format == Some(wx_media::DatFormat::V2) {
                 let account_root = account_root.ok_or_else(|| {
                     LiveAttachmentError::Unavailable(
@@ -480,7 +480,7 @@ pub fn materialize_message_attachment(
                     "the selected voice candidate has an incompatible source".into(),
                 ));
             };
-            let (data, format) = match wx_media::transcode_silk_to_ogg_opus(&data) {
+            let (data, format) = match wx_media::transcode_silk_to_ogg_opus(data) {
                 Ok(decoded) => (decoded.data, decoded.ext.to_string()),
                 Err(_) => (data.clone(), "silk".to_string()),
             };
@@ -498,7 +498,7 @@ pub fn materialize_message_attachment(
             let (byte_count, digest) = publish_file_candidate(
                 protected_root,
                 output,
-                &candidate,
+                candidate,
                 kind.maximum_source_bytes(),
             )?;
             (format, byte_count, digest)
@@ -546,15 +546,76 @@ fn resolve_message_descriptor(
     message_id: &str,
     kind: AttachmentKind,
 ) -> Result<MessageAttachmentDescriptor, LiveAttachmentError> {
-    let resource = match get_message(source, conversation, message_id) {
+    let (parent_id, child_index) =
+        if let Some((parent, index)) = message_id.rsplit_once("~merged-image~") {
+            let index = index
+                .parse::<usize>()
+                .ok()
+                .filter(|index| *index < 500)
+                .ok_or_else(|| {
+                    LiveAttachmentError::InvalidArgument("invalid merged image index".into())
+                })?;
+            if kind != AttachmentKind::Image {
+                return Err(LiveAttachmentError::InvalidArgument(
+                    "merged child must be an image".into(),
+                ));
+            }
+            (parent, Some(index))
+        } else {
+            (message_id, None)
+        };
+    let resource = match get_message(source, conversation, parent_id) {
         Ok(resource) => resource,
         Err(LiveQueryError::InvalidCursor(_)) => {
-            get_search_result_message(source, conversation, message_id)
+            get_search_result_message(source, conversation, parent_id)
                 .map_err(map_live_query_error)?
         }
         Err(error) => return Err(map_live_query_error(error)),
     };
     let message = resource.item;
+    if let Some(index) = child_index {
+        let raw = message
+            .content
+            .get("MergedMessages")
+            .and_then(|v| v.get("raw_xml"))
+            .and_then(Value::as_str)
+            .ok_or_else(|| {
+                LiveAttachmentError::InvalidArgument("parent is not a merged record".into())
+            })?;
+        let (mut md5, original) = merged_image_locator(raw, index)?;
+        if let Some((server_id, timestamp)) = original {
+            // Only the authorized parent conversation, bounded to the source second.
+            let page = crate::live_query::list_messages_in_time_range(
+                source,
+                conversation,
+                100,
+                None,
+                Some(timestamp),
+                Some(timestamp),
+            )
+            .map_err(map_live_query_error)?;
+            let matches: Vec<_> = page
+                .items
+                .iter()
+                .filter(|item| {
+                    item.server_id == server_id && message_matches_kind(item, AttachmentKind::Image)
+                })
+                .collect();
+            if matches.len() == 1 {
+                if let Some(value) = extract_unique_message_field(&matches[0].content, "md5")
+                    .and_then(|v| normalize_md5(&v).ok())
+                {
+                    md5 = value;
+                }
+            }
+        }
+        return Ok(MessageAttachmentDescriptor {
+            message_id: message_id.to_string(),
+            server_id: message.server_id,
+            source_md5: Some(md5),
+            title: None,
+        });
+    }
     if !message_matches_kind(&message, kind) {
         return Err(LiveAttachmentError::InvalidArgument(
             "the exact message identity does not describe the requested attachment kind".into(),
@@ -597,6 +658,9 @@ fn map_live_query_error(error: LiveQueryError) -> LiveAttachmentError {
                 "message identity is not bound to this source and conversation".into(),
             )
         }
+        LiveQueryError::AiReadDenied => {
+            LiveAttachmentError::UnsafeSource("AI read blacklist denies this operation".into())
+        }
         LiveQueryError::UnsafeSource(_) => LiveAttachmentError::UnsafeSource(
             "the database source required for attachment lookup is unsafe".into(),
         ),
@@ -607,6 +671,67 @@ fn map_live_query_error(error: LiveQueryError) -> LiveAttachmentError {
             "the exact source message could not be hydrated read-only".into(),
         ),
     }
+}
+
+// Resolve only an exact parent-owned child; never trust caller supplied MD5 or CDN keys.
+fn merged_image_locator(
+    raw: &str,
+    index: usize,
+) -> Result<(String, Option<(i64, i64)>), LiveAttachmentError> {
+    fn parse(raw: &str) -> Result<roxmltree::Document<'_>, LiveAttachmentError> {
+        if raw.len() > 2 * 1024 * 1024 {
+            return Err(LiveAttachmentError::Unavailable(
+                "merged record is too large".into(),
+            ));
+        }
+        roxmltree::Document::parse_with_options(
+            raw,
+            roxmltree::ParsingOptions {
+                allow_dtd: false,
+                nodes_limit: 30000,
+                entity_resolver: None,
+            },
+        )
+        .map_err(|_| LiveAttachmentError::Unavailable("invalid merged record XML".into()))
+    }
+    let document = parse(raw)?;
+    let container = document
+        .descendants()
+        .find(|n| n.has_tag_name("recorditem"))
+        .ok_or_else(|| LiveAttachmentError::Unavailable("record content absent".into()))?;
+    let embedded;
+    let root = if container.children().any(|n| n.is_element()) {
+        container
+    } else {
+        embedded = parse(container.text().unwrap_or(""))?;
+        embedded.root()
+    };
+    let item = root
+        .descendants()
+        .filter(|n| {
+            n.has_tag_name("dataitem") && !n.ancestors().skip(1).any(|a| a.has_tag_name("dataitem"))
+        })
+        .nth(index)
+        .filter(|n| n.attribute("datatype") == Some("2"))
+        .ok_or_else(|| {
+            LiveAttachmentError::InvalidArgument("selected child is not an image".into())
+        })?;
+    let md5 = item
+        .children()
+        .find(|n| n.has_tag_name("fullmd5"))
+        .and_then(|n| n.text())
+        .ok_or_else(|| LiveAttachmentError::Unavailable("image checksum absent".into()))?;
+    let field = |name: &str| {
+        item.children()
+            .find(|n| n.has_tag_name(name))
+            .and_then(|n| n.text())
+            .and_then(|v| v.parse::<i64>().ok())
+            .filter(|v| *v > 0)
+    };
+    Ok((
+        normalize_md5(md5)?,
+        field("fromnewmsgid").zip(field("srcMsgCreateTime")),
+    ))
 }
 
 fn message_matches_kind(message: &MessageItem, kind: AttachmentKind) -> bool {
