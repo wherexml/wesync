@@ -29,3 +29,7 @@ python3 scripts/dependency-upgrade-e2e.py OLD_CLI NEW_CLI REPORT.json --fixture-
 ```
 
 脚本生成临时 SQLCipher 数据库，随机凭据仅经 stdin 传递，保护文件在临时目录中随测试销毁；产物只保留二进制 SHA-256 和各项结果。覆盖 TOML 输出设置与无效输入，以及恢复词/Argon2 口令保护快照的双向验证、消息读取、错误口令/恢复词拒绝。初版夹具使用 Python 明文 SQLite 时，升级前后均在逻辑备份处拒绝；此记录不声称明文来源转换已通过，本次兼容性范围为实际加密来源。
+
+### #2 argon2 0.5 → 0.6
+
+现有 `Argon2::new`、`Params::new` 和 `hash_password_into` 可编译；固定 Argon2id v19、64 MiB、3 次、并行度 1、32 字节输出，未改格式标识与口令边界。更新 blake2/password-hash 和新增 phc 的许可证条目，同步分发基线；需通过跨版本快照互读后才合并。
