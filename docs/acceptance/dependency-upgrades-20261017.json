@@ -513,6 +513,88 @@
       "crossVersionE2E": "docs/acceptance/dependency-pr5-e2e-20261017.json"
     }
   },
-  "installedAcceptance": "PENDING",
-  "privateDataRecorded": false
+  "installedAcceptance": {
+    "status": "PASS",
+    "app": "/Applications/WeSync.app",
+    "fromBuild": "43",
+    "toBuild": "44",
+    "beforeUpgrade": {
+      "installedBuild": "43",
+      "stableIdentityVerified": true,
+      "nativeQuitConfirmedProcessAbsent": true,
+      "nativeRelaunchAutomaticConnection": true,
+      "conversationOpened": true,
+      "manualRefresh": true,
+      "credentialEntry": false,
+      "privacyPromptsObserved": false,
+      "privateDataRecorded": false
+    },
+    "staging": {
+      "status": "PASS",
+      "sourceCommit": "cf6cdb0274b86bd834cedee2a3fc7838afe1047d",
+      "fromBuild": "43",
+      "toBuild": "44",
+      "checks": {
+        "exactPreviousToolDigest": true,
+        "exactNewToolDigest": true,
+        "stickerDigest": true,
+        "noticesCurrent": true,
+        "inventoryCurrent": true,
+        "sourceCommitCurrent": true,
+        "sourceClean": true,
+        "localDistributionAccurate": true,
+        "teamUnchanged": true,
+        "sendHelperUnchanged": true,
+        "entitlementsUnchanged": true
+      },
+      "privateDataRecorded": false
+    },
+    "strictSignature": "PASS",
+    "installedMatchesStaged": "PASS",
+    "sameSigningIdentity": true,
+    "identityMigration": false,
+    "backup": ".build/dependency-review-20261017/installed-build43-backup.app",
+    "coldStarts": [
+      {
+        "nativeQuit": true,
+        "processAbsentBeforeLaunch": true,
+        "nativeRelaunch": true,
+        "automaticConnection": true,
+        "messageTimelineLoaded": true,
+        "manualRefresh": "PASS",
+        "credentialEntry": false,
+        "permissionPromptObserved": false
+      },
+      {
+        "nativeQuit": true,
+        "processAbsentBeforeLaunch": true,
+        "nativeRelaunch": true,
+        "automaticConnection": true,
+        "messageTimelineLoaded": true,
+        "manualRefresh": "PASS",
+        "credentialEntry": false,
+        "permissionPromptObserved": false
+      }
+    ],
+    "aiReadBlacklistCountPreserved": true,
+    "installedCliCrossVersionReport": "docs/acceptance/dependency-installed-e2e-20261017.json",
+    "compatibilitySymlinkPreserved": true,
+    "privateDataRecorded": false
+  },
+  "privateDataRecorded": false,
+  "limitations": [
+    "Existing plaintext SQLite source snapshot creation failed in both baseline and candidate during initial fixture setup; encrypted-source compatibility was exercised instead. No plaintext-conversion fix is claimed.",
+    "Rust audit retains three pre-existing allowed warnings; no new audit exemptions were added.",
+    "The pre-existing manual performance test remains ignored.",
+    "This is a local Apple Development installation, not a notarized public release."
+  ],
+  "repeatNativeAcceptance": [
+    "Quit WeSync using its native application menu.",
+    "Confirm pgrep -x greenbubbles-history returns no process.",
+    "Open /Applications/WeSync.app through native UI and verify the catalog loads without entering a key or password.",
+    "Select a conversation, wait for the message timeline, click Refresh, and verify no load or connection failure.",
+    "Open Advanced Settings and verify connected state and unchanged blacklist count without exposing credentials.",
+    "Quit fully and repeat launch, message loading and Refresh."
+  ],
+  "stagingReproduction": "python3 scripts/stage-local-tool-update.py --identity EXISTING_CERTIFICATE_SHA1 --output NEW_STAGING_DIRECTORY"
 }
