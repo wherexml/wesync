@@ -187,6 +187,7 @@ struct FileVersion {
 
 #[derive(Debug)]
 struct MessageAttachmentDescriptor {
+    created_at_unix: i64,
     message_id: String,
     server_id: i64,
     source_md5: Option<String>,
@@ -546,24 +547,28 @@ fn resolve_message_descriptor(
     message_id: &str,
     kind: AttachmentKind,
 ) -> Result<MessageAttachmentDescriptor, LiveAttachmentError> {
-    let (parent_id, child_index) =
-        if let Some((parent, index)) = message_id.rsplit_once("~merged-image~") {
-            let index = index
-                .parse::<usize>()
-                .ok()
-                .filter(|index| *index < 500)
-                .ok_or_else(|| {
-                    LiveAttachmentError::InvalidArgument("invalid merged image index".into())
-                })?;
-            if kind != AttachmentKind::Image {
-                return Err(LiveAttachmentError::InvalidArgument(
-                    "merged child must be an image".into(),
-                ));
-            }
-            (parent, Some(index))
-        } else {
-            (message_id, None)
-        };
+    let (parent_id, child_index) = if let Some((parent, index)) = message_id
+        .rsplit_once("~merged-image~")
+        .or_else(|| message_id.rsplit_once("~merged-document~"))
+    {
+        let index = index
+            .parse::<usize>()
+            .ok()
+            .filter(|index| *index < 500)
+            .ok_or_else(|| {
+                LiveAttachmentError::InvalidArgument("invalid merged image index".into())
+            })?;
+        if (message_id.contains("~merged-image~") && kind != AttachmentKind::Image)
+            || (message_id.contains("~merged-document~") && kind != AttachmentKind::Document)
+        {
+            return Err(LiveAttachmentError::InvalidArgument(
+                "merged child must be an image".into(),
+            ));
+        }
+        (parent, Some(index))
+    } else {
+        (message_id, None)
+    };
     let resource = match get_message(source, conversation, parent_id) {
         Ok(resource) => resource,
         Err(LiveQueryError::InvalidCursor(_)) => {
@@ -582,8 +587,12 @@ fn resolve_message_descriptor(
             .ok_or_else(|| {
                 LiveAttachmentError::InvalidArgument("parent is not a merged record".into())
             })?;
-        let (mut md5, original) = merged_image_locator(raw, index)?;
-        if let Some((server_id, timestamp)) = original {
+        let MergedAttachmentLocator {
+            mut md5,
+            original,
+            title,
+        } = merged_attachment_locator(raw, index, kind)?;
+        if let Some((server_id, timestamp)) = original.filter(|_| kind == AttachmentKind::Image) {
             // Only the authorized parent conversation, bounded to the source second.
             let page = crate::live_query::list_messages_in_time_range(
                 source,
@@ -610,10 +619,11 @@ fn resolve_message_descriptor(
             }
         }
         return Ok(MessageAttachmentDescriptor {
+            created_at_unix: message.created_at_unix,
             message_id: message_id.to_string(),
             server_id: message.server_id,
             source_md5: Some(md5),
-            title: None,
+            title,
         });
     }
     if !message_matches_kind(&message, kind) {
@@ -644,6 +654,7 @@ fn resolve_message_descriptor(
         _ => {}
     }
     Ok(MessageAttachmentDescriptor {
+        created_at_unix: message.created_at_unix,
         message_id: message_id.to_string(),
         server_id: message.server_id,
         source_md5,
@@ -674,10 +685,17 @@ fn map_live_query_error(error: LiveQueryError) -> LiveAttachmentError {
 }
 
 // Resolve only an exact parent-owned child; never trust caller supplied MD5 or CDN keys.
-fn merged_image_locator(
+struct MergedAttachmentLocator {
+    md5: String,
+    original: Option<(i64, i64)>,
+    title: Option<String>,
+}
+
+fn merged_attachment_locator(
     raw: &str,
     index: usize,
-) -> Result<(String, Option<(i64, i64)>), LiveAttachmentError> {
+    kind: AttachmentKind,
+) -> Result<MergedAttachmentLocator, LiveAttachmentError> {
     fn parse(raw: &str) -> Result<roxmltree::Document<'_>, LiveAttachmentError> {
         if raw.len() > 2 * 1024 * 1024 {
             return Err(LiveAttachmentError::Unavailable(
@@ -697,7 +715,7 @@ fn merged_image_locator(
     let document = parse(raw)?;
     let container = document
         .descendants()
-        .find(|n| n.has_tag_name("recorditem"))
+        .find(|n| n.has_tag_name("recorditem") || n.has_tag_name("recordxml"))
         .ok_or_else(|| LiveAttachmentError::Unavailable("record content absent".into()))?;
     let embedded;
     let root = if container.children().any(|n| n.is_element()) {
@@ -712,15 +730,24 @@ fn merged_image_locator(
             n.has_tag_name("dataitem") && !n.ancestors().skip(1).any(|a| a.has_tag_name("dataitem"))
         })
         .nth(index)
-        .filter(|n| n.attribute("datatype") == Some("2"))
+        .filter(|n| {
+            n.attribute("datatype")
+                == Some(if kind == AttachmentKind::Document {
+                    "8"
+                } else {
+                    "2"
+                })
+        })
         .ok_or_else(|| {
-            LiveAttachmentError::InvalidArgument("selected child is not an image".into())
+            LiveAttachmentError::InvalidArgument(
+                "selected child has the wrong attachment type".into(),
+            )
         })?;
     let md5 = item
         .children()
         .find(|n| n.has_tag_name("fullmd5"))
         .and_then(|n| n.text())
-        .ok_or_else(|| LiveAttachmentError::Unavailable("image checksum absent".into()))?;
+        .ok_or_else(|| LiveAttachmentError::Unavailable("attachment checksum absent".into()))?;
     let field = |name: &str| {
         item.children()
             .find(|n| n.has_tag_name(name))
@@ -728,10 +755,15 @@ fn merged_image_locator(
             .and_then(|v| v.parse::<i64>().ok())
             .filter(|v| *v > 0)
     };
-    Ok((
-        normalize_md5(md5)?,
-        field("fromnewmsgid").zip(field("srcMsgCreateTime")),
-    ))
+    Ok(MergedAttachmentLocator {
+        md5: normalize_md5(md5)?,
+        original: field("fromnewmsgid").zip(field("srcMsgCreateTime")),
+        title: item
+            .children()
+            .find(|n| n.has_tag_name("datatitle"))
+            .and_then(|n| n.text())
+            .map(str::to_string),
+    })
 }
 
 fn message_matches_kind(message: &MessageItem, kind: AttachmentKind) -> bool {
@@ -996,6 +1028,19 @@ fn resolve_filesystem_message_candidates(
             add_existing_candidate_path(account_root, path, &mut paths)?;
         }
     }
+    // Shared month storage has no conversation directory. Probe only the exact
+    // filename in the parent message's month; the content MD5 check below is mandatory.
+    // No directory listing or other conversation lookup is performed here.
+    if kind == AttachmentKind::Document && descriptor.message_id.contains("~merged-document~") {
+        if let Some(title) = descriptor.title.as_deref() {
+            validate_path_segment(title, "merged document filename")?;
+            let path = account_root
+                .join("msg/file")
+                .join(month_folder(descriptor.created_at_unix))
+                .join(title);
+            add_existing_candidate_path(account_root, path, &mut paths)?;
+        }
+    }
     scan_scoped_filesystem_candidates(
         account_root,
         conversation,
@@ -1012,8 +1057,8 @@ fn resolve_filesystem_message_candidates(
     let source_md5 = descriptor.source_md5.as_deref().unwrap_or("");
     paths
         .into_iter()
-        .map(|(relative_path, path)| {
-            inspect_file_candidate(
+        .filter_map(|(relative_path, path)| {
+            let candidate = inspect_file_candidate(
                 account_root,
                 path,
                 relative_path,
@@ -1021,7 +1066,19 @@ fn resolve_filesystem_message_candidates(
                 source_md5,
                 kind,
                 Some(&descriptor.message_id),
-            )
+            );
+            match candidate {
+                Ok(candidate) if descriptor.message_id.contains("~merged-document~") => {
+                    match read_file_candidate(&candidate) {
+                        Ok(bytes) if format!("{:x}", md5::compute(&bytes)) == source_md5 => {
+                            Some(Ok(candidate))
+                        }
+                        Ok(_) => None,
+                        Err(error) => Some(Err(error)),
+                    }
+                }
+                other => Some(other),
+            }
         })
         .collect()
 }
@@ -1044,24 +1101,6 @@ fn hardlink_candidate_paths(
         AttachmentKind::Document => "file",
         _ => return Ok(Vec::new()),
     };
-    let table = [
-        format!("{prefix}_hardlink_info_v3"),
-        format!("{prefix}_hardlink_info_v4"),
-    ]
-    .into_iter()
-    .find(|table| {
-        connection
-            .query_row(
-                "SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = ?1)",
-                [table],
-                |row| row.get::<_, i64>(0),
-            )
-            .unwrap_or_default()
-            == 1
-    });
-    let Some(table) = table else {
-        return Ok(Vec::new());
-    };
     let has_directory_map = connection
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'dir2id')",
@@ -1073,42 +1112,47 @@ fn hardlink_candidate_paths(
     if !has_directory_map {
         return Ok(Vec::new());
     }
-    let sql = format!(
-        "SELECT f.file_name, COALESCE(d1.username, ''), COALESCE(d2.username, '') \
+    let mut records = Vec::new();
+    for table in [
+        format!("{prefix}_hardlink_info_v3"),
+        format!("{prefix}_hardlink_info_v4"),
+    ] {
+        let sql = format!(
+            "SELECT f.file_name, COALESCE(d1.username, ''), COALESCE(d2.username, '') \
          FROM [{table}] f \
          LEFT JOIN dir2id d1 ON d1.rowid = f.dir1 \
          LEFT JOIN dir2id d2 ON d2.rowid = f.dir2 \
-         WHERE lower(f.md5) = lower(?1) \
+         WHERE lower(f.md5) = lower(?1) OR lower(hex(f.md5)) = lower(?1) \
          ORDER BY f.file_name ASC, f.rowid ASC LIMIT ?2"
-    );
-    let mut statement = match connection.prepare(&sql) {
-        Ok(statement) => statement,
-        Err(_) => return Ok(Vec::new()),
-    };
-    let rows = match statement.query_map(
-        rusqlite::params![source_md5, (MAXIMUM_ATTACHMENT_CANDIDATES + 1) as i64],
-        |row| {
-            Ok(HardlinkRow {
-                file_name: row.get(0)?,
-                dir1: row.get(1)?,
-                dir2: row.get(2)?,
-            })
-        },
-    ) {
-        Ok(rows) => rows,
-        Err(_) => return Ok(Vec::new()),
-    };
-    let mut records = Vec::new();
-    for row in rows {
-        let row = match row {
-            Ok(row) => row,
+        );
+        let mut statement = match connection.prepare(&sql) {
+            Ok(statement) => statement,
             Err(_) => continue,
         };
-        records.push(row);
-        if records.len() > MAXIMUM_ATTACHMENT_CANDIDATES {
-            return Err(LiveAttachmentError::Unavailable(
-                "hardlink metadata exceeds the fixed candidate limit".into(),
-            ));
+        let rows = match statement.query_map(
+            rusqlite::params![source_md5, (MAXIMUM_ATTACHMENT_CANDIDATES + 1) as i64],
+            |row| {
+                Ok(HardlinkRow {
+                    file_name: row.get(0)?,
+                    dir1: row.get(1)?,
+                    dir2: row.get(2)?,
+                })
+            },
+        ) {
+            Ok(rows) => rows,
+            Err(_) => continue,
+        };
+        for row in rows {
+            let row = match row {
+                Ok(row) => row,
+                Err(_) => continue,
+            };
+            records.push(row);
+            if records.len() > MAXIMUM_ATTACHMENT_CANDIDATES {
+                return Err(LiveAttachmentError::Unavailable(
+                    "hardlink metadata exceeds the fixed candidate limit".into(),
+                ));
+            }
         }
     }
     let conversation_hash = format!("{:x}", md5::compute(conversation.as_bytes()));
@@ -1143,6 +1187,10 @@ fn hardlink_candidate_paths(
             }
             AttachmentKind::Document => {
                 paths.extend([
+                    account_root
+                        .join("msg/file")
+                        .join(&record.dir2)
+                        .join(&record.file_name),
                     account_root
                         .join("msg/file")
                         .join(&record.dir1)
@@ -2616,3 +2664,5 @@ mod tests {
         assert!(page.items[2].media.is_none());
     }
 }
+
+// Support diagnostics contain counters only, never locator values or private filenames.

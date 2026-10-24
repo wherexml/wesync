@@ -1107,6 +1107,12 @@ struct HistoryDirectMessageBubble: View {
             loadMergedImage: { index in
               try await model.previewDirectImage(message, mergedIndex: index)
             },
+            loadMergedPDF: { index in
+              try await model.previewDirectPDF(message, mergedIndex: index)
+            },
+            loadMergedFile: { index in
+              try await model.materializeDirectDocument(message, mergedIndex: index)
+            },
             loadPDF: {
               try await model.previewDirectPDF(message)
             }

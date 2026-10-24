@@ -885,3 +885,197 @@ fn merged_image_child_cli_is_parent_bound_and_materializes_local_bytes() {
         assert!(!result.status.success());
     }
 }
+
+#[test]
+fn merged_document_child_cli_checks_content_and_parent_identity() {
+    let fixture = MessageFixture::new();
+    let db = Connection::open(fixture.database_root.join("message/message_0.db")).unwrap();
+    let table = format!("Msg_{:x}", md5::compute(MESSAGE_CONVERSATION.as_bytes()));
+    let xml = String::from("<msg><appmsg><type>19</type><title>History</title><recorditem><![CDATA[<recordinfo><datalist><dataitem datatype=\"8\"><fullmd5>CHECKSUM</fullmd5><datatitle>report.pdf</datatitle></dataitem><dataitem datatype=\"1\"><datadesc>text</datadesc></dataitem></datalist></recordinfo>]]></recorditem></appmsg></msg>");
+    let xml = xml.replace(
+        "CHECKSUM",
+        &format!("{:x}", md5::compute(&fixture.document)),
+    );
+    db.execute(
+        &format!("INSERT INTO [{table}] VALUES (3999,500,?1,1,500,0,?2,NULL,0,NULL)"),
+        params![(19_i64 << 32) | 49, xml.into_bytes()],
+    )
+    .unwrap();
+    drop(db);
+    let page = run(&[
+        "messages",
+        "list",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--limit",
+        "10",
+        "--decrypted",
+        "--json",
+    ]);
+    assert_success(&page);
+    let page: Value = serde_json::from_slice(&page.stdout).unwrap();
+    let parent = page["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["serverId"] == 3999)
+        .unwrap()["id"]
+        .as_str()
+        .unwrap();
+    let child = format!("{parent}~merged-document~0");
+    let inspect = run(&[
+        "attachment",
+        "inspect",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--message",
+        &child,
+        "--kind",
+        "document",
+        "--decrypted",
+    ]);
+    assert_success(&inspect);
+    let report: Value = serde_json::from_slice(&inspect.stdout).unwrap();
+    let attachment = report["preferredAttachmentId"].as_str().unwrap();
+    let path = fixture.output.join("merged.pdf");
+    let output = run(&[
+        "attachment",
+        "materialize",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--message",
+        &child,
+        "--kind",
+        "document",
+        "--attachment",
+        attachment,
+        "--output",
+        path.to_str().unwrap(),
+        "--decrypted",
+    ]);
+    assert_success(&output);
+    assert_eq!(fs::read(path).unwrap(), fixture.document);
+    let monthly = fixture.account.join("msg/file/1970-01");
+    fs::create_dir_all(&monthly).unwrap();
+    fs::copy(
+        fixture
+            .account
+            .join("msg/file")
+            .join(MESSAGE_CONVERSATION)
+            .join("2026-08/report.pdf"),
+        monthly.join("report.pdf"),
+    )
+    .unwrap();
+    fs::remove_file(
+        fixture
+            .account
+            .join("msg/file")
+            .join(MESSAGE_CONVERSATION)
+            .join("2026-08/report.pdf"),
+    )
+    .unwrap();
+    let monthly_inspect = run(&[
+        "attachment",
+        "inspect",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--message",
+        &child,
+        "--kind",
+        "document",
+        "--decrypted",
+    ]);
+    assert_success(&monthly_inspect);
+    let monthly_report: Value = serde_json::from_slice(&monthly_inspect.stdout).unwrap();
+    assert!(monthly_report["preferredAttachmentId"].is_string());
+    fs::remove_file(monthly.join("report.pdf")).unwrap();
+    // A current v4 index must work even when an empty legacy table exists.
+    // Its exact indexed month/name may differ from the forwarding display title.
+    let indexed_month = fixture.account.join("msg/file/2026-08");
+    fs::create_dir_all(&indexed_month).unwrap();
+    fs::write(indexed_month.join("renamed.pdf"), &fixture.document).unwrap();
+    let index = Connection::open(fixture.database_root.join("hardlink/hardlink.db")).unwrap();
+    index.execute_batch("CREATE TABLE file_hardlink_info_v3(md5 TEXT, file_name TEXT, dir1 INTEGER, dir2 INTEGER); CREATE TABLE file_hardlink_info_v4(md5 BLOB, file_name TEXT, dir1 INTEGER, dir2 INTEGER);").unwrap();
+    index
+        .execute(
+            "INSERT INTO file_hardlink_info_v4 VALUES (?1,'renamed.pdf',1,2)",
+            [md5::compute(&fixture.document).0.as_slice()],
+        )
+        .unwrap();
+    drop(index);
+    let indexed = run(&[
+        "attachment",
+        "inspect",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--message",
+        &child,
+        "--kind",
+        "document",
+        "--decrypted",
+    ]);
+    assert_success(&indexed);
+    let indexed: Value = serde_json::from_slice(&indexed.stdout).unwrap();
+    assert!(indexed["preferredAttachmentId"].is_string());
+    fs::write(indexed_month.join("renamed.pdf"), b"wrong indexed content").unwrap();
+    let mismatch = run(&[
+        "attachment",
+        "inspect",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--message",
+        &child,
+        "--kind",
+        "document",
+        "--decrypted",
+    ]);
+    assert_success(&mismatch);
+    let mismatch: Value = serde_json::from_slice(&mismatch.stdout).unwrap();
+    assert!(mismatch["preferredAttachmentId"].is_null());
+    fs::write(
+        fixture
+            .account
+            .join("msg/file")
+            .join(MESSAGE_CONVERSATION)
+            .join("2026-08/report.pdf"),
+        b"wrong file same name",
+    )
+    .unwrap();
+    let missing = run(&[
+        "attachment",
+        "inspect",
+        fixture.database_root.to_str().unwrap(),
+        "--conversation",
+        MESSAGE_CONVERSATION,
+        "--message",
+        &child,
+        "--kind",
+        "document",
+        "--decrypted",
+    ]);
+    assert_success(&missing);
+    let missing: Value = serde_json::from_slice(&missing.stdout).unwrap();
+    assert!(missing["preferredAttachmentId"].is_null());
+    for index in ["1", "500", "bad"] {
+        let invalid = format!("{parent}~merged-document~{index}");
+        let result = run(&[
+            "attachment",
+            "inspect",
+            fixture.database_root.to_str().unwrap(),
+            "--conversation",
+            MESSAGE_CONVERSATION,
+            "--message",
+            &invalid,
+            "--kind",
+            "document",
+            "--decrypted",
+        ]);
+        assert!(!result.status.success());
+    }
+}

@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-24",
+  "installedBuild": "56",
+  "scope": "merged forwarded local documents",
+  "status": "CHECKS_PASSED_TARGET_PDF_UNAVAILABLE",
+  "checks": {
+    "attachmentCLIE2E": {
+      "passed": 9,
+      "failed": 0
+    },
+    "clippy": true,
+    "syntheticPDFPreviewAndNextPage": true,
+    "syntheticFileSaveAndByteComparison": true,
+    "sameSigningIdentity": true,
+    "exactToolDigestMigration": true,
+    "sendHelperPreserved": true,
+    "installedColdStart1AutoReconnect": true,
+    "installedColdStart2AutoReconnect": true,
+    "installedManualRefresh": true,
+    "credentialEntryRequired": false,
+    "nativePermissionPromptObserved": false,
+    "realMergedFileCard": true,
+    "realTargetPDFOpened": false,
+    "blacklistE2E": {
+      "passed": 20
+    },
+    "stickerMetadataE2E": {
+      "passed": 6
+    },
+    "isolatedRustE2E": true,
+    "hostPolicyUnchanged": true,
+    "v3V4AndBlobMD5AndIndexedSharedMonthE2E": true,
+    "stagedSourceSwiftBuild": true
+  },
+  "realTargetResult": "Unique v4 index matches the parent conversation, textual MD5 and display title. All exact indexed paths are absent. Bounded depth-4 traversal of the indexed conversation/month visited 109 entries with no filename/MD5-name match or index-size match. No target PDF was opened; absence elsewhere or deletion is not established.",
+  "localCI": {
+    "status": "PASS",
+    "passedSteps": 23,
+    "failedSteps": 0,
+    "report": ".build/local-ci/20261024T063225.840826Z/summary.json"
+  },
+  "dependencyPatches": {
+    "ctutils": "0.4.4",
+    "rustls-webpki": "0.103.16",
+    "webpki-roots": "1.0.10"
+  },
+  "privacy": {
+    "privateScreenshotsSaved": false,
+    "privateContentInReport": false,
+    "remoteAttachmentDownloads": false,
+    "directWeChatOperation": false,
+    "policyBypassAdded": false
+  },
+  "commitAndPush": "Authorized after successful checks; see Git history for commit identity",
+  "backup": ".build/merged-files-20261024/installed-build49-backup.app",
+  "repeat": [
+    "Run cargo test --manifest-path Native/GreenBubbles/Cargo.toml --test live_attachment_cli",
+    "Package preview with existing Apple Development identity, launch and open synthetic merged history; preview PDF, go to page 2, return, save ordinary file and compare bytes.",
+    "Quit installed WeSync through native UI, confirm process exit, reopen and confirm automatic connection, refresh target conversation, open the user-selected record and try PDF preview. Repeat cold start."
+  ]
+}

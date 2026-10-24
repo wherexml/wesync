@@ -989,14 +989,15 @@ public struct HistoryAttachmentMaterialization: Decodable, Sendable {
 extension HistoryDirectQueryClient {
   public func inspectDocument(
     configuration: HistoryDirectConfiguration, keyUTF8: [UInt8],
-    message: HistoryDirectMessage
+    message: HistoryDirectMessage, attachmentMessageID: String? = nil
   ) async throws -> HistoryAttachmentInspection {
     try await request(
       configuration: configuration, keyUTF8: keyUTF8,
       operation: "attachment.inspect",
       arguments: [
         "attachment", "inspect", configuration.sourceURL.path,
-        "--conversation", message.conversationID, "--message", message.id, "--kind", "document",
+        "--conversation", message.conversationID, "--message", attachmentMessageID ?? message.id,
+        "--kind", "document",
       ],
       query: nil, type: HistoryAttachmentInspection.self)
   }
@@ -1004,14 +1005,15 @@ extension HistoryDirectQueryClient {
   public func materializeDocument(
     configuration: HistoryDirectConfiguration, keyUTF8: [UInt8],
     message: HistoryDirectMessage, attachmentID: String,
-    output: URL
+    output: URL, attachmentMessageID: String? = nil
   ) async throws -> HistoryAttachmentMaterialization {
     try await request(
       configuration: configuration, keyUTF8: keyUTF8,
       operation: "attachment.materialize",
       arguments: [
         "attachment", "materialize", configuration.sourceURL.path,
-        "--conversation", message.conversationID, "--message", message.id, "--kind", "document",
+        "--conversation", message.conversationID, "--message", attachmentMessageID ?? message.id,
+        "--kind", "document",
         "--attachment", attachmentID, "--output", output.path,
       ],
       query: nil, type: HistoryAttachmentMaterialization.self)

@@ -191,7 +191,7 @@ repository-level license checksum.
 - `crossbeam-utils 0.8.22` — `MIT OR Apache-2.0` — https://github.com/crossbeam-rs/crossbeam
 - `crypto-common 0.1.7` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/traits
 - `crypto-common 0.2.2` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/traits
-- `ctutils 0.4.2` — `Apache-2.0 OR MIT` — https://github.com/RustCrypto/utils
+- `ctutils 0.4.4` — `Apache-2.0 OR MIT` — https://github.com/RustCrypto/utils
 - `curve25519-dalek 4.1.3` — `BSD-3-Clause` — https://github.com/dalek-cryptography/curve25519-dalek/tree/main/curve25519-dalek
 - `dashmap 6.2.1` — `MIT` — https://github.com/xacrimon/dashmap
 - `digest 0.10.7` — `MIT OR Apache-2.0` — https://github.com/RustCrypto/traits
@@ -279,7 +279,7 @@ repository-level license checksum.
 - `rustix 1.1.4` — `Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT` — https://github.com/bytecodealliance/rustix
 - `rustls 0.23.46` — `Apache-2.0 OR ISC OR MIT` — https://github.com/rustls/rustls
 - `rustls-pki-types 1.15.1` — `MIT OR Apache-2.0` — https://github.com/rustls/pki-types
-- `rustls-webpki 0.103.15` — `ISC` — https://github.com/rustls/webpki
+- `rustls-webpki 0.103.16` — `ISC` — https://github.com/rustls/webpki
 - `same-file 1.0.6` — `Unlicense OR MIT` — https://github.com/BurntSushi/same-file
 - `scopeguard 1.2.0` — `MIT OR Apache-2.0` — https://github.com/bluss/scopeguard
 - `serde 1.0.229` — `MIT OR Apache-2.0` — https://github.com/serde-rs/serde
@@ -324,7 +324,7 @@ repository-level license checksum.
 - `utf8_iter 1.0.4` — `Apache-2.0 OR MIT` — https://github.com/hsivonen/utf8_iter
 - `walkdir 2.5.0` — `Unlicense OR MIT` — https://github.com/BurntSushi/walkdir
 - `webpki-roots 0.26.11` — `CDLA-Permissive-2.0` — https://github.com/rustls/webpki-roots
-- `webpki-roots 1.0.9` — `CDLA-Permissive-2.0` — https://github.com/rustls/webpki-roots
+- `webpki-roots 1.0.10` — `CDLA-Permissive-2.0` — https://github.com/rustls/webpki-roots
 - `winnow 1.0.4` — `MIT` — https://github.com/winnow-rs/winnow
 - `writeable 0.6.4` — `Unicode-3.0` — https://github.com/unicode-org/icu4x
 - `wx-context 0.7.4` — `MIT`
@@ -1340,7 +1340,7 @@ express Statement of Purpose.
 Used by:
 
 - `webpki-roots 0.26.11`
-- `webpki-roots 1.0.9`
+- `webpki-roots 1.0.10`
 
 ```text
 # Community Data License Agreement - Permissive - Version 2.0
@@ -1986,7 +1986,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Used by:
 
-- `rustls-webpki 0.103.15`
+- `rustls-webpki 0.103.16`
 
 ```text
 Except as otherwise noted, this project is licensed under the following
@@ -4155,7 +4155,7 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `ctutils 0.4.2`
+- `ctutils 0.4.4`
 
 ```text
 Copyright (c) 2025-2026 The RustCrypto Project Developers

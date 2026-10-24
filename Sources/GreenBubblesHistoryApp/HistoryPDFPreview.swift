@@ -6,7 +6,7 @@ enum PDFPreviewError: LocalizedError {
   case unavailable, tooLarge, invalid, locked, openFailed
   var errorDescription: String? {
     switch self {
-    case .unavailable: "本地尚未找到此 PDF。请先确认文件已下载，再点重试。"
+    case .unavailable: "本机未找到可校验的文件副本。确认文件已下载后可重试。"
     case .tooLarge: "此文件超过 64 MB 预览上限，或无法读取文件大小。"
     case .invalid: "此文件不是可读取的 PDF，可能已损坏。"
     case .locked: "此 PDF 已加密，暂不支持应用内预览。"

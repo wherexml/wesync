@@ -1,0 +1,26 @@
+{
+  "scope": "user-selected parent conversation and indexed month; bounded depth 4",
+  "counters": {
+    "v4_attach_file_indexed_exists": 0,
+    "v4_attach_scope_exists": 1,
+    "v4_indexed_name_matches_title": 1,
+    "v4_file_dir1_dir2_exists": 0,
+    "v4_dir1_conversation": 1,
+    "v4_file_month_indexed_exists": 0,
+    "v4_dir2_month": 1,
+    "v4_matches": 1,
+    "v4_positive_index_size": 1,
+    "v3_schema_supported": 0,
+    "v4_md5_text": 1,
+    "parent_month_exact_file_exists": 0,
+    "v4_file_dir1_exists": 0,
+    "v4_attach_rec_indexed_exists": 0,
+    "v4_schema_supported": 1,
+    "v4_file_scope_exists": 0,
+    "v4_attach_scope_visited": 109
+  },
+  "nameMatches": 0,
+  "sizeMatches": 0,
+  "contentMatches": 0,
+  "privateIdentifiersIncluded": false
+}

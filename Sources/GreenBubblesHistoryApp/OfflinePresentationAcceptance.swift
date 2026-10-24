@@ -550,7 +550,7 @@
       try require(model.directMessages.count == 15, "typed-json-messages")
       let merged = model.directMessages.first { $0.id == "demo-12" }!.content.mergedRecord!
       try require(
-        merged.entries.count == 2 && merged.entries[0].text == "第一条 & 完整正文"
+        merged.entries.count == 4 && merged.entries[0].text == "第一条 & 完整正文"
           && merged.entries[0].sender == "合成甲" && merged.entries[1].text == "[图片]",
         "merged-record-ordered-text-and-media")
       try require(
@@ -562,6 +562,17 @@
       try require(
         mergedImage.size.width > 0 && mergedImage.size.height > 0,
         "merged-image-production-load-and-decode")
+      let mergedPDF = try await model.previewDirectPDF(
+        model.directMessages.first { $0.id == "demo-12" }!, mergedIndex: 2)
+      try require(
+        merged.entries[2].filename == "Forwarded report.PDF"
+          && mergedPDF.document.pageCount == 2, "merged-file-card-and-pdf-two-pages")
+      mergedPDF.cleanup()
+      let mergedFileURL = try await model.materializeDirectDocument(
+        model.directMessages.first { $0.id == "demo-12" }!, mergedIndex: 3)
+      try require(
+        FileManager.default.fileExists(atPath: mergedFileURL.path), "merged-file-materialization")
+      try FileManager.default.removeItem(at: mergedFileURL)
       let emoji = model.directMessages.first { $0.id == "demo-9" }!
       let unsafeEmoji = model.directMessages.first { $0.id == "demo-10" }!
       let malformedEmoji = model.directMessages.first { $0.id == "demo-11" }!

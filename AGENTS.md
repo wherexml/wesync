@@ -72,3 +72,7 @@ AI 读取黑名单位于高级设置的“会话显示”之前，支持个人/�
 GitHub Actions 已按用户要求停用，日常检查统一先运行 `python3 scripts/local-ci.py`，本机全部通过后再提交推送；不得擅自重新启用云端 CI 或购买额度。范围、复验和报告见 [docs/LOCAL_CI.md](docs/LOCAL_CI.md)。应用改动仍执行既有签名与原生重启验收。
 
 依赖升级须同步分发基线与许可证清单，运行完整本机检查；加密/压缩依赖验证旧数据兼容，安装仍使用同身份工具摘要迁移及原生冷启动。见 [docs/DEPENDENCY_UPGRADES.md](docs/DEPENDENCY_UPGRADES.md)。
+
+合并转发文件使用父消息绑定子序号及 fullmd5 内容校验，PDF 原生预览、其他文件原生存储；不按同名信任文件、不自动读取远端附件。见 `docs/MERGED_RECORDS.md`。
+
+真实黑名单非空时，完整 Rust 进程 E2E 在本机 Docker 独立账户运行；不挂载用户 home/真实策略，不添加生产豁免。macOS 原生检查与安装验收保留，见 `docs/LOCAL_CI.md`。

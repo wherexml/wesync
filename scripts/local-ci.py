@@ -116,7 +116,7 @@ CHECKS = json.loads(r'''[
   {
     "name": "Run restoration-engine tests",
     "cwd": "Native/GreenBubbles",
-    "command": "cargo test --locked --all-targets"
+    "command": "cargo test --locked --lib --bins\npython3 ../../scripts/rust-e2e-isolated.py"
   },
   {
     "name": "Verify exact-message sticker metadata end to end",

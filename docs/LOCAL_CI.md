@@ -13,7 +13,7 @@
 
 ## 使用
 
-要求 macOS 14+、Swift 6、Rust/Cargo、Python 3.11+、Ruby。入口会从本机已安装版本选择受支持的 Python，并让全部子检查使用同一解释器；不会使用系统默认 Python 3.9 运行既有日期解析测试，也不会自动安装 Python。审计工具一次安装：
+要求 macOS 14+、Swift 6、Rust/Cargo、Python 3.11+、Ruby，以及已运行的本机 Docker（例如 OrbStack）。入口会从本机已安装版本选择受支持的 Python，并让全部子检查使用同一解释器；不会使用系统默认 Python 3.9 运行既有日期解析测试，也不会自动安装 Python。审计工具一次安装：
 
 ```sh
 cargo install cargo-audit --locked --version 0.22.2
@@ -46,3 +46,7 @@ gh run list --repo wherexml/wesync --limit 5
 ## 2026-10-17 验收
 
 本机完整 23 项检查通过，三项合成 E2E 成功，黑名单策略恢复。依赖审计保留原有三条允许警告，未新增忽略项；原有手动性能用例继续标记 ignored。既有 CLI 进程测试改用临时配置，避免个人默认 JSON 输出影响默认简洁格式断言，全部原断言保留。未修改应用功能或安装应用。脱敏结果见 [本机检查验收](acceptance/local-ci-20261017.json)。
+
+## 独立账户端到端检查的失败契约
+
+真实用户黑名单非空时，合成 Connector 测试也被拒绝，不能通过清空用户策略或修改生产拒绝逻辑解决。Rust 原生库/二进制检查继续在 macOS 执行；完整 Rust E2E 使用本机 Docker 独立账户，复制白名单源码与合成夹具，不挂载用户 home、钥匙串、聊天目录、真实策略或 Docker socket。测试阶段禁网，策略正反例在容器账户内执行。容器不可用、依赖准备失败、任一测试失败都返回失败，不静默跳过。测试前后核对真实策略摘要和权限未改变。容器测试不替代 macOS 构建与原生安装验收。

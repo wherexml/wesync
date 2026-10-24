@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "hostPolicyUnchanged": true,
+  "platform": "isolated local Linux container",
+  "testNetwork": "none",
+  "source": "allowlisted source and synthetic fixtures only",
+  "productionPolicyCodeModified": false,
+  "hostHomeMounted": false,
+  "image": "wesync-rust-e2e:1.94.0-v1"
+}

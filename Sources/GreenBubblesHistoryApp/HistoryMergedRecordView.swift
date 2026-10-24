@@ -5,6 +5,8 @@ import SwiftUI
 struct HistoryMergedRecordView: View {
   let record: HistoryMergedRecord
   var loadImage: (@MainActor (Int) async throws -> NSImage)? = nil
+  var loadPDF: (@MainActor (Int) async throws -> HistoryPDFPreview)? = nil
+  var loadFile: (@MainActor (Int) async throws -> URL)? = nil
   @State private var opened = false
 
   var body: some View {
@@ -49,6 +51,12 @@ struct HistoryMergedRecordView: View {
                 }
                 if entry.isImage, let loadImage {
                   HistoryMergedImageView(load: { try await loadImage(index) })
+                } else if let filename = entry.filename, filename.lowercased().hasSuffix(".pdf"),
+                  let loadPDF
+                {
+                  HistoryPDFCard(filename: filename, load: { try await loadPDF(index) })
+                } else if let filename = entry.filename, let loadFile {
+                  HistoryMergedFileCard(filename: filename, load: { try await loadFile(index) })
                 } else {
                   Text(HistoryEmojiText.render(entry.text)).textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -60,8 +68,6 @@ struct HistoryMergedRecordView: View {
               Text("部分记录未能读取，来源内容可能缺失或超出预览范围。")
                 .font(.callout).foregroundStyle(.secondary)
             }
-            Text("图片从本机读取；尚不支持的附件显示类型说明。")
-              .font(.caption).foregroundStyle(.secondary)
           }.padding(20)
         }
       }.frame(width: 620, height: 560)
@@ -109,5 +115,41 @@ private struct HistoryMergedImageView: View {
       guard image == nil else { return }
       do { image = try await load() } catch is CancellationError {} catch { failed = true }
     }
+  }
+}
+
+private struct HistoryMergedFileCard: View {
+  let filename: String
+  let load: @MainActor () async throws -> URL
+  @State private var loading = false
+  @State private var error: String?
+  @State private var task: Task<Void, Never>?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Label(filename, systemImage: "doc").textSelection(.enabled)
+      if let error { Text(error).font(.caption).foregroundStyle(.secondary) }
+      if loading {
+        ProgressView().controlSize(.small)
+      } else {
+        Button("存储文件…") {
+          loading = true
+          error = nil
+          task = Task { @MainActor in
+            defer { loading = false }
+            do {
+              let url = try await load()
+              defer { try? FileManager.default.removeItem(at: url) }
+              try Task.checkCancellation()
+              let panel = NSSavePanel()
+              panel.nameFieldStringValue = (filename as NSString).lastPathComponent
+              guard panel.runModal() == .OK, let destination = panel.url else { return }
+              try Data(contentsOf: url).write(to: destination, options: .atomic)
+            } catch is CancellationError {} catch { self.error = historyUserError(error) }
+          }
+        }
+      }
+    }
+    .onDisappear { task?.cancel() }
   }
 }

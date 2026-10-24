@@ -1,0 +1,16 @@
+   Compiling greenbubbles v0.10.0 (/Users/steve/Projects/greenbubbles/Native/GreenBubbles)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.52s
+     Running tests/live_attachment_cli.rs (Native/GreenBubbles/target/debug/deps/live_attachment_cli-86ce36d9f8591453)
+
+running 9 tests
+test attachment_commands_expose_help_without_accessing_an_account ... ok
+test attachment_cli_rejects_unbounded_or_mismatched_requests_without_path_disclosure ... ok
+test inspect_writes_nothing_and_materialize_creates_exactly_one_private_image ... ok
+test exact_message_requests_require_one_access_mode_and_bind_every_identity_dimension ... ok
+test merged_image_child_cli_is_parent_bound_and_materializes_local_bytes ... ok
+test merged_document_child_cli_checks_content_and_parent_identity ... ok
+test exact_message_cli_rejects_oversized_and_symlinked_sources_without_partial_output ... ok
+test exact_message_cli_lazily_materializes_image_voice_video_and_document ... ok
+test exact_message_cli_enforces_candidate_and_directory_traversal_bounds ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.09s

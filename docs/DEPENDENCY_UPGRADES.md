@@ -55,3 +55,7 @@ python3 scripts/dependency-upgrade-e2e.py OLD_CLI NEW_CLI REPORT.json --fixture-
 最终 build 43 → 44 沿用同一 Apple Development 身份，严格签名、DR 稳定、精确工具摘要迁移、11 项 staging 检查及安装包与候选资源比对通过。原生两次完整退出并确认进程消失后重开，自动连接、消息加载和主动刷新均通过，未输入密钥/密码，未观察到权限弹窗，黑名单数量保持。已安装 release CLI 的额外 14 项跨版本检查通过。旧包在忽略目录 `.build/dependency-review-20261017/installed-build43-backup.app`，未提交本机包或私人界面内容。
 
 新旧 CLI 的加密来源快照兼容已验证；初版明文 SQLite 夹具在升级前后均无法创建快照，属于已有行为，本次未声称修复。安装为本机开发证书更新，不是公证公开发行。完整状态和复验步骤见 [脱敏验收记录](acceptance/dependency-upgrades-20261017.json)。
+
+## 2026-10-24：本机检查发现的传递依赖补丁
+
+转发文件修复的全量检查命中 RUSTSEC-2026-0385、0382、0381。仅将 ctutils 升至 0.4.4、rustls-webpki 升至 0.103.16、webpki-roots 升至 1.0.10，保持直接依赖和 wx-cli 固定版本不变。分发基线重新生成比对无差异（记录直接/原生依赖）；许可证清单更新三项版本，许可文本不变。没有新增审计豁免。

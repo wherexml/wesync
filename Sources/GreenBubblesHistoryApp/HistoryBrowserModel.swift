@@ -600,15 +600,40 @@ final class HistoryBrowserModel {
     }
   }
 
-  func previewDirectPDF(_ message: HistoryDirectMessage) async throws -> HistoryPDFPreview {
-    guard message.pdfFilename != nil, let configuration = directConfiguration else {
+  func previewDirectPDF(_ message: HistoryDirectMessage, mergedIndex: Int? = nil) async throws
+    -> HistoryPDFPreview
+  {
+    guard message.pdfFilename != nil || mergedIndex != nil else {
+      throw PDFPreviewError.unavailable
+    }
+    let output = try await materializeDirectDocument(message, mergedIndex: mergedIndex)
+    var retained = false
+    defer { if !retained { try? FileManager.default.removeItem(at: output) } }
+    let bytes = try Data(contentsOf: output)
+    guard bytes.starts(with: Data("%PDF-".utf8)), let document = PDFDocument(data: bytes) else {
+      throw PDFPreviewError.invalid
+    }
+    guard !document.isLocked else { throw PDFPreviewError.locked }
+    guard document.pageCount > 0 else { throw PDFPreviewError.invalid }
+    try Task.checkCancellation()
+    retained = true
+    return HistoryPDFPreview(url: output, document: document)
+  }
+
+  func materializeDirectDocument(_ message: HistoryDirectMessage, mergedIndex: Int? = nil)
+    async throws -> URL
+  {
+    let attachmentID =
+      mergedIndex.map { message.id + "~merged-document~" + String($0) } ?? message.id
+    guard let configuration = directConfiguration else {
       throw PDFPreviewError.unavailable
     }
     let sessionID = activeDirectLoadID
     var key = directKeyUTF8
     defer { key.resetBytes(in: 0..<key.count) }
     let inspection = try await directClient.inspectDocument(
-      configuration: configuration, keyUTF8: key, message: message)
+      configuration: configuration, keyUTF8: key, message: message,
+      attachmentMessageID: attachmentID)
     try Task.checkCancellation()
     guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
       throw PresentationError.sourceChanged
@@ -620,12 +645,12 @@ final class HistoryBrowserModel {
     else { throw PDFPreviewError.tooLarge }
     let folder = HistoryPresentationAssets.shared.root.appending(path: "Previews")
     try HistoryPresentationAssets.shared.prepareDirectory(folder)
-    let output = folder.appending(path: UUID().uuidString + ".pdf")
+    let output = folder.appending(path: UUID().uuidString)
     var retained = false
     defer { if !retained { try? FileManager.default.removeItem(at: output) } }
     let report = try await directClient.materializeDocument(
       configuration: configuration, keyUTF8: key,
-      message: message, attachmentID: attachment, output: output)
+      message: message, attachmentID: attachment, output: output, attachmentMessageID: attachmentID)
     try Task.checkCancellation()
     guard directConfiguration == configuration, activeDirectLoadID == sessionID else {
       throw PresentationError.sourceChanged
@@ -641,14 +666,8 @@ final class HistoryBrowserModel {
       SHA256.hash(data: bytes).map({ String(format: "%02x", $0) }).joined()
         == report.decodedSha256.lowercased()
     else { throw PresentationError.invalidIntegrity }
-    guard bytes.starts(with: Data("%PDF-".utf8)), let document = PDFDocument(data: bytes) else {
-      throw PDFPreviewError.invalid
-    }
-    guard !document.isLocked else { throw PDFPreviewError.locked }
-    guard document.pageCount > 0 else { throw PDFPreviewError.invalid }
-    try Task.checkCancellation()
     retained = true
-    return HistoryPDFPreview(url: output, document: document)
+    return output
   }
 
   func resolveDirectSticker(_ message: HistoryDirectMessage) async throws -> HistorySticker {

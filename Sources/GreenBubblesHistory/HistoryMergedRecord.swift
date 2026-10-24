@@ -4,6 +4,7 @@ import Foundation
 public struct HistoryMergedRecord: Sendable {
   public struct Entry: Sendable {
     public let isImage: Bool
+    public let filename: String?
     public let sender: String
     public let time: String
     public let text: String
@@ -37,7 +38,8 @@ extension HistoryDirectJSONValue {
           node.value("datadesc") ?? node.value("datatitle") ?? fallback[kind] ?? "[暂不支持的消息]"
         entries.append(
           .init(
-            isImage: kind == "2", sender: node.value("sourcename") ?? "未知发送者",
+            isImage: kind == "2", filename: kind == "8" ? (node.value("datatitle") ?? "附件") : nil,
+            sender: node.value("sourcename") ?? "未知发送者",
             time: node.value("sourcetime") ?? "", text: text))
         return
       }
