@@ -46,22 +46,26 @@ enum HistoryAIReadPolicy {
 
 struct HistoryAIReadBlacklistSection: View {
   @Bindable var model: HistoryBrowserModel
+  @Binding var showsHelp: Bool
   @State private var selected: Set<String> = []
   @State private var error: String?
   @State private var showsPicker = false
 
   var body: some View {
-    Section("AI 读取黑名单") {
+    HistorySettingsGroup(title: "AI 读取黑名单") {
       HStack {
         Label("禁止 AI 读取的会话", systemImage: "hand.raised.fill")
         Spacer()
         Text("已选 \(selected.count) 个").foregroundStyle(.secondary)
-        Button("选择个人和群聊…") { showsPicker = true }
+        Button("选择会话…") { showsPicker = true }
+          .buttonStyle(HistoryActionStyle())
           .accessibilityIdentifier("ai-read-blacklist-picker")
           .disabled(error != nil)
+        HistoryHelpButton(
+          title: "AI 读取黑名单说明",
+          text: "支持多选。保存后禁止 AI 读取所选会话，你仍可在应用中查看。",
+          presented: $showsHelp)
       }
-      Text("支持多选。保存后禁止 AI 读取所选会话，你仍可在应用中查看。")
-        .font(.caption).foregroundStyle(.secondary)
       if let error { Text(error).font(.caption).foregroundStyle(.red) }
     }
     .onAppear(perform: reload)

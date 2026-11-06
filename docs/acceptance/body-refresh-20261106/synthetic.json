@@ -1,0 +1,19 @@
+{
+  "checks": {
+    "automatic-update-keeps-cursor": true,
+    "automatic-update-keeps-history": true,
+    "background-update-keeps-selection": true,
+    "disconnect-rejects-late-result": true,
+    "disjoint-refresh-keeps-reading-page": true,
+    "explicit-latest-resolves-gap": true,
+    "failure-keeps-readable-content": true,
+    "initial-history-loaded": true,
+    "manual-refresh-recovers": true,
+    "switch-restores-contiguous-history": true,
+    "unopened-chat-cache-updated": true
+  },
+  "error": "",
+  "passed": true,
+  "source": "synthetic-only",
+  "wechatRead": false
+}

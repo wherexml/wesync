@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-06",
+  "installedBuild": "57",
+  "previousBuild": "56",
+  "signature": "existing Apple Development; unchanged designated requirement; strict verification passed",
+  "helperBytesUnchanged": true,
+  "nativeAcceptance": {
+    "coldStarts": 2,
+    "automaticConnectionWithoutKeyEntry": true,
+    "conversationABA": true,
+    "manualRefresh": true,
+    "historyScrollAndReturnToLatest": true,
+    "finalChatReadable": true,
+    "controlledLiveIncomingMessage": "NOT_SENT; incoming change and scroll behavior verified with synthetic native app"
+  },
+  "syntheticNativeScroll": {
+    "historyAnchorBefore": "Synthetic cache message -52",
+    "historyAnchorAfter": "Synthetic cache message -52",
+    "stage103BackgroundRefresh": true,
+    "stage104FollowedAtBottom": true,
+    "jumpButtonHiddenAtBottom": true,
+    "note": "Same reading row retained; scroll restoration aligns row to top, not pixel-exact offset."
+  },
+  "privacy": {
+    "realScreenshotsSaved": false,
+    "credentialsReadOrRecorded": false,
+    "wechatOperated": false
+  },
+  "localCI": {
+    "status": "FAIL_EXISTING_RUST_DEPENDENCY_AUDIT",
+    "passedBeforeFailure": 15,
+    "failedStep": 16,
+    "remainingNotRun": 7,
+    "report": ".build/local-ci/20261106T014527.467030Z/summary.json",
+    "advisories": [
+      "RUSTSEC-2026-0391",
+      "RUSTSEC-2026-0403",
+      "RUSTSEC-2026-0398",
+      "RUSTSEC-2026-0410"
+    ]
+  },
+  "git": "Not committed or pushed because full local CI is required to pass first; pre-existing edits preserved.",
+  "applicationSourceSHA256": {
+    "HistoryBrowserModel.swift": "7f84d5f7e61b66bc6678ccdb3e475afbed252fa332241b7c755221a91ce0261d",
+    "HistoryDirectViews.swift": "193685db0a6450a8745a08e83541f2e2f418f325a79b981f47336de6d93a21ed",
+    "HistoryRememberedConnection.swift": "dd331d389750ea5db2487765fc7cc8eb8c9f69d007d521a0a30fc582a29acd1e",
+    "OfflinePresentationAcceptance.swift": "d251565fc0be37c5b41235d3d2fb3cfdf4f1ffdbb7d05c67b0e4b62ec7d8bbe3"
+  }
+}

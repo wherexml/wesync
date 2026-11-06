@@ -73,6 +73,14 @@ GitHub Actions 已按用户要求停用，日常检查统一先运行 `python3 s
 
 依赖升级须同步分发基线与许可证清单，运行完整本机检查；加密/压缩依赖验证旧数据兼容，安装仍使用同身份工具摘要迁移及原生冷启动。见 [docs/DEPENDENCY_UPGRADES.md](docs/DEPENDENCY_UPGRADES.md)。
 
+原生合成预览也须使用既有 Apple Development 证书，`package-presentation-preview.py` 必须传入 `--identity`，禁止 ad-hoc 重建后反复要求测试钥匙串密码；旧临时签名预览先停止，不迁移生产凭据或放宽 ACL/TCC。见 `docs/DESIGN_SYSTEM.md`。
+
+最近正文后台预热为 100 个个人会话 + 50 个群聊，各 40 条；前台读取优先、附件按需，缓存上限 160 会话 / 10,000 条。回到最新按钮距底部 320pt 内隐藏；合成无钥匙串场景及安装验收见 `docs/MESSAGE_CACHE.md`。
+
 合并转发文件使用父消息绑定子序号及 fullmd5 内容校验，PDF 原生预览、其他文件原生存储；不按同名信任文件、不自动读取远端附件。见 `docs/MERGED_RECORDS.md`。
 
 真实黑名单非空时，完整 Rust 进程 E2E 在本机 Docker 独立账户运行；不挂载用户 home/真实策略，不添加生产豁免。macOS 原生检查与安装验收保留，见 `docs/LOCAL_CI.md`。
+
+会话变化在应用后台也按 60 秒限频处理，并触发已缓存/当前会话正文更新；当前会话优先，历史阅读锚点和连续游标须保留，失败暂停、主动刷新恢复。见 `docs/MESSAGE_CACHE.md`、`docs/CONVERSATION_REFRESH.md`。
+
+依赖安全修复不得增加审计豁免；真实黑名单非空时，依赖升级双向快照验收使用 `scripts/dependency-upgrade-isolated.py` 的独立 Docker 账户与断网测试，见 `docs/DEPENDENCY_UPGRADES.md`。

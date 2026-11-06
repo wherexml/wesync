@@ -10,7 +10,7 @@
 
 ## 可重复验收
 
-1. `python3 scripts/package-presentation-preview.py`，使用干净的 offline-fixture（旧 marker 和该合成应用专用的 History-v1 缓存需移入备份目录，不能清理生产缓存）。
+1. `python3 scripts/package-presentation-preview.py --identity EXISTING_APPLE_DEVELOPMENT_SHA1`，使用干净的 offline-fixture（旧 marker 和该合成应用专用的 History-v1 缓存需移入备份目录，不能清理生产缓存）。
 2. 原生启动预览，合成 CLI 经生产连接、分页与渲染路径加载 15 条消息，检查 `acceptance.json` 中 `merged-record-ordered-text-and-media`、`merged-record-malformed-and-entity-safe` 为 true；`presentation.png` 为可核查合成图。
 3. 打开合成会话，点击“合成群聊的聊天记录”，核对两条消息的顺序、发送者、时间、实体解码后的正文和图片占位，点击“完成”返回。
 4. 按 `LOCAL_SIGNING.md` 沿用当前 Apple Development 身份，通过工具更新脚本同时暂存主程序和读取工具；校验 designated requirement 不变、读取工具精确摘要迁移、发送 helper 字节不变。

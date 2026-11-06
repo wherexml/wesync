@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """Package isolated offline acceptance app. Does not launch or read WeChat."""
 from pathlib import Path
-import plistlib,shutil,os,subprocess,sys
+import argparse,plistlib,shutil,os,re,subprocess,sys
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--identity',required=True,help='Existing Apple Development certificate SHA-1; never ad-hoc')
+parser.add_argument('--polish',action='store_true')
+parser.add_argument('--chinese',action='store_true')
+parser.add_argument('--dark-mode',action='store_true')
+args=parser.parse_args()
+if not re.fullmatch(r'[0-9A-Fa-f]{40}',args.identity):
+ parser.error('Use the existing Apple Development certificate fingerprint; ad-hoc signing is forbidden.')
 repo=Path(__file__).resolve().parents[1]
 subprocess.run(['swift','build','--package-path',str(repo),'--product','greenbubbles-history'],check=True)
 polish='--polish' in sys.argv
@@ -26,6 +34,10 @@ hevc=(data/'sample.hevc').read_bytes()
 (data/'sample.wxgf').write_bytes(b'wxgf'+bytes([8])+bytes(3)+len(hevc).to_bytes(4,'big')+hevc)
 with (app/'Contents/Info.plist').open('wb') as f:
  plistlib.dump({'CFBundleExecutable':'greenbubbles-history','CFBundleIdentifier':app_id,'CFBundleName':app_name,'CFBundleDisplayName':app_name,'CFBundleIconFile':'GreenBubbles','CFBundlePackageType':'APPL','CFBundleDevelopmentRegion':'zh_CN','CFBundleLocalizations':['zh_CN'],'CFBundleVersion':'1','CFBundleShortVersionString':'0.10.0-preview','NSHighResolutionCapable':True,'LSMinimumSystemVersion':'14.0','GBOfflineAcceptance':True},f)
-subprocess.run(['/usr/bin/codesign','--force','--deep','--sign','-',str(app)],check=True)
+subprocess.run(['/usr/bin/codesign','--force','--deep','--sign',args.identity,str(app)],check=True)
+subprocess.run(['/usr/bin/codesign','--verify','--deep','--strict',str(app)],check=True)
+signature=subprocess.run(['/usr/bin/codesign','-dv','--verbose=2',str(app)],check=True,capture_output=True,text=True)
+if 'Authority=Apple Development:' not in signature.stderr or 'TeamIdentifier=not set' in signature.stderr:
+ raise RuntimeError('Preview must retain a legitimate Apple Development identity.')
 print('Open preview app to execute offline acceptance:',app)
 print('Artifacts:',data/'acceptance.json',data/'presentation.png')

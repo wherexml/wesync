@@ -59,3 +59,17 @@ python3 scripts/dependency-upgrade-e2e.py OLD_CLI NEW_CLI REPORT.json --fixture-
 ## 2026-10-24：本机检查发现的传递依赖补丁
 
 转发文件修复的全量检查命中 RUSTSEC-2026-0385、0382、0381。仅将 ctutils 升至 0.4.4、rustls-webpki 升至 0.103.16、webpki-roots 升至 1.0.10，保持直接依赖和 wx-cli 固定版本不变。分发基线重新生成比对无差异（记录直接/原生依赖）；许可证清单更新三项版本，许可文本不变。没有新增审计豁免。
+
+## 2026-11-06：压缩依赖和 Tokio 安全修复
+
+实现前沿用上述失败契约：不得新增审计豁免；旧新快照双向互读、错误保护器拒绝、黑名单隔离与同身份工具摘要迁移均须验证。
+
+锁定 zstd 0.13.4 / 0.14.3、zstd-safe 7.4.0 / 8.2.0、zstd-sys 2.1.2+zstd.1.5.7，并将 Tokio 1.53.1 升至 1.53.3。修复审计报告的 7 个漏洞命中及新增 unsound 警告；剩余 ansi_term/atty 的 3 条既有警告，不新增忽略规则。wx-cli Git revision、直接依赖约束和底层 zstd 1.5.7 不变。Cargo 同时重新解析已有 Windows 专属依赖边，不增加包版本。
+
+zstd 0.13.4 与 zstd-safe 7.4.0 的包内 LICENSE 已核对为 BSD-3-Clause；重新生成并审查 `THIRD_PARTY_NOTICES.md` 和 `docs/distribution-dependencies.json`。
+
+真实黑名单非空时，跨版本验收使用 `scripts/dependency-upgrade-isolated.py OLD_CARGO_LOCK REPORT.json`：仅复制当前 Rust 源码、两份锁文件及合成脚本，在 Docker 独立账户构建新旧二进制，测试阶段断网，不挂载 home、真实聊天或策略。适用于仅依赖变化；不把当前源码配旧锁文件称为旧应用完整源码重建。既有 14 项跨版本 CLI 检查覆盖加密快照、压缩内容、恢复词和口令双向读取。运行前后比较主机策略摘要及权限；不清空用户黑名单、不加生产豁免。
+
+本轮完整本机 CI 23 项及跨版本 14 项全部通过。build 57 → 58 保持原 Apple Development 身份，精确 CLI/helper 摘要迁移、许可证/SBOM 同步和严格验签通过；两次原生完整退出重开自动连接，消息读取和主动刷新均通过，未输入凭据或触发权限变更。证据见 [security-upgrade-20261106/summary.json](acceptance/security-upgrade-20261106/summary.json) 和 [compatibility.json](acceptance/security-upgrade-20261106/compatibility.json)。
+
+复现本轮旧依赖基线：`git show 33bede0:Native/GreenBubbles/Cargo.lock > /tmp/wesync-before-20261106.lock`，再运行 `python3 scripts/dependency-upgrade-isolated.py /tmp/wesync-before-20261106.lock .build/dependency-compatibility-repeat.json`。先通过 `python3 scripts/rust-e2e-isolated.py` 准备固定 Docker 镜像；全量本机 CI 也会准备该镜像。

@@ -12,7 +12,7 @@
 
 ## 验收结果（2026-10-02）
 
-独立中文预览版本：`python3 scripts/package-presentation-preview.py --chinese`，输出 `.local-install/GreenBubbles Chinese Preview.app`，独立标识 `me.greenbubbles.ChinesePreview`。
+独立中文预览版本：`python3 scripts/package-presentation-preview.py --chinese --identity EXISTING_APPLE_DEVELOPMENT_SHA1`，输出 `.local-install/GreenBubbles Chinese Preview.app`，独立标识 `me.greenbubbles.ChinesePreview`。
 
 - Debug/Release 编译通过；合并离线 E2E 49/49 通过，含 PDF 9 项检查。
 - 原生界面实际验证欢迎页三条入口、七个连接方式的菜单文案、密码子页面及空密码中文错误、备份设置/可选密码、中文文件选择窗口与取消返回；中文日期及系统菜单通过。

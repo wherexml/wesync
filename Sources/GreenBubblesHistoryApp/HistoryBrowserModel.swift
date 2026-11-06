@@ -128,10 +128,47 @@ final class HistoryBrowserModel {
     var accessedAt: Date
   }
   private var directMessagePageCache: [String: CachedTimeline] = [:]
+  private let messageCacheConversationLimit = 160
+  private let messageCacheTotalLimit = 10_000
+  var directTimelineFollowingLatest = true
+  var directMessageScrollRevision = 0
+  var directAutomaticMessageRevision = 0
+  private var directTimelineDetached = false
+  private var pendingBodyRefresh: [String: UUID] = [:]
+  private var bodyRefreshTask: Task<Void, Never>?
+  private var bodyRefreshPaused = false
+  private var recentPreloadTask: Task<Void, Never>?
+  private var recentPreloadAttempted: Set<String> = []
+  private var recentPreloadPaused = false
+  private(set) var isPreloadingRecentConversations = false
   private struct DiskHistory: Codable {
     var conversations: [HistoryDirectConversation]
     var cursor: String?
     var timelines: [String: CachedTimeline]
+    var avatarPool: [String: String]?
+    var avatarReferences: [String: [String: String]]?
+
+    func restoringAvatars() -> [String: CachedTimeline] {
+      guard let avatarPool, let avatarReferences else { return timelines }
+      return timelines.map { id, timeline in
+        let messages = timeline.messages.map { message in
+          var restored = message
+          if restored.avatarBase64 == nil,
+            let reference = avatarReferences[id]?[message.id]
+          {
+            restored.avatarBase64 = avatarPool[reference]
+          }
+          return restored
+        }
+        return (
+          id,
+          CachedTimeline(
+            messages: messages, cursor: timeline.cursor,
+            warnings: timeline.warnings, consistency: timeline.consistency,
+            refreshedAt: timeline.refreshedAt, accessedAt: timeline.accessedAt)
+        )
+      }.reduce(into: [:]) { $0[$1.0] = $1.1 }
+    }
   }
   @ObservationIgnored private var persistentHistory: HistoryPersistentCache?
   private var conversationRefreshItems: [HistoryDirectConversation] = []
@@ -149,10 +186,38 @@ final class HistoryBrowserModel {
   private func saveHistoryCache() {
     guard let persistentHistory else { return }
     do {
+      var pool: [String: String] = [:]
+      var references: [String: [String: String]] = [:]
+      var fingerprints: [String: String] = [:]
+      var timelines: [String: CachedTimeline] = [:]
+      for (id, timeline) in directMessagePageCache {
+        let messages = timeline.messages.map { message in
+          var compact = message
+          if let avatar = message.avatarBase64 {
+            let fingerprint: String
+            if let known = fingerprints[avatar] {
+              fingerprint = known
+            } else {
+              fingerprint = SHA256.hash(data: Data(avatar.utf8))
+                .map { String(format: "%02x", $0) }.joined()
+              fingerprints[avatar] = fingerprint
+              pool[fingerprint] = avatar
+            }
+            references[id, default: [:]][message.id] = fingerprint
+            compact.avatarBase64 = nil
+          }
+          return compact
+        }
+        timelines[id] = CachedTimeline(
+          messages: messages, cursor: timeline.cursor,
+          warnings: timeline.warnings, consistency: timeline.consistency,
+          refreshedAt: timeline.refreshedAt, accessedAt: timeline.accessedAt)
+      }
       try persistentHistory.write(
         DiskHistory(
           conversations: directConversations,
-          cursor: directConversationCursor, timelines: directMessagePageCache))
+          cursor: directConversationCursor, timelines: timelines, avatarPool: pool,
+          avatarReferences: references))
     } catch {
       connectionPersistenceNotice = "本地缓存暂时无法保存，下次打开将重新加载。"
     }
@@ -534,7 +599,7 @@ final class HistoryBrowserModel {
       secret: keyUTF8, enabled: shouldRemember)
     if let cached = persistentHistory?.read(DiskHistory.self) {
       directConversations = cached.conversations
-      directMessagePageCache = cached.timelines
+      directMessagePageCache = cached.restoringAvatars()
       directSection = .chats
     }
     showsDirectConnection = false
@@ -562,6 +627,7 @@ final class HistoryBrowserModel {
         try Task.checkCancellation()
         guard activeDirectLoadID == loadID, directConfiguration == configuration else { return }
         directStatus = status
+        enqueueChangedBodies(page.items)
         conversationRefreshItems = page.items
         let freshIDs = Set(page.items.map(\.id))
         directConversations = page.items + directConversations.filter { !freshIDs.contains($0.id) }
@@ -573,6 +639,7 @@ final class HistoryBrowserModel {
         isDirectConnecting = false
         saveHistoryCache()
         loadMoreDirectConversations()
+        scheduleRecentMessagePreload()
         refreshDirectConversationsIfNeeded()
         if shouldRemember && rememberDirectConnection && (!restoring || migratingTool) {
           do {
@@ -815,6 +882,7 @@ final class HistoryBrowserModel {
               return left == right ? $0.id < $1.id : left > right
             }
         }
+        enqueueChangedBodies(page.items)
         let catalogChanged = refreshedCatalog != directConversations
         if catalogChanged { directConversations = refreshedCatalog }
         directConversationWarnings = page.warnings
@@ -827,6 +895,7 @@ final class HistoryBrowserModel {
           loadMoreDirectConversations()
         }
         if reloadAll || catalogChanged { saveHistoryCache() }
+        scheduleRecentMessagePreload()
       } catch is CancellationError {
         if activeDirectConversationRefreshID == requestID {
           isRefreshingDirectConversations = false
@@ -841,7 +910,7 @@ final class HistoryBrowserModel {
   }
 
   func refreshDirectConversationsIfNeeded() {
-    guard conversationSceneActive, conversationSourceChanged,
+    guard conversationSourceChanged,
       directConfiguration != nil, conversationChangeMonitor != nil,
       directConversationError == nil, !isDirectConnecting,
       directConversationCursor == nil, !isLoadingDirectConversations,
@@ -857,7 +926,7 @@ final class HistoryBrowserModel {
       do { try await Task.sleep(for: delay) } catch { return }
       guard let self, activeDirectLoadID == sessionID else { return }
       conversationChangeTask = nil
-      guard conversationSceneActive, conversationSourceChanged,
+      guard conversationSourceChanged,
         directConversationError == nil, !isDirectConnecting,
         directConversationCursor == nil, !isLoadingDirectConversations,
         !isRefreshingDirectConversations
@@ -871,9 +940,6 @@ final class HistoryBrowserModel {
     if active {
       conversationChangeMonitor?.checkForChanges()
       refreshDirectConversationsIfNeeded()
-    } else {
-      conversationChangeTask?.cancel()
-      conversationChangeTask = nil
     }
   }
 
@@ -900,6 +966,8 @@ final class HistoryBrowserModel {
   }
 
   func refreshDirectHistory() {
+    bodyRefreshPaused = false
+    scheduleChangedBodyRefresh()
     refreshDirectConversations(reloadAll: true)
     returnToLatestDirectMessages()
   }
@@ -942,6 +1010,7 @@ final class HistoryBrowserModel {
           directConversationError = "会话分页未前进，请重新连接后重试。"
           return
         }
+        enqueueChangedBodies(page.items)
         conversationRefreshCursors.insert(cursor)
         let existing = Set(conversationRefreshItems.map(\.id))
         conversationRefreshItems.append(contentsOf: page.items.filter { !existing.contains($0.id) })
@@ -957,6 +1026,7 @@ final class HistoryBrowserModel {
         directConversationConsistency = page.consistency
         isLoadingDirectConversations = false
         saveHistoryCache()
+        scheduleRecentMessagePreload()
         // One bounded page at a time; yield between pages so chat reads remain responsive.
         try await Task.sleep(for: .milliseconds(150))
         guard activeDirectConversationID == requestID, directConfiguration == configuration else {
@@ -984,6 +1054,9 @@ final class HistoryBrowserModel {
       return
     }
     directSelectedConversationID = conversationID
+    directTimelineFollowingLatest = true
+    directTimelineDetached = false
+    directMessageScrollRevision += 1
     if var cached = directMessagePageCache[conversationID] {
       cached.accessedAt = Date()
       directMessagePageCache[conversationID] = cached
@@ -997,7 +1070,11 @@ final class HistoryBrowserModel {
       directIsSearchContext = false
       directHighlightedMessageID = nil
       isLoadingDirectMessages = false
-      if Date().timeIntervalSince(cached.refreshedAt) < 60 { return }
+      if pendingBodyRefresh[conversationID] == nil
+        && Date().timeIntervalSince(cached.refreshedAt) < 60
+      {
+        return
+      }
       loadDirectMessages(
         conversationID: conversationID, cursor: nil, appending: false, preservingContent: true)
     } else {
@@ -1149,6 +1226,7 @@ final class HistoryBrowserModel {
         directMessages = [resource.item]
         directMessageWarnings = resource.warnings
         directMessageConsistency = resource.consistency
+        directMessageScrollRevision += 1
         saveHistoryCache()
         isLoadingDirectMessages = false
       } catch is CancellationError {
@@ -1563,6 +1641,7 @@ final class HistoryBrowserModel {
       directMessageCursor = nil
       directMessageWarnings = []
     }
+    if !appending { directTimelineDetached = false }
     directMessageError = nil
     directIsSearchContext = false
     directHighlightedMessageID = nil
@@ -1612,7 +1691,7 @@ final class HistoryBrowserModel {
         directMessageConsistency = page.consistency
         // Keep a bounded, contiguous timeline with its matching pagination cursor.
         // If the user reads beyond the per-chat budget, retain the last bounded snapshot.
-        if directMessages.count <= 400 {
+        if directMessages.count <= 400 && !directTimelineDetached {
           let now = Date()
           let refreshedAt =
             appending ? directMessagePageCache[conversationID]?.refreshedAt ?? now : now
@@ -1620,16 +1699,9 @@ final class HistoryBrowserModel {
             messages: directMessages, cursor: directMessageCursor,
             warnings: directMessageWarnings, consistency: directMessageConsistency,
             refreshedAt: refreshedAt, accessedAt: now)
-          while directMessagePageCache.count > 32
-            || directMessagePageCache.values.reduce(0, { $0 + $1.messages.count }) > 2_000
-          {
-            guard
-              let oldest = directMessagePageCache.filter({ $0.key != conversationID })
-                .min(by: { $0.value.accessedAt < $1.value.accessedAt })?.key
-            else { break }
-            directMessagePageCache.removeValue(forKey: oldest)
-          }
+          trimMessageCache(protecting: conversationID)
         }
+        if !appending { directMessageScrollRevision += 1 }
         saveHistoryCache()
         isLoadingDirectMessages = false
       } catch is CancellationError {
@@ -1643,6 +1715,220 @@ final class HistoryBrowserModel {
     }
   }
 
+  /// Compare the catalog before replacing it; changes to avatar/name alone do not read bodies.
+  private func enqueueChangedBodies(_ incoming: [HistoryDirectConversation]) {
+    let previous = Dictionary(
+      directConversations.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+    for item in incoming {
+      guard directMessagePageCache[item.id] != nil || directSelectedConversationID == item.id,
+        let old = previous[item.id], old.sortDate != item.sortDate || old.summary != item.summary
+      else { continue }
+      pendingBodyRefresh[item.id] = UUID()
+    }
+  }
+
+  /// One bounded request at a time, with foreground reads taking precedence.
+  private func scheduleChangedBodyRefresh() {
+    guard bodyRefreshTask == nil, !bodyRefreshPaused, !pendingBodyRefresh.isEmpty,
+      let configuration = directConfiguration
+    else { return }
+    let sessionID = activeDirectLoadID
+    bodyRefreshTask = Task(priority: .utility) { [weak self] in
+      guard let self else { return }
+      var key = directKeyUTF8
+      defer {
+        key.resetBytes(in: 0..<key.count)
+        if activeDirectLoadID == sessionID {
+          bodyRefreshTask = nil
+          saveHistoryCache()
+        }
+      }
+      do {
+        while !pendingBodyRefresh.isEmpty {
+          try Task.checkCancellation()
+          while isLoadingDirectMessages || isSearchingDirect || isRefreshingDirectConversations
+            || isLoadingDirectConversations || isDirectConnecting
+          {
+            try await Task.sleep(for: .milliseconds(100))
+          }
+          guard activeDirectLoadID == sessionID, directConfiguration == configuration else {
+            return
+          }
+          let id =
+            directSelectedConversationID.flatMap { pendingBodyRefresh[$0] != nil ? $0 : nil }
+            ?? directConversations.first(where: { pendingBodyRefresh[$0.id] != nil })?.id
+            ?? pendingBodyRefresh.keys.sorted().first!
+          let revision = pendingBodyRefresh[id]
+          guard directConversations.contains(where: { $0.id == id }),
+            directMessagePageCache[id] != nil || directSelectedConversationID == id
+          else {
+            pendingBodyRefresh.removeValue(forKey: id)
+            continue
+          }
+          let foregroundID = activeDirectMessageID
+          let page = try await directClient.messages(
+            configuration: configuration, keyUTF8: key,
+            conversationID: id, limit: 40, cursor: nil)
+          try Task.checkCancellation()
+          guard activeDirectLoadID == sessionID, directConfiguration == configuration else {
+            return
+          }
+          // A newer catalog event or foreground query must win over this result.
+          guard pendingBodyRefresh[id] == revision, activeDirectMessageID == foregroundID,
+            !isLoadingDirectMessages, !isSearchingDirect
+          else { continue }
+          let old = directMessagePageCache[id]
+          let visible = directSelectedConversationID == id && !directIsSearchContext
+          let existing = visible ? directMessages : old?.messages ?? []
+          var messages = page.items
+          var cursor = page.page.nextCursor
+          var warnings = page.warnings
+          var overlaps = false
+          if let boundary = page.items.last,
+            let index = existing.firstIndex(where: { $0.id == boundary.id })
+          {
+            overlaps = true
+            let ids = Set(page.items.map(\.id))
+            let older = existing.dropFirst(index + 1).filter { !ids.contains($0.id) }
+            messages += older
+            if !older.isEmpty {
+              cursor = visible ? directMessageCursor : old?.cursor
+              warnings = mergeDirectWarnings(
+                warnings, visible ? directMessageWarnings : old?.warnings ?? [])
+            }
+          }
+          let now = Date()
+          // The disk snapshot always has a continuous page/cursor pair, even after a large gap.
+          directMessagePageCache[id] = CachedTimeline(
+            messages: messages.count <= 400 ? messages : page.items,
+            cursor: messages.count <= 400 ? cursor : page.page.nextCursor,
+            warnings: messages.count <= 400 ? warnings : page.warnings,
+            consistency: page.consistency, refreshedAt: now, accessedAt: old?.accessedAt ?? now)
+          if visible {
+            if overlaps || existing.isEmpty || directTimelineFollowingLatest {
+              directMessages = messages
+              directMessageCursor = cursor
+              directMessageWarnings = warnings
+              directMessageConsistency = page.consistency
+              directTimelineDetached = false
+              directAutomaticMessageRevision += 1
+            } else {
+              // Reading a disjoint historical page: retain it until explicit navigation to latest.
+              directTimelineDetached = true
+            }
+          }
+          trimMessageCache(protecting: directSelectedConversationID)
+          pendingBodyRefresh.removeValue(forKey: id)
+          try await Task.sleep(for: .milliseconds(100))
+        }
+      } catch is CancellationError {
+        // Source changes cancel without publishing anything.
+      } catch {
+        if activeDirectLoadID == sessionID { bodyRefreshPaused = true }
+      }
+    }
+  }
+
+  private func trimMessageCache(protecting conversationID: String?) {
+    while directMessagePageCache.count > messageCacheConversationLimit
+      || directMessagePageCache.values.reduce(0, { $0 + $1.messages.count })
+        > messageCacheTotalLimit
+    {
+      guard
+        let oldest = directMessagePageCache.filter({ $0.key != conversationID })
+          .min(by: { $0.value.accessedAt < $1.value.accessedAt })?.key
+      else { break }
+      directMessagePageCache.removeValue(forKey: oldest)
+    }
+  }
+
+  /// One bounded body page per recent chat; selection and attachments remain foreground-only.
+  private func scheduleRecentMessagePreload() {
+    scheduleChangedBodyRefresh()
+    guard let configuration = directConfiguration, directConversationCursor == nil,
+      !isDirectConnecting, !isLoadingDirectConversations, !isRefreshingDirectConversations,
+      !isPreloadingRecentConversations, !recentPreloadPaused
+    else { return }
+    let sorted = directConversations.enumerated().sorted {
+      let left = $0.element.sortDate ?? .distantPast
+      let right = $1.element.sortDate ?? .distantPast
+      return left == right ? $0.offset < $1.offset : left > right
+    }.map(\.element)
+    let targets =
+      Array(sorted.filter { directCategory(for: $0) == "personal" }.prefix(100))
+      + Array(sorted.filter { directCategory(for: $0) == "group" }.prefix(50))
+    let targetIDs = Set(targets.map(\.id))
+    let pending = sorted.filter {
+      targetIDs.contains($0.id) && !recentPreloadAttempted.contains($0.id)
+    }
+    guard !pending.isEmpty else { return }
+    let sessionID = activeDirectLoadID
+    isPreloadingRecentConversations = true
+    recentPreloadTask = Task(priority: .utility) { [weak self] in
+      guard let self else { return }
+      var key = directKeyUTF8
+      var dirty = false
+      var writes = 0
+      defer {
+        key.resetBytes(in: 0..<key.count)
+        if activeDirectLoadID == sessionID && directConfiguration == configuration {
+          if dirty { saveHistoryCache() }
+          isPreloadingRecentConversations = false
+          recentPreloadTask = nil
+        }
+      }
+      do {
+        for conversation in pending {
+          try Task.checkCancellation()
+          guard activeDirectLoadID == sessionID, directConfiguration == configuration else {
+            return
+          }
+          // Finish the active UI query before starting another background subprocess.
+          while isLoadingDirectMessages || isSearchingDirect || isRefreshingDirectConversations
+            || bodyRefreshTask != nil
+          {
+            try await Task.sleep(for: .milliseconds(100))
+          }
+          try Task.checkCancellation()
+          guard activeDirectLoadID == sessionID, directConfiguration == configuration else {
+            return
+          }
+          recentPreloadAttempted.insert(conversation.id)
+          if directMessagePageCache[conversation.id] != nil { continue }
+          if directSelectedConversationID == conversation.id { continue }
+          let page = try await directClient.messages(
+            configuration: configuration, keyUTF8: key,
+            conversationID: conversation.id, limit: 40, cursor: nil)
+          try Task.checkCancellation()
+          guard activeDirectLoadID == sessionID, directConfiguration == configuration else {
+            return
+          }
+          // A foreground selection/page completed while this read was in flight.
+          if directMessagePageCache[conversation.id] == nil
+            && directSelectedConversationID != conversation.id && page.items.count <= 400
+          {
+            let now = Date()
+            directMessagePageCache[conversation.id] = CachedTimeline(
+              messages: page.items, cursor: page.page.nextCursor, warnings: page.warnings,
+              consistency: page.consistency, refreshedAt: now, accessedAt: now)
+            trimMessageCache(protecting: directSelectedConversationID)
+            dirty = true
+            writes += 1
+            if writes % 10 == 0 {
+              saveHistoryCache()
+              dirty = false
+            }
+          }
+          try await Task.sleep(for: .milliseconds(100))
+        }
+      } catch is CancellationError {
+        // Closing/changing a source must never publish the old request's results.
+      } catch {
+        if activeDirectLoadID == sessionID { recentPreloadPaused = true }
+      }
+    }
+  }
+
   private func replaceDirectKey(with key: [UInt8]) {
     directKeyUTF8.resetBytes(in: 0..<directKeyUTF8.count)
     directKeyUTF8.removeAll(keepingCapacity: false)
@@ -1650,6 +1936,18 @@ final class HistoryBrowserModel {
   }
 
   private func clearDirectState() {
+    bodyRefreshTask?.cancel()
+    bodyRefreshTask = nil
+    pendingBodyRefresh.removeAll()
+    bodyRefreshPaused = false
+    directTimelineDetached = false
+    directTimelineFollowingLatest = true
+    if isPreloadingRecentConversations { saveHistoryCache() }
+    recentPreloadTask?.cancel()
+    recentPreloadTask = nil
+    isPreloadingRecentConversations = false
+    recentPreloadAttempted.removeAll()
+    recentPreloadPaused = false
     conversationChangeMonitor?.stop()
     conversationChangeMonitor = nil
     conversationChangeTask?.cancel()

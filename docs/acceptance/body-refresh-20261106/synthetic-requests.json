@@ -1,0 +1,246 @@
+{
+  "source": "synthetic-only",
+  "firstAutomaticCatalogIntervalSeconds": 60.03,
+  "requests": [
+    {
+      "operation": "source.status",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": null,
+      "observedAtUnixSeconds": 1793929607.271199
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929607.325623
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929607.44319
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-b",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929607.602308
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929607.762613
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929667.3558242
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929667.4080179
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-b",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929667.5666938
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929669.664845
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929669.715345
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-b",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929669.893269
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929671.826808
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929671.940429
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929671.988116
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929674.9950268
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929674.9954681
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929675.071847
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929675.1914299
+    },
+    {
+      "operation": "source.status",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": null,
+      "observedAtUnixSeconds": 1793929676.385649
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929676.428761
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929676.497272
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-b",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929676.644168
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929694.008395
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929737.510446
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929737.5672069
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-b",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929737.723708
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929835.5246139
+    },
+    {
+      "operation": "conversations.list",
+      "json": false,
+      "source": "synthetic",
+      "conversation": null,
+      "limit": "100",
+      "observedAtUnixSeconds": 1793929843.419282
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-a",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929843.468954
+    },
+    {
+      "operation": "messages.list",
+      "json": true,
+      "source": "synthetic",
+      "conversation": "body-b",
+      "limit": "40",
+      "observedAtUnixSeconds": 1793929843.636449
+    }
+  ]
+}

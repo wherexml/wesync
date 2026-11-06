@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-17",
+  "timezone": "Asia/Singapore",
+  "product": "WeSync",
+  "baselineBuild": "44",
+  "installedBuild": "46",
+  "signing": {
+    "strictValidation": "PASS",
+    "originalDesignatedRequirementPreserved": true,
+    "originalEntitlementsPreserved": true,
+    "allHelperBytesPreserved": true,
+    "installedMainMatchesStaged": true,
+    "identityMigration": false
+  },
+  "nativeAcceptance": {
+    "build46ColdStart1": "PASS",
+    "build46ColdStart2": "PASS",
+    "processAbsenceConfirmedBetweenStarts": true,
+    "automaticConnectionWithoutKeyEntry": "PASS",
+    "passwordPromptsDuringBuild46Acceptance": 0,
+    "conversationSelectionAndImages": "PASS",
+    "sidebarCollapseExpand": "PASS",
+    "chatSearchChineseInputAndEscape": "PASS",
+    "contextMenuPositionOpenCancel": "PASS",
+    "manualRefreshBothStarts": "PASS",
+    "settingsCompactGroupsAndPicker": "PASS",
+    "blacklistPickerCancelPolicyUnchanged": "PASS",
+    "bothHelpPopoversEscapeKeepsSettings": "PASS",
+    "connectionReadOnlyEditCancel": "PASS",
+    "doneReturnsToChat": "PASS",
+    "appearance": "light",
+    "realDataMutations": false,
+    "credentialEntry": false
+  },
+  "checks": {
+    "localCI": "PASS",
+    "steps": 23,
+    "report": ".build/local-ci/20261017T033936.598056Z/summary.json",
+    "finalReleaseBuild": "PASS",
+    "diffCheck": "PASS",
+    "previewScriptSyntax": "PASS",
+    "previewAdHocIdentityRejected": "PASS"
+  },
+  "previewIncident": {
+    "legacyAdHocPreviewCausedKeychainPrompt": true,
+    "previewStopped": true,
+    "passwordCollectedOrEnteredByAgent": false,
+    "packagingNowRequiresAppleDevelopmentFingerprint": true,
+    "keychainACLOrTCCModified": false,
+    "productionCacheOrVaultModified": false
+  },
+  "evidence": {
+    "syntheticScreenshots": ".local-install/ui-polish-20261017/",
+    "baselineBackup": ".local-install/ui-polish-20261017/installed-build44-backup.app",
+    "realScreenshotsArchived": false
+  },
+  "limitations": [
+    "Existing synthetic presentation E2E passed 54 checks on the earlier UI candidate. Final help Escape behavior was verified in installed build46.",
+    "New toolbar and settings were inspected in native light appearance; native dark/high-contrast/VoiceOver were not repeated.",
+    "No guarantee is made for certificate expiry, keychain locking or future identity migration."
+  ],
+  "repeat": [
+    "Quit WeSync through the native app menu; confirm the main process is absent.",
+    "Open /Applications/WeSync.app through native UI; verify automatic connection without credentials.",
+    "Select a conversation, fold/unfold sidebar, open/cancel right-click menu, enter a harmless Chinese sample into chat search then Escape, refresh.",
+    "Open Advanced Settings, inspect grouped controls and current range. Open each help then Escape: settings must remain. Open blacklist picker then Cancel.",
+    "Expand connection, verify read-only/unlocked state, enter edit mode and Cancel without changing any fields. Reopen and click Done: chat must remain.",
+    "Fully quit and repeat native cold start, conversation load and refresh. Keep policy and credentials unchanged."
+  ],
+  "gitCommitOrPush": false,
+  "sourceSHA256": {
+    "Sources/GreenBubblesHistoryApp/HistoryDesign.swift": "0daac3e2d93b4522ec046eb84c84e121305896625e13c5db36e32eaac1430467",
+    "Sources/GreenBubblesHistoryApp/HistoryAIReadBlacklist.swift": "99c2c3af2fae4a2e7d222ee6968324d0e4eacba4fb954da16c1f98c94134631e",
+    "Sources/GreenBubblesHistoryApp/HistoryDirectViews.swift": "6bdf8391d8eaae041220a1bc74a2a01d1fa17a92e7729c9853760b2f17df0b64"
+  }
+}

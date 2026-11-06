@@ -10,199 +10,201 @@ struct HistoryDirectConnectionSheet: View {
   @State private var showsConnection = false
   @State private var editsConnection = false
   @State private var confirmsForget = false
+  @State private var showsBlacklistHelp = false
+  @State private var showsRangeHelp = false
 
   private var viewingConnection: Bool { model.isDirectHistoryOpen && !editsConnection }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      VStack(alignment: .leading, spacing: 5) {
-        Text(model.isDirectHistoryOpen ? "高级设置" : "连接微信记录或备份")
-          .font(.title2.weight(.semibold))
-        Text(
-          "管理 AI 读取权限、会话显示和本机连接。"
-        )
-        .foregroundStyle(.secondary)
-      }
-
-      .padding(24)
+      Text(model.isDirectHistoryOpen ? "高级设置" : "连接微信记录或备份")
+        .font(HistoryDesign.title)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 20)
 
       Divider()
-      Form {
-        HistoryAIReadBlacklistSection(model: model)
-        Section("会话显示") {
-          Picker("联系人和群聊时间范围", selection: $model.conversationRange) {
-            ForEach(HistoryConversationRange.allCases) { range in
-              Text(range.title).tag(range)
+      ScrollView {
+        VStack(alignment: .leading, spacing: 16) {
+          HistoryAIReadBlacklistSection(model: model, showsHelp: $showsBlacklistHelp)
+          HistorySettingsGroup(title: "会话显示") {
+            HStack(spacing: 8) {
+              Text("联系人和群聊时间范围")
+              Spacer()
+              Picker("联系人和群聊时间范围", selection: $model.conversationRange) {
+                ForEach(HistoryConversationRange.allCases) { range in
+                  Text(range.title).tag(range)
+                }
+              }
+              .labelsHidden()
+              .fixedSize()
+              .accessibilityIdentifier("conversation-time-range")
+              HistoryHelpButton(
+                title: "会话时间范围说明",
+                text: "按最近消息时间显示会话，选择后立即生效并自动保存。选择“所有”可查看全部会话。",
+                presented: $showsRangeHelp)
             }
           }
-          .accessibilityIdentifier("conversation-time-range")
-          Text("按最近消息时间显示会话，选择后立即生效并自动保存。选择“所有”可查看全部会话。")
-            .font(.caption).foregroundStyle(.secondary)
-        }
-        Section {
-          DisclosureGroup(isExpanded: $showsConnection) {
-            VStack(alignment: .leading, spacing: 10) {
-              Divider().padding(.vertical, 6)
-              if viewingConnection {
-                HStack {
-                  Label("当前连接可正常使用", systemImage: "checkmark.shield")
-                    .foregroundStyle(HistoryDesign.accent)
-                  Spacer()
-                  Button("修改连接") { editsConnection = true }
-                }
-                Text("仅更换记录来源或凭据时需要修改。")
-                  .font(.caption).foregroundStyle(.secondary)
-              }
-              Text("本机读取工具").font(.subheadline.weight(.semibold))
-              pathField(
-                title: "读取工具",
-                text: $model.liveExecutablePath,
-                actionTitle: "选择…",
-                action: chooseExecutable
-              )
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-              Divider().padding(.vertical, 6)
-              Text("聊天记录来源").font(.subheadline.weight(.semibold))
-              HStack {
-                Text("打开方式").foregroundStyle(.secondary)
-                Spacer()
+          HistorySettingsGroup {
+            DisclosureGroup(isExpanded: $showsConnection) {
+              VStack(alignment: .leading, spacing: 10) {
+                Divider().padding(.vertical, 6)
                 if viewingConnection {
-                  Text(model.directAccessMode.displayName)
-                } else {
-                  Picker("打开方式", selection: $model.directAccessMode) {
-                    ForEach(HistoryDirectAccessMode.allCases, id: \.rawValue) { mode in
-                      Text(mode.displayName).tag(mode)
-                    }
+                  HStack {
+                    Label("当前连接可正常使用", systemImage: "checkmark.shield")
+                      .foregroundStyle(HistoryDesign.accent)
+                    Spacer()
+                    Button("修改连接") { editsConnection = true }
                   }
-                  .labelsHidden()
-                  .fixedSize()
-                }
-              }
-              pathField(
-                title: "记录文件夹",
-                text: $model.directSourcePath,
-                actionTitle: "选择…",
-                action: chooseSource
-              )
-            }
 
-            VStack(alignment: .leading, spacing: 10) {
-              Divider().padding(.vertical, 6)
-              Text("访问凭据").font(.subheadline.weight(.semibold))
-              if viewingConnection {
-                Label("当前连接已解锁，无需重新输入", systemImage: "lock.shield")
-                  .foregroundStyle(.secondary)
-              } else if model.directAccessMode == .decrypted {
-                Label(
-                  "此方式无需密钥，仅适用于已经解密的数据库文件。",
-                  systemImage: "exclamationmark.shield"
-                )
-                .foregroundStyle(.orange)
-              } else if model.directAccessMode == .snapshotKeychain {
-                Label(
-                  "使用本机钥匙串中已保存的凭据打开这份备份。",
-                  systemImage: "key.fill"
-                )
-                Text(
-                  "钥匙串保存的是这份备份的快捷解锁凭据。打开期间会使用仅本人可读的临时文件，关闭后清理。"
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                Label(
-                  "即使电脑丢失或钥匙串条目被删除，也可以用另外保存的 24 个恢复词找回备份。",
-                  systemImage: "externaldrive.badge.checkmark"
-                )
-                .font(.caption)
-                .foregroundStyle(.green)
-              } else if model.directAccessMode == .snapshotLocalCredential {
-                pathField(
-                  title: "本机解锁文件",
-                  text: $model.directLocalCredentialPath,
-                  actionTitle: "选择…",
-                  action: chooseLocalCredential
-                )
-                Text(
-                  "选择之前保存的快捷解锁文件。应用只记住文件位置，不将内容写入普通设置。"
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                Label(
-                  "快捷解锁文件被删除后，仍可使用另行保存的恢复词打开备份。请不要用它代替备份。",
-                  systemImage: "externaldrive.badge.exclamationmark"
-                )
-                .font(.caption)
-                .foregroundStyle(.orange)
-              } else if model.directAccessMode == .snapshotRecoveryKit {
-                pathField(
-                  title: "恢复词文件",
-                  text: $model.directRecoveryKitPath,
-                  actionTitle: "选择…",
-                  action: chooseRecoveryKit
-                )
-                Text(
-                  "恢复词文件只在本机读取，用其中的 24 个恢复词解锁备份。恢复词不会写入命令参数或普通设置。"
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                Label(
-                  "请在其他安全位置另存一份恢复词，不要只保留本机这一份。",
-                  systemImage: "exclamationmark.triangle"
-                )
-                .font(.caption)
-                .foregroundStyle(.orange)
-              } else {
-                VStack(alignment: .leading, spacing: 6) {
-                  Text(secretTitle).font(.callout)
-                  SecureField("请输入" + secretTitle, text: $secret)
-                    .labelsHidden()
-                    .textFieldStyle(.roundedBorder)
-                    .textContentType(.password)
-                    .accessibilityLabel(secretTitle)
-                    .frame(maxWidth: .infinity)
                 }
-                Text(secretExplanation)
+                Text("本机读取工具").font(.subheadline.weight(.semibold))
+                pathField(
+                  title: "读取工具",
+                  text: $model.liveExecutablePath,
+                  actionTitle: "选择…",
+                  action: chooseExecutable
+                )
+              }
+
+              VStack(alignment: .leading, spacing: 10) {
+                Divider().padding(.vertical, 6)
+                Text("聊天记录来源").font(.subheadline.weight(.semibold))
+                HStack {
+                  Text("打开方式").foregroundStyle(.secondary)
+                  Spacer()
+                  if viewingConnection {
+                    Text(model.directAccessMode.displayName)
+                  } else {
+                    Picker("打开方式", selection: $model.directAccessMode) {
+                      ForEach(HistoryDirectAccessMode.allCases, id: \.rawValue) { mode in
+                        Text(mode.displayName).tag(mode)
+                      }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                  }
+                }
+                pathField(
+                  title: "记录文件夹",
+                  text: $model.directSourcePath,
+                  actionTitle: "选择…",
+                  action: chooseSource
+                )
+              }
+
+              VStack(alignment: .leading, spacing: 10) {
+                Divider().padding(.vertical, 6)
+                Text("访问凭据").font(.subheadline.weight(.semibold))
+                if viewingConnection {
+                  Label("当前连接已解锁，无需重新输入", systemImage: "lock.shield")
+                    .foregroundStyle(.secondary)
+                } else if model.directAccessMode == .decrypted {
+                  Label(
+                    "此方式无需密钥，仅适用于已经解密的数据库文件。",
+                    systemImage: "exclamationmark.shield"
+                  )
+                  .foregroundStyle(.orange)
+                } else if model.directAccessMode == .snapshotKeychain {
+                  Label(
+                    "使用本机钥匙串中已保存的凭据打开这份备份。",
+                    systemImage: "key.fill"
+                  )
+                  Text(
+                    "钥匙串保存的是这份备份的快捷解锁凭据。打开期间会使用仅本人可读的临时文件，关闭后清理。"
+                  )
                   .font(.caption)
                   .foregroundStyle(.secondary)
-              }
-            }
-            VStack(alignment: .leading, spacing: 10) {
-              Divider().padding(.vertical, 6)
-              Text("连接偏好").font(.subheadline.weight(.semibold))
-              Toggle("记住此连接，下次启动自动打开", isOn: $model.rememberDirectConnection)
-              Text("凭据仅保存在本机钥匙串中。")
-                .font(.caption).foregroundStyle(.secondary)
-              Button("忘记已保存的连接…", role: .destructive) { confirmsForget = true }
-                .confirmationDialog("忘记已保存的连接？", isPresented: $confirmsForget) {
-                  Button("忘记连接", role: .destructive) { model.forgetRememberedConnection() }
-                  Button("取消", role: .cancel) {}
-                } message: {
-                  Text("下次启动需要重新连接。聊天记录不会被删除。")
+                  Label(
+                    "即使电脑丢失或钥匙串条目被删除，也可以用另外保存的 24 个恢复词找回备份。",
+                    systemImage: "externaldrive.badge.checkmark"
+                  )
+                  .font(.caption)
+                  .foregroundStyle(.green)
+                } else if model.directAccessMode == .snapshotLocalCredential {
+                  pathField(
+                    title: "本机解锁文件",
+                    text: $model.directLocalCredentialPath,
+                    actionTitle: "选择…",
+                    action: chooseLocalCredential
+                  )
+                  Text(
+                    "选择之前保存的快捷解锁文件。应用只记住文件位置，不将内容写入普通设置。"
+                  )
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                  Label(
+                    "快捷解锁文件被删除后，仍可使用另行保存的恢复词打开备份。请不要用它代替备份。",
+                    systemImage: "externaldrive.badge.exclamationmark"
+                  )
+                  .font(.caption)
+                  .foregroundStyle(.orange)
+                } else if model.directAccessMode == .snapshotRecoveryKit {
+                  pathField(
+                    title: "恢复词文件",
+                    text: $model.directRecoveryKitPath,
+                    actionTitle: "选择…",
+                    action: chooseRecoveryKit
+                  )
+                  Text(
+                    "恢复词文件只在本机读取，用其中的 24 个恢复词解锁备份。恢复词不会写入命令参数或普通设置。"
+                  )
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                  Label(
+                    "请在其他安全位置另存一份恢复词，不要只保留本机这一份。",
+                    systemImage: "exclamationmark.triangle"
+                  )
+                  .font(.caption)
+                  .foregroundStyle(.orange)
+                } else {
+                  VStack(alignment: .leading, spacing: 6) {
+                    Text(secretTitle).font(.callout)
+                    SecureField("请输入" + secretTitle, text: $secret)
+                      .labelsHidden()
+                      .textFieldStyle(.roundedBorder)
+                      .textContentType(.password)
+                      .accessibilityLabel(secretTitle)
+                      .frame(maxWidth: .infinity)
+                  }
+                  Text(secretExplanation)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
-              if let notice = model.connectionPersistenceNotice {
-                Text(notice).font(.caption).foregroundStyle(.orange)
               }
-            }
-          } label: {
-            HStack(spacing: 10) {
-              Image(systemName: "externaldrive").foregroundStyle(HistoryDesign.accent)
-              VStack(alignment: .leading, spacing: 4) {
-                Text("连接设置").fontWeight(.medium)
-                Text("记录来源、读取工具与访问凭据")
+              VStack(alignment: .leading, spacing: 10) {
+                Divider().padding(.vertical, 6)
+                Text("连接偏好").font(.subheadline.weight(.semibold))
+                Toggle("记住此连接，下次启动自动打开", isOn: $model.rememberDirectConnection)
+                Text("凭据仅保存在本机钥匙串中。")
                   .font(.caption).foregroundStyle(.secondary)
+                Button("忘记已保存的连接…", role: .destructive) { confirmsForget = true }
+                  .confirmationDialog("忘记已保存的连接？", isPresented: $confirmsForget) {
+                    Button("忘记连接", role: .destructive) { model.forgetRememberedConnection() }
+                    Button("取消", role: .cancel) {}
+                  } message: {
+                    Text("下次启动需要重新连接。聊天记录不会被删除。")
+                  }
+                if let notice = model.connectionPersistenceNotice {
+                  Text(notice).font(.caption).foregroundStyle(.orange)
+                }
               }
-              Spacer()
-              if model.isDirectHistoryOpen {
-                Label("已连接", systemImage: "checkmark.circle.fill")
-                  .font(.caption).foregroundStyle(HistoryDesign.accent)
+            } label: {
+              HStack(spacing: 10) {
+                Image(systemName: "externaldrive").foregroundStyle(HistoryDesign.accent)
+                Text("连接设置").fontWeight(.medium)
+                Spacer()
+                if model.isDirectHistoryOpen {
+                  Label("已连接", systemImage: "checkmark.circle.fill")
+                    .font(.caption).foregroundStyle(HistoryDesign.accent)
+                }
               }
             }
+            .accessibilityIdentifier("connection-settings-disclosure")
           }
-          .accessibilityIdentifier("connection-settings-disclosure")
         }
+        .padding(20)
       }
-      .formStyle(.grouped)
+      .background(HistoryDesign.card)
 
       if let validationError {
         Label(validationError, systemImage: "exclamationmark.triangle.fill")
@@ -213,12 +215,13 @@ struct HistoryDirectConnectionSheet: View {
       Divider()
 
       HStack {
-        Button("取消") { dismiss() }
-          .keyboardShortcut(.cancelAction)
+        if !viewingConnection {
+          Button("取消") { dismiss() }
+            .buttonStyle(HistoryActionStyle())
+            .keyboardShortcut(.cancelAction)
+        }
         Spacer()
         if viewingConnection {
-          Text("会话显示与黑名单独立保存")
-            .font(.caption).foregroundStyle(.secondary)
           Button("完成") { dismiss() }
             .buttonStyle(HistoryActionStyle(prominent: true))
             .keyboardShortcut(.defaultAction)
@@ -228,9 +231,19 @@ struct HistoryDirectConnectionSheet: View {
             .keyboardShortcut(.defaultAction)
         }
       }
-      .padding(20)
+      .padding(.horizontal, 20)
+      .padding(.vertical, 14)
     }
-    .frame(width: 680, height: 560)
+    .frame(width: 680, height: 520)
+    .onExitCommand {
+      if showsBlacklistHelp {
+        showsBlacklistHelp = false
+      } else if showsRangeHelp {
+        showsRangeHelp = false
+      } else {
+        dismiss()
+      }
+    }
     .onAppear { showsConnection = !model.isDirectHistoryOpen }
     .onChange(of: model.directAccessMode) { _, mode in
       if mode == .decrypted || mode == .snapshotRecoveryKit
@@ -455,22 +468,15 @@ struct HistoryDirectLibraryView: View {
       VStack(spacing: 0) {
         HStack(spacing: 4) {
           if !isSidebarCollapsed {
-            VStack(alignment: .leading, spacing: 3) {
-              Text("聊天").font(.system(size: 22, weight: .semibold, design: .rounded))
-              Text("WeSync").font(.system(size: 11, weight: .medium)).foregroundStyle(
-                .secondary)
-            }
+            Text("WeSync").font(HistoryDesign.title)
             Spacer()
             Button {
               model.presentDirectConnection()
             } label: {
               Image(systemName: "gearshape")
-                .font(.system(size: 16))
-                .frame(width: 32, height: 32)
-                .contentShape(Rectangle())
+
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
+            .buttonStyle(HistoryIconButtonStyle())
             .help("高级设置")
             .accessibilityLabel("高级设置")
           }
@@ -478,16 +484,16 @@ struct HistoryDirectLibraryView: View {
             isSidebarCollapsed.toggle()
           } label: {
             Image(systemName: isSidebarCollapsed ? "sidebar.left" : "sidebar.leading")
-              .font(.system(size: 16))
-              .frame(width: 32, height: 32)
-              .contentShape(Rectangle())
+
           }
-          .buttonStyle(.plain)
-          .foregroundStyle(.secondary)
+          .buttonStyle(HistoryIconButtonStyle())
           .help(isSidebarCollapsed ? "展开会话列表" : "折叠会话列表")
           .accessibilityLabel(isSidebarCollapsed ? "展开会话列表" : "折叠会话列表")
           .accessibilityIdentifier("conversation-sidebar-toggle")
-        }.padding(isSidebarCollapsed ? 10 : 16)
+        }
+        .frame(height: 32)
+        .padding(.horizontal, isSidebarCollapsed ? 10 : 14)
+        .padding(.vertical, 12)
         if !isSidebarCollapsed, let notice = model.connectionPersistenceNotice {
           Text(notice).font(.caption).foregroundStyle(.orange).padding(.horizontal)
         }
@@ -788,27 +794,28 @@ private struct HistoryDirectConversationList: View {
                 VStack(alignment: .leading, spacing: 4) {
                   HStack {
                     Text(conversation.displayName)
-                      .font(.body.weight(.medium))
+                      .font(.system(size: 13, weight: .medium))
                       .lineLimit(1)
                     Spacer()
                     if let date = conversation.sortDate {
                       HistoryConversationTimestamp(date: date)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .font(.system(size: 10).monospacedDigit())
+                        .foregroundStyle(.secondary)
                     }
                   }
                   Text(conversation.summary ?? "")
-                    .font(.caption)
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(1)
                 }
               }
             }
             .frame(maxWidth: .infinity, alignment: isCollapsed ? .center : .leading)
-            .padding(.vertical, 8)
-            .contentShape(Rectangle())
           }
-          .buttonStyle(.plain)
+          .buttonStyle(
+            HistoryConversationRowStyle(
+              selected: model.directSelectedConversationID == conversation.id)
+          )
           .help(conversation.displayName)
           .accessibilityLabel(conversation.displayName)
           .overlay {
@@ -835,10 +842,9 @@ private struct HistoryDirectConversationList: View {
               return actions
             }
           }
-          .listRowBackground(
-            model.directSelectedConversationID == conversation.id
-              ? HistoryDesign.selection : Color.clear
-          )
+          .listRowBackground(Color.clear)
+          .listRowSeparator(.hidden)
+          .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
         }
 
         if model.directConversationCursor != nil {
@@ -861,6 +867,7 @@ private struct HistoryDirectConversationList: View {
       .listStyle(.inset)
       .scrollContentBackground(.hidden)
       .background(HistoryChatPalette.sidebar)
+      .background(HistoryScrollAppearance())
       .overlay {
         if model.filteredDirectConversations.isEmpty && !model.isLoadingDirectConversations {
           if isCollapsed {
@@ -886,13 +893,15 @@ private struct HistoryDirectTimelineView: View {
   @State private var isChatSearchVisible = false
   @State private var readingPosition: String?
   @State private var paginationAnchor: String?
+  @State private var showsJumpToLatest = false
+  @State private var allowsScrollControls = false
 
   var body: some View {
     VStack(spacing: 0) {
       HStack(spacing: 8) {
-        VStack(alignment: .leading, spacing: 3) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
           Text(model.selectedDirectConversation?.displayName ?? conversationID)
-            .font(.title2.weight(.semibold))
+            .font(HistoryDesign.title)
             .lineLimit(1)
           Text(
             model.selectedDirectConversation.map { model.directCategory(for: $0) } == "other"
@@ -917,11 +926,8 @@ private struct HistoryDirectTimelineView: View {
           }
         } label: {
           Image(systemName: "magnifyingglass")
-            .frame(width: 32, height: 32)
-            .contentShape(Rectangle())
-            .foregroundStyle(isChatSearchVisible ? HistoryDesign.accent : Color.secondary)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HistoryIconButtonStyle(selected: isChatSearchVisible))
         .help(isChatSearchVisible ? "收起搜索（Esc）" : "搜索当前聊天")
         .accessibilityLabel(isChatSearchVisible ? "收起聊天搜索" : "搜索当前聊天")
         .accessibilityIdentifier("chat-search-toggle")
@@ -929,17 +935,16 @@ private struct HistoryDirectTimelineView: View {
           model.refreshDirectHistory()
         } label: {
           Image(systemName: "arrow.clockwise")
-            .frame(width: 32, height: 32)
-            .contentShape(Rectangle())
-            .foregroundStyle(.secondary)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HistoryIconButtonStyle())
         .help("刷新会话列表和最新消息")
 
       }
+      .frame(height: 32)
       .padding(.horizontal, 18)
       .padding(.vertical, 12)
       .background(HistoryChatPalette.timeline)
+      .overlay(alignment: .bottom) { HistoryDesign.groupLine.frame(height: 0.5) }
 
       if let error = model.directMessageError {
         DirectInlineError(message: error)
@@ -1013,7 +1018,11 @@ private struct HistoryDirectTimelineView: View {
           .scrollTargetLayout()
           .padding(18)
           .background(
-            HistoryScrollPrefetch {
+            HistoryScrollPrefetch(bottomDistance: { distance in
+              model.directTimelineFollowingLatest = distance <= 32
+              let show = distance > 320
+              if showsJumpToLatest != show { showsJumpToLatest = show }
+            }) {
               guard !model.isLoadingDirectMessages, model.directMessageCursor != nil else { return }
               paginationAnchor = readingPosition ?? model.directMessages.last?.id
               model.loadOlderDirectMessages()
@@ -1028,7 +1037,7 @@ private struct HistoryDirectTimelineView: View {
           }
         }
         .task(id: [
-          conversationID, model.directMessages.first?.id ?? "",
+          conversationID, String(model.directMessageScrollRevision),
           model.directHighlightedMessageID ?? "",
         ]) {
           guard !model.directMessages.isEmpty else { return }
@@ -1040,13 +1049,27 @@ private struct HistoryDirectTimelineView: View {
           } else {
             proxy.scrollTo("latest", anchor: .bottom)
           }
+          allowsScrollControls = true
+        }
+        .onChange(of: model.directAutomaticMessageRevision) { _, _ in
+          if model.directTimelineFollowingLatest {
+            proxy.scrollTo("latest", anchor: .bottom)
+          } else if let anchor = readingPosition {
+            proxy.scrollTo(anchor, anchor: .top)
+          }
         }
         .overlay(alignment: .bottomTrailing) {
-          Button {
-            withAnimation { proxy.scrollTo("latest", anchor: .bottom) }
-          } label: {
-            Image(systemName: "arrow.down").padding(8)
-          }.buttonStyle(.bordered).clipShape(Circle()).padding(16).help("回到最新消息")
+          if allowsScrollControls && showsJumpToLatest && !model.directMessages.isEmpty {
+            Button {
+              model.returnToLatestDirectMessages()
+              withAnimation { proxy.scrollTo("latest", anchor: .bottom) }
+            } label: {
+              Image(systemName: "arrow.down").padding(8)
+            }
+            .buttonStyle(.bordered).clipShape(Circle()).padding(16).help("回到最新消息")
+            .accessibilityLabel("回到最新消息")
+            .accessibilityIdentifier("jump-to-latest")
+          }
         }
       }
     }

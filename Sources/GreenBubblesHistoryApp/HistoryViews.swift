@@ -430,6 +430,7 @@ private struct ConversationListView: View {
           .tag(conversation.conversationID)
         }
       }
+      .background(HistoryScrollAppearance())
       .overlay {
         if model.filteredConversations.isEmpty {
           ContentUnavailableView.search(text: model.conversationFilter)

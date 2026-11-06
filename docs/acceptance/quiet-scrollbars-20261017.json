@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-17",
+  "app": "/Applications/WeSync.app",
+  "build": "49",
+  "status": "PASS",
+  "scope": "Conversation-list and message-timeline native vertical scrollbars; live and imported views share appearance.",
+  "appearance": {
+    "thumbWidthPt": 3,
+    "track": "transparent",
+    "border": "none",
+    "layout": "overlay",
+    "lightBlackAlpha": 0.2,
+    "darkWhiteAlpha": 0.26,
+    "nativeTrackingHitAreaAndProportion": "preserved",
+    "nativeVisualInspection": "light appearance, synthetic and installed app",
+    "darkAppearance": "adaptive drawing implemented; no separate native dark run this round"
+  },
+  "synthetic": {
+    "passed": true,
+    "assertions": 314,
+    "keychainAccess": false,
+    "realWeChatRead": false,
+    "screenshots": [
+      "quiet-scrollbars-20261017/timeline-scrolling.png",
+      "quiet-scrollbars-20261017/collapsed-scrolling.png"
+    ],
+    "historicalPagination": "PASS",
+    "thumbPositionThroughNativeAccessibility": "PASS"
+  },
+  "installedNative": {
+    "firstColdStartAutoConnected": true,
+    "firstColdStartCredentialPrompt": false,
+    "firstColdStartBodyLoaded": true,
+    "latestArrowHidden": true,
+    "sidebarScrolled": true,
+    "timelineScrolled": true,
+    "nativeThumbPositionWorks": true,
+    "returnLatestHidesArrow": true,
+    "collapsedSidebarWorks": true,
+    "secondColdStartAutoConnected": true,
+    "secondColdStartCredentialPrompt": false,
+    "secondColdStartBodyLoaded": true,
+    "secondColdStartScrollWorks": true,
+    "secondColdStartLatestArrowHidden": true
+  },
+  "installation": {
+    "build": "49",
+    "signature": "PASS",
+    "stableDesignatedRequirement": true,
+    "helpersUnchanged": {
+      "Contents/MacOS/greenbubbles": true,
+      "Contents/MacOS/greenbubbles-sticker-query": true,
+      "Contents/MacOS/greenbubbles-send": true
+    },
+    "sameEntitlements": true,
+    "installedMatchesStaged": true,
+    "nativeQuitProcessAbsence": true
+  },
+  "validation": {
+    "localCI": "PASS",
+    "checks": 23,
+    "summary": ".build/local-ci/20261017T040622.643501Z/summary.json"
+  },
+  "repeat": [
+    "python3 scripts/local-ci.py",
+    "Package the synthetic preview with the existing Apple Development certificate and the preload-acceptance fixture, as documented in MESSAGE_CACHE.md. After its E2E completes, reconnect to the prefilled decrypted synthetic fixture without remembering the connection.",
+    "Select a synthetic personal chat; scroll sidebar and timeline; move the native scrollbar; scroll upward for older pages; click return-to-latest; collapse and scroll sidebar. Inspect a 3 pt thumb with transparent track.",
+    "Quit installed WeSync through its menu, confirm process absent, reopen through native UI, select a chat and scroll. Repeat once; require automatic connection without entering credentials."
+  ],
+  "privacy": "No real message bodies, contact lists, credentials or installed-app screenshots archived.",
+  "git": "No branch, worktree, commit or push created."
+}

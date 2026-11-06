@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "syntheticOnly": true,
+  "privateDataRecorded": false,
+  "checks": {
+    "binary-0-toml-json-output": "PASS",
+    "binary-0-toml-reject-syntax": "PASS",
+    "binary-0-toml-reject-unknown": "PASS",
+    "binary-1-toml-json-output": "PASS",
+    "binary-1-toml-reject-syntax": "PASS",
+    "binary-1-toml-reject-unknown": "PASS",
+    "writer-0-reader-1-words-verify-and-read": "PASS",
+    "writer-0-reader-1-passphrase-verify-and-read": "PASS",
+    "writer-0-wrong-passphrase-rejected": "PASS",
+    "writer-0-wrong-recovery-words-rejected": "PASS",
+    "writer-1-reader-0-words-verify-and-read": "PASS",
+    "writer-1-reader-0-passphrase-verify-and-read": "PASS",
+    "writer-1-wrong-passphrase-rejected": "PASS",
+    "writer-1-wrong-recovery-words-rejected": "PASS"
+  },
+  "binarySHA256": [
+    "dd120f798b7b761c6543b62daf17374d4543d417ecfb626f00c86829abf82eb8",
+    "dfd1944f41a08eee6150e5c69c38bcb50f17b3c3f055b9ce8e1cb35d74bc1a52"
+  ],
+  "platform": "isolated local Linux container",
+  "testNetwork": "none",
+  "hostHomeMounted": false,
+  "hostPolicyUnchanged": true,
+  "buildScope": "same current Rust source with baseline and candidate lockfiles"
+}

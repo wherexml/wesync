@@ -15,7 +15,7 @@
 
 ## 可重复验收
 
-1. `python3 scripts/package-presentation-preview.py --dark-mode`，原生打开隔离预览，运行现有合成端到端流程；输出 acceptance.json、presentation.png 及 light/dark 两张原生渲染图。
+1. `python3 scripts/package-presentation-preview.py --dark-mode --identity EXISTING_APPLE_DEVELOPMENT_SHA1`，原生打开隔离预览，运行现有合成端到端流程；输出 acceptance.json、presentation.png 及 light/dark 两张原生渲染图。
 2. 检查两种外观的发送文字、引用、文件卡片、接收文字和左右背景；预览仅使用合成数据。
 3. release 编译，保持安装应用固定证书身份及全部 helper 字节；原生退出后安装，再原生打开。
 4. 确认无需数据库密钥自动连接；打开已有会话检查收发气泡与背景，退出重开再确认。

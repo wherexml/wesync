@@ -67,3 +67,7 @@ GitHub Actions 已按用户要求停用，日常检查统一先运行 `python3 s
 合并转发文件使用父消息绑定子序号及 fullmd5 内容校验，PDF 原生预览、其他文件原生存储；不按同名信任文件、不自动读取远端附件。见 `docs/MERGED_RECORDS.md`。
 
 真实黑名单非空时，完整 Rust 进程 E2E 在本机 Docker 独立账户运行；不挂载用户 home/真实策略，不添加生产豁免。macOS 原生检查与安装验收保留，见 `docs/LOCAL_CI.md`。
+
+会话变化在应用后台也按 60 秒限频处理，并触发已缓存/当前会话正文更新；当前会话优先，历史阅读锚点和连续游标须保留，失败暂停、主动刷新恢复。见 `docs/MESSAGE_CACHE.md`、`docs/CONVERSATION_REFRESH.md`。
+
+依赖安全修复不得增加审计豁免；真实黑名单非空时，依赖升级双向快照验收使用 `scripts/dependency-upgrade-isolated.py` 的独立 Docker 账户与断网测试，见 `docs/DEPENDENCY_UPGRADES.md`。

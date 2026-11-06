@@ -22,7 +22,7 @@ Avatars are imported by the user into GreenBubbles's own private store. The app 
 
 ## Repeatable offline acceptance
 
-Run `python3 scripts/package-presentation-preview.py`, then open `.local-install/GreenBubbles Preview.app`. The preview has a separate application identity and a fixture CLI that rejects every non-fixture source. Its debug-only harness runs actual production models, subprocess queries, attachment verification, avatar persistence and SwiftUI rendering. Results appear in `Contents/Resources/offline-fixture/{acceptance.json,requests.jsonl,presentation.png}`. The release binary excludes the harness.
+Run `python3 scripts/package-presentation-preview.py --identity EXISTING_APPLE_DEVELOPMENT_SHA1`, then open `.local-install/GreenBubbles Preview.app`. The preview has a separate application identity and a fixture CLI that rejects every non-fixture source. Its debug-only harness runs actual production models, subprocess queries, attachment verification, avatar persistence and SwiftUI rendering. Results appear in `Contents/Resources/offline-fixture/{acceptance.json,requests.jsonl,presentation.png}`. The release binary excludes the harness.
 
 Open the fixture conversation, click an image to open/close its preview, and right-click an avatar to import `Contents/Resources/offline-fixture/sample.png`. These native CUA interactions passed separately from the in-process render.
 
@@ -102,7 +102,7 @@ Reproduce synthetic checks:
 ```sh
 cargo build --release --manifest-path Native/GreenBubbles/Cargo.toml
 python3 scripts/verify-dat-presentation.py
-python3 scripts/package-presentation-preview.py
+python3 scripts/package-presentation-preview.py --identity EXISTING_APPLE_DEVELOPMENT_SHA1
 ```
 
 Open `.local-install/GreenBubbles Preview.app` using the native UI. Its fixture CLI refuses external source paths and credentials. Remove its synthetic `verify-restart` marker to run all checks; create the marker and reopen to exercise startup restoration. Reports appear in the preview app's `Contents/Resources/offline-fixture/`. No unit tests were added or run.

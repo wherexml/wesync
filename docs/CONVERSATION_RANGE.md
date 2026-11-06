@@ -12,7 +12,7 @@
 
 ## 重复 E2E
 
-1. `python3 scripts/package-presentation-preview.py --polish` 构建隔离预览，不读取微信。
+1. `python3 scripts/package-presentation-preview.py --polish --identity EXISTING_APPLE_DEVELOPMENT_SHA1` 构建隔离预览，不读取微信。
 2. 在 `.local-install/GreenBubbles Polish Preview.app/Contents/Resources/offline-fixture/` 创建空文件 `conversation-range-acceptance`。此模式优先于其他既有验收标记，不更改安装版连接。
 3. 原生退出旧预览并重新打开；真实 CLI transport 返回固定 2026-10-02 12:00 UTC 下的 21 个合成会话，生产 model 校验五档范围、分类、搜索交集、毫秒时间、未知时间、边界、自然月末、选择清空、扩大恢复及新 model 偏好读取。
 4. 检查 `offline-fixture/conversation-range-acceptance.json`：`passed: true`，48 项检查全部通过。固定时钟用于自动验收；自动流程结束后每分钟时钟会恢复真实当前时间。

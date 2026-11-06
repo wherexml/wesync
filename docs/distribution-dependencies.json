@@ -392,7 +392,7 @@
         "name" : "zstd",
         "optional" : false,
         "requirement" : "^0.14",
-        "resolvedVersion" : "0.14.0",
+        "resolvedVersion" : "0.14.3",
         "source" : "registry+https://github.com/rust-lang/crates.io-index",
         "usesDefaultFeatures" : true
       }
@@ -453,7 +453,7 @@
       {
         "licenseMetadata" : "BSD-3-Clause",
         "name" : "zstd-sys",
-        "version" : "2.1.0+zstd.1.5.7"
+        "version" : "2.1.2+zstd.1.5.7"
       }
     ],
     "package" : {

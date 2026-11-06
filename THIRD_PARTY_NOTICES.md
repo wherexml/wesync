@@ -308,7 +308,7 @@ repository-level license checksum.
 - `tinystr 0.8.4` — `Unicode-3.0` — https://github.com/unicode-org/icu4x
 - `tinyvec 1.12.0` — `Zlib OR Apache-2.0 OR MIT` — https://github.com/Lokathor/tinyvec
 - `tinyvec_macros 0.1.1` — `MIT OR Apache-2.0 OR Zlib` — https://github.com/Soveu/tinyvec_macros
-- `tokio 1.53.1` — `MIT` — https://github.com/tokio-rs/tokio
+- `tokio 1.53.3` — `MIT` — https://github.com/tokio-rs/tokio
 - `tokio-macros 2.7.2` — `MIT` — https://github.com/tokio-rs/tokio
 - `toml 1.1.4+spec-1.1.0` — `MIT OR Apache-2.0` — https://github.com/toml-rs/toml
 - `toml_datetime 1.1.1+spec-1.1.0` — `MIT OR Apache-2.0` — https://github.com/toml-rs/toml
@@ -343,11 +343,11 @@ repository-level license checksum.
 - `zerovec 0.11.8` — `Unicode-3.0` — https://github.com/unicode-org/icu4x
 - `zerovec-derive 0.11.6` — `Unicode-3.0` — https://github.com/unicode-org/icu4x
 - `zmij 1.0.23` — `MIT` — https://github.com/dtolnay/zmij
-- `zstd 0.13.3` — `MIT` — https://github.com/gyscos/zstd-rs
-- `zstd 0.14.0` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
-- `zstd-safe 7.2.4` — `MIT OR Apache-2.0` — https://github.com/gyscos/zstd-rs
-- `zstd-safe 8.0.0` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
-- `zstd-sys 2.1.0+zstd.1.5.7` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
+- `zstd 0.13.4` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
+- `zstd 0.14.3` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
+- `zstd-safe 7.4.0` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
+- `zstd-safe 8.2.0` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
+- `zstd-sys 2.1.2+zstd.1.5.7` — `BSD-3-Clause` — https://github.com/gyscos/zstd-rs
 
 ## Rust license texts
 
@@ -855,9 +855,11 @@ limitations under the License.
 
 Used by:
 
-- `zstd-safe 8.0.0`
-- `zstd-sys 2.1.0+zstd.1.5.7`
-- `zstd 0.14.0`
+- `zstd-safe 7.4.0`
+- `zstd-safe 8.2.0`
+- `zstd-sys 2.1.2+zstd.1.5.7`
+- `zstd 0.13.4`
+- `zstd 0.14.3`
 
 ```text
 BSD 3-Clause License
@@ -895,7 +897,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Used by:
 
-- `zstd-sys 2.1.0+zstd.1.5.7`
+- `zstd-sys 2.1.2+zstd.1.5.7`
 
 ```text
 BSD License
@@ -1033,7 +1035,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 Used by:
 
-- `zstd-sys 2.1.0+zstd.1.5.7`
+- `zstd-sys 2.1.2+zstd.1.5.7`
 
 ```text
 The auto-generated bindings are under the 3-clause BSD license:
@@ -4665,7 +4667,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `tokio 1.53.1`
+- `tokio 1.53.3`
 
 ```text
 MIT License
@@ -5206,25 +5208,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-```
-
-### MIT License
-
-Used by:
-
-- `zstd-safe 7.2.4`
-- `zstd 0.13.3`
-
-```text
-The MIT License (MIT)
-Copyright (c) 2016 Alexandre Bury
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 

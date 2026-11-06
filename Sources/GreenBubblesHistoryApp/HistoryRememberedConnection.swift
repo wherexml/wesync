@@ -83,6 +83,19 @@ struct HistoryRememberedConnection: Codable {
 }
 
 struct HistoryConnectionVault {
+  #if DEBUG
+    // This synthetic E2E never exercises real credentials or the Keychain.
+    private var isolatedPreloadAcceptance: Bool {
+      Bundle.main.bundleIdentifier == "me.greenbubbles.PresentationPreview"
+        && Bundle.main.object(forInfoDictionaryKey: "GBOfflineAcceptance") as? Bool == true
+        && Bundle.main.resourceURL.map {
+          FileManager.default.fileExists(
+            atPath: $0.appending(path: "offline-fixture/preload-acceptance").path)
+            || FileManager.default.fileExists(
+              atPath: $0.appending(path: "offline-fixture/body-refresh-acceptance").path)
+        } == true
+    }
+  #endif
   private var query: [String: Any] {
     [
       kSecClass as String: kSecClassGenericPassword,
@@ -94,6 +107,9 @@ struct HistoryConnectionVault {
   }
 
   func save(_ record: HistoryRememberedConnection) throws {
+    #if DEBUG
+      if isolatedPreloadAcceptance { return }
+    #endif
     var bytes = try JSONEncoder().encode(record)
     defer { bytes.resetBytes(in: 0..<bytes.count) }
     let status = SecItemUpdate(
@@ -111,6 +127,9 @@ struct HistoryConnectionVault {
   }
 
   func load() throws -> HistoryRememberedConnection? {
+    #if DEBUG
+      if isolatedPreloadAcceptance { return nil }
+    #endif
     var item = query
     item[kSecReturnData as String] = true
     item[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -127,6 +146,9 @@ struct HistoryConnectionVault {
   }
 
   func remove() throws {
+    #if DEBUG
+      if isolatedPreloadAcceptance { return }
+    #endif
     let status = SecItemDelete(query as CFDictionary)
     guard status == errSecSuccess || status == errSecItemNotFound else {
       throw RememberedConnectionError.keychain(status)

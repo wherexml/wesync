@@ -33,7 +33,7 @@
 1. `swift build -c release --product greenbubbles-history`。
 2. `cargo build --release --manifest-path Native/GreenBubbles/Cargo.toml`。
 3. `python3 scripts/verify-ai-read-blacklist.py`。仅构造合成 SQLite 数据，临时追加合成黑名单，并在 finally 恢复原策略。运行时不要同时编辑设置。结果 `acceptance/ai-read-blacklist/cli-e2e.json`。
-4. 离线 UI：`python3 scripts/package-presentation-preview.py --polish`，在预览包 `Contents/Resources/offline-fixture` 放置空文件 `ai-blacklist-acceptance`，原生打开预览。使用合成人名和群聊检查多选、分类、搜索、取消和保存。
+4. 离线 UI：`python3 scripts/package-presentation-preview.py --polish --identity EXISTING_APPLE_DEVELOPMENT_SHA1`，在预览包 `Contents/Resources/offline-fixture` 放置空文件 `ai-blacklist-acceptance`，原生打开预览。使用合成人名和群聊检查多选、分类、搜索、取消和保存。
 5. 使用现有证书运行 `python3 scripts/stage-local-tool-update.py --identity <证书SHA1> --output <新暂存目录>`。退出已安装应用，保留旧包，安装已校验新包。
 6. 从原生 UI 再打开，确认自动重连无需密钥；设置同时选择一个个人和群聊，保存后重新打开/重启保持。本人仍可在应用浏览；CLI 在合成数据源上用选中 ID 验证拒绝，不读取真实正文。验收后恢复用户原选择。
 7. `greenbubbles` 命令入口同步指向更新工具；历史副本不具有该保护。仅保存脱敏布尔结果，系统钥匙串确认未完成时记为 BLOCKED，不声称安装验收通过。

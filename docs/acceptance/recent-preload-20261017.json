@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-17",
+  "timezone": "Asia/Singapore",
+  "product": "WeSync",
+  "baselineBuild": "46",
+  "installedBuild": "48",
+  "behavior": {
+    "jumpButton": "Hidden within320pt of latest, shown farther away; returns/hides on click",
+    "warmPersonalLimit": 100,
+    "warmGroupLimit": 50,
+    "messagesPerWarmPage": 40,
+    "queueOrder": "All selected personal/group targets merged by recent-message time",
+    "attachments": "On demand only",
+    "cacheConversations": 160,
+    "cacheMessages": 10000,
+    "perChatMessages": 400,
+    "encryptedFileByteLimit": 33554432,
+    "avatarPool": "Deduplicated inside encrypted snapshot; restored on read; old optional-field-free format supported"
+  },
+  "signing": {
+    "strictValidation": "PASS",
+    "originalDesignatedRequirementPreserved": true,
+    "originalEntitlementsPreserved": true,
+    "allHelperBytesPreserved": true,
+    "installedMainMatchesStaged": true,
+    "identityMigration": false
+  },
+  "nativeAcceptance": {
+    "build48ColdStart1": "PASS",
+    "build48ColdStart2": "PASS",
+    "processAbsenceConfirmedBetweenStarts": true,
+    "automaticConnectionNoKeyInput": "PASS",
+    "passwordPromptsObserved": 0,
+    "bottomArrowHidden": "PASS",
+    "upScrollArrowVisible": "PASS",
+    "clickLatestHidesArrow": "PASS",
+    "personalGroupPersonalBodyWithoutBlankLoading": "PASS",
+    "cachedPersonalAndGroupAfterRestart": "PASS",
+    "refreshRetainsReadableContentBothStarts": "PASS",
+    "realScreenshotsArchived": false,
+    "realMessageOrPolicyMutations": false
+  },
+  "syntheticAcceptance": {
+    "status": "PASS",
+    "assertions": 314,
+    "report": "recent-preload-20261017/synthetic.json",
+    "keychainAccess": false,
+    "realSourceAccess": false,
+    "covers": [
+      "exact100personal50groups",
+      "mixed-recent-order",
+      "40bodies",
+      "zeroAttachments",
+      "150ImmediateSwitches",
+      "sourceIsolation",
+      "historyCursorContinuity",
+      "backgroundFailureStops",
+      "encryptedDiskRestore",
+      "avatarRestore",
+      "closeCancelsWarm"
+    ]
+  },
+  "checks": {
+    "localCI": "PASS",
+    "steps": 23,
+    "report": ".build/local-ci/20261017T035848.199304Z/summary.json",
+    "diffCheck": "PASS",
+    "fixtureSyntax": "PASS"
+  },
+  "evidence": {
+    "localArtifacts": ".local-install/recent-preload-20261017/",
+    "baselineBackup": ".local-install/recent-preload-20261017/installed-build46-backup.app",
+    "previousBuildBackup": ".local-install/recent-preload-20261017/installed-build47-backup.app",
+    "syntheticScreenshots": [
+      ".local-install/recent-preload-20261017/bottom-hidden.png",
+      ".local-install/recent-preload-20261017/scrolled-visible.png"
+    ],
+    "failedAttemptsRetainedLocally": true
+  },
+  "resolvedFindings": [
+    "Repeated per-message avatar bytes exceeded the32MiB snapshot cap; encrypted avatar pooling reduced the synthetic snapshot from about33MB to about3MB.",
+    "Disk-cache visibility assertion was corrected to allow background refresh of stale but already-visible data.",
+    "Personal-first warming delayed groups; final queue merges both categories by recency."
+  ],
+  "limitations": [
+    "First uncached startup warms gradually; conversations outside targets remain on-demand.",
+    "A slow or failed source can delay/stop warming; on failure this connection does not retry automatically.",
+    "The32MiB snapshot cap remains; unusually large bodies may leave the prior valid disk snapshot intact.",
+    "Native verification used current personal/group samples; all150 exact warm targets were verified only with synthetic data."
+  ],
+  "repeat": [
+    "Quit via native WeSync menu, confirm process absent, reopen /Applications/WeSync.app; no credentials should be requested.",
+    "Select a recent personal chat: at latest, no jump-to-latest control. Use native Scroll Up on message scroll area: button appears. Click it: latest is visible and button disappears.",
+    "Switch group/personal/group after warming; bodies should be immediately readable. Refresh retains old readable content.",
+    "Fully quit/reopen; cached recent personal/group bodies remain readable without blank waiting, and refresh still works.",
+    "For synthetic reproduction: first quit the default PresentationPreview. Package it with the existing Apple Development identity; move prior fixture requests.jsonl, preload-acceptance.json, warm-fail and warm-slow (if any) to a separate backup directory. Create preload-acceptance marker, re-sign using the same identity and open natively. Read preload-acceptance.json. This DEBUG scene skips vault Keychain calls and uses only its synthetic cache namespace."
+  ],
+  "gitCommitOrPush": false,
+  "sourceSHA256": {
+    "Sources/GreenBubblesHistoryApp/HistoryBrowserModel.swift": "813753eed43a4b9389c03b6cfa3ea82a478f84c953570ad72151df549f7dba8b",
+    "Sources/GreenBubblesHistoryApp/HistoryScrollPrefetch.swift": "bd284bdb0394660982bac4fb317dee3e18f8b3936d450d38eac085bcbbbb51b5",
+    "Sources/GreenBubblesHistoryApp/HistoryDirectViews.swift": "8a8d12fd2228b09cecd0f078b0f8c0c2b01af04db85c3ba87ef572610ad8b8c0",
+    "Sources/GreenBubblesHistoryApp/HistoryRememberedConnection.swift": "ffbf2cfdfce54b29c901a4b81c28a6afecf389ce19914ce8c804509765ab4a5a",
+    "Sources/GreenBubblesHistoryApp/OfflinePresentationAcceptance.swift": "d08cd536d688735cb7fa3183d7e33777fb3ae8dbf88d49fcb8a6c66b2b015504",
+    "scripts/presentation-fixture/greenbubbles": "fcbed0c60acaa4e026c4ad400c5257a38b48c73b0d94776dfbc8c55153afcfe3"
+  }
+}

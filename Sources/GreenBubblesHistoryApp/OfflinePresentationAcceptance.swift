@@ -130,7 +130,7 @@
         try stage(1)
         try stage(1)
         try await Task.sleep(for: .seconds(5))
-        try require(try catalogReadCount() == quietReadCount, "inactive-scene-defers-changes")
+        try require(try catalogReadCount() == quietReadCount, "inactive-scene-retains-throttle")
         model.setDirectConversationMonitoringActive(true)
         // Real filesystem notifications must trigger a throttled read, without a button call.
         try await waitForRefresh {
@@ -327,6 +327,228 @@
         withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
       {
         try? data.write(to: root.appending(path: "conversation-range-acceptance.json"))
+      }
+      return
+    }
+    if FileManager.default.fileExists(atPath: root.appending(path: "body-refresh-acceptance").path)
+    {
+      func bodyStage(_ value: Int) throws {
+        try Data(String(value).utf8).write(to: root.appending(path: "body-stage"))
+        try Data("Synthetic body stage \(value)".utf8).write(
+          to: root.appending(path: "session/session.db-wal"))
+      }
+      func waitBody(_ ready: @escaping () -> Bool) async throws {
+        for _ in 0..<2400 {
+          if ready() { return }
+          try await Task.sleep(for: .milliseconds(50))
+        }
+        throw NSError(domain: "BodyRefreshAcceptance", code: 1)
+      }
+      do {
+        model.rememberDirectConnection = false
+        model.conversationRange = .all
+        try bodyStage(0)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitBody { !model.isDirectConnecting && !model.isPreloadingRecentConversations }
+        model.selectDirectConversation("body-a")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.loadOlderDirectMessages()
+        try await waitFor { !model.isLoadingDirectMessages }
+        let cursor = model.directMessageCursor
+        let oldIDs = Set(model.directMessages.map(\.id))
+        try require(oldIDs.count == 80, "initial-history-loaded")
+        model.setDirectConversationMonitoringActive(false)
+        try bodyStage(1)
+        try await waitBody { model.directMessages.first?.id == "cache--1" }
+        try require(
+          oldIDs.isSubset(of: Set(model.directMessages.map(\.id))), "automatic-update-keeps-history"
+        )
+        try require(model.directMessageCursor == cursor, "automatic-update-keeps-cursor")
+        try require(
+          model.directSelectedConversationID == "body-a", "background-update-keeps-selection")
+        // Let the second bounded body query finish, then inspect its synchronous cache hit.
+        try await Task.sleep(for: .seconds(2))
+        model.selectDirectConversation("body-b")
+        try require(
+          model.directMessages.first?.id == "cache--1" && !model.isLoadingDirectMessages,
+          "unopened-chat-cache-updated")
+        model.selectDirectConversation("body-a")
+        try require(model.directMessages.count == 81, "switch-restores-contiguous-history")
+        model.directTimelineFollowingLatest = false
+        try bodyStage(100)
+        model.refreshDirectConversations()
+        try await waitBody { model.directConversations.first?.summary == "Body stage 100" }
+        try await Task.sleep(for: .seconds(2))
+        try require(
+          model.directMessages.first?.id == "cache--1", "disjoint-refresh-keeps-reading-page")
+        model.returnToLatestDirectMessages()
+        try await waitFor { !model.isLoadingDirectMessages }
+        try require(model.directMessages.first?.id == "cache--100", "explicit-latest-resolves-gap")
+        let beforeFailure = model.directMessages.map(\.id)
+        try Data().write(to: root.appending(path: "warm-fail"))
+        try bodyStage(101)
+        model.refreshDirectConversations()
+        try await Task.sleep(for: .seconds(3))
+        try require(
+          model.directMessages.map(\.id) == beforeFailure, "failure-keeps-readable-content")
+        try FileManager.default.removeItem(at: root.appending(path: "warm-fail"))
+        model.refreshDirectHistory()
+        try await waitFor { !model.isLoadingDirectMessages }
+        try require(model.directMessages.first?.id == "cache--101", "manual-refresh-recovers")
+        try Data().write(to: root.appending(path: "warm-slow"))
+        try bodyStage(102)
+        model.refreshDirectConversations()
+        try await Task.sleep(for: .milliseconds(200))
+        model.closeBundle()
+        try await Task.sleep(for: .seconds(1))
+        try require(
+          model.directMessages.isEmpty && model.directConfiguration == nil,
+          "disconnect-rejects-late-result")
+        try FileManager.default.removeItem(at: root.appending(path: "warm-slow"))
+        // Leave a connected synthetic window for native scroll acceptance.
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitBody { !model.isDirectConnecting && !model.isPreloadingRecentConversations }
+        model.selectDirectConversation("body-a")
+      } catch { failure = error.localizedDescription }
+      let report: [String: Any] = [
+        "checks": checks, "passed": failure == nil,
+        "error": failure ?? "", "source": "synthetic-only", "wechatRead": false,
+      ]
+      if let data = try? JSONSerialization.data(
+        withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+      {
+        try? data.write(to: root.appending(path: "body-refresh-acceptance.json"))
+      }
+      return
+    }
+    if FileManager.default.fileExists(atPath: root.appending(path: "preload-acceptance").path) {
+      func waitForWarm(_ ready: @escaping () -> Bool) async throws {
+        for _ in 0..<2400 {
+          if ready() { return }
+          try await Task.sleep(for: .milliseconds(50))
+        }
+        throw NSError(domain: "PreloadAcceptance", code: 1)
+      }
+      func requests() throws -> [[String: Any]] {
+        let url = root.appending(path: "requests.jsonl")
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else { return [] }
+        return try text.split(separator: "\n").map {
+          try JSONSerialization.jsonObject(with: Data($0.utf8)) as! [String: Any]
+        }
+      }
+      do {
+        model.rememberDirectConnection = false
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitForWarm {
+          !model.isDirectConnecting && model.directConversationCursor == nil
+            && !model.isLoadingDirectConversations && !model.isPreloadingRecentConversations
+        }
+        let records = try requests()
+        let warmReads = records.filter { $0["operation"] as? String == "messages.list" }
+        let expected = Set(
+          (0..<100).map { "warm-personal-\($0)" }
+            + (0..<50).map { "warm-group-\($0)@chatroom" })
+        try require(
+          Set(warmReads.compactMap { $0["conversation"] as? String }) == expected,
+          "exact-latest-100-personal-50-groups")
+        try require(warmReads.count == 150, "one-read-per-warm-conversation")
+        try require(
+          Set(warmReads.prefix(2).compactMap { $0["conversation"] as? String })
+            == Set(["warm-personal-0", "warm-group-0@chatroom"]),
+          "most-recent-personal-and-group-warm-first")
+        try require(
+          warmReads.allSatisfy { $0["limit"] as? String == "40" }, "forty-bodies-per-page")
+        try require(
+          !records.contains { ($0["operation"] as? String ?? "").hasPrefix("attachment.") },
+          "no-background-attachments")
+        try require(model.directSelectedConversationID == nil, "warming-does-not-select-chat")
+        for id in expected.sorted() {
+          model.selectDirectConversation(id)
+          try require(
+            model.directMessages.count == 40 && !model.isLoadingDirectMessages,
+            "immediate-cache-hit-\(id)")
+          try require(model.directMessages.allSatisfy { $0.conversationID == id }, "isolated-\(id)")
+        }
+        model.selectDirectConversation("warm-personal-0")
+        model.loadOlderDirectMessages()
+        try await waitForWarm { !model.isLoadingDirectMessages }
+        try require(
+          model.directMessages.count == 80 && model.directMessageCursor == "80",
+          "history-cursor-after-warming")
+        model.selectDirectConversation("warm-group-0@chatroom")
+        model.selectDirectConversation("warm-personal-0")
+        try require(model.directMessages.count == 80, "warm-switch-keeps-history")
+        model.closeBundle()
+        try Data().write(to: root.appending(path: "warm-fail"))
+        let beforeFail = try requests().filter { $0["operation"] as? String == "messages.list" }
+          .count
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitForWarm {
+          !model.isDirectConnecting && model.directConversationCursor == nil
+            && !model.isLoadingDirectConversations && !model.isPreloadingRecentConversations
+        }
+        try await Task.sleep(for: .milliseconds(400))
+        let afterFail = try requests().filter { $0["operation"] as? String == "messages.list" }
+          .count
+        try require(afterFail - beforeFail == 1, "warm-failure-stops-without-retry")
+        try require(
+          model.directConversationError == nil && model.directMessageError == nil,
+          "warm-error-does-not-poison-ui")
+        try FileManager.default.removeItem(at: root.appending(path: "warm-fail"))
+        model.closeBundle()
+        model.rememberDirectConnection = true
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try await waitForWarm {
+          !model.isDirectConnecting && model.directConversationCursor == nil
+            && !model.isLoadingDirectConversations && !model.isPreloadingRecentConversations
+        }
+        let config = model.directConfiguration!
+        let cache = HistoryPersistentCache(configuration: config, secret: [], enabled: true)!
+        try require(
+          try Data(contentsOf: cache.url).range(of: Data("Synthetic cache message".utf8)) == nil,
+          "warmed-cache-encrypted")
+        model.closeBundle()
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [], restoring: true)
+        model.selectDirectConversation("warm-group-49@chatroom")
+        try require(
+          model.directMessages.count == 40 && model.directMessageCursor == "40",
+          "restart-restores-warmed-pages-synchronously")
+        // An older disk snapshot may refresh in the background while remaining readable.
+        try await waitForWarm { !model.isLoadingDirectMessages }
+        try require(
+          model.directMessages.first?.avatarBase64
+            == (try Data(contentsOf: root.appending(path: "sample.png"))).base64EncodedString(),
+          "avatar-pool-restores-message-avatar")
+
+        model.closeBundle()
+        try Data().write(to: root.appending(path: "warm-slow"))
+        model.rememberDirectConnection = false
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+        try await waitForWarm { model.isPreloadingRecentConversations }
+        model.closeBundle()
+        try await Task.sleep(for: .milliseconds(600))
+        try require(
+          !model.isPreloadingRecentConversations && model.directMessages.isEmpty
+            && model.directConfiguration == nil,
+          "close-cancels-warm-and-clears-source")
+        try FileManager.default.removeItem(at: root.appending(path: "warm-slow"))
+      } catch { failure = error.localizedDescription }
+      let report: [String: Any] = [
+        "checks": checks, "passed": failure == nil,
+        "error": failure ?? "", "source": "synthetic-only", "wechatRead": false,
+        "keychainAccess": false,
+      ]
+      if let data = try? JSONSerialization.data(
+        withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+      {
+        try? data.write(to: root.appending(path: "preload-acceptance.json"))
       }
       return
     }
