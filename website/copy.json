@@ -1,0 +1,62 @@
+{
+  "title": ["we-sync：在 Mac 上，找回微信记录", "we-sync：在 Mac 上，找回微信記錄", "we-sync · WeChat history for Mac"],
+  "hero": [["在 Mac 上，", "找回", "微信记录。"], ["在 Mac 上，", "找回", "微信記錄。"], ["On your Mac.", "Find ", "your chats."]],
+  "lede": ["查找微信聊天、打开附件，按会话控制 AI 的读取范围。", "查找微信聊天、打開附件，按會話控制 AI 的讀取範圍。", "Search WeChat messages, open attachments, and choose which conversations AI can read."],
+  "skip": ["跳到正文", "跳到正文", "Skip to content"],
+  "navigation": ["页面导航", "頁面導覽", "Page navigation"],
+  "language": ["语言", "語言", "Language"],
+  "open_menu": ["打开菜单", "打開選單", "Open menu"],
+  "close_menu": ["关闭菜单", "關閉選單", "Close menu"],
+  "features": ["功能", "功能", "Features"],
+  "privacy": ["隐私", "隱私", "Privacy"],
+  "faq": ["常见问题", "常見問題", "FAQ"],
+  "start": ["开始", "開始", "Get started"],
+  "build": ["从源码构建", "從原始碼建置", "Build from source"],
+  "chip": ["Apple 芯片", "Apple 晶片", "Apple silicon"],
+  "system": ["macOS 14 或更新", "macOS 14 或更新", "macOS 14 or later"],
+  "system_requirements": ["系统要求", "系統需求", "System requirements"],
+  "sample": ["合成数据", "合成資料", "Sample data"],
+  "search": ["搜索聊天", "搜尋聊天", "Search chats"],
+  "no_results": ["没有找到匹配的聊天", "找不到相符的聊天", "No matching conversations"],
+  "demo": [["找到，", "打开，", "接着读。"], ["找到，", "打開，", "接著讀。"], ["Find it.", "Open it.", "Read on."]],
+  "demo_status": ["本机聊天预览", "本機聊天預覽", "Local chat preview"],
+  "pause": ["暂停", "暫停", "Pause"],
+  "play": ["播放", "播放", "Play"],
+  "replay": ["重播", "重播", "Replay"],
+  "tagline": [["以前说过的话，", "别人发过的文件，", "随时翻出来。"], ["以前說過的話，", "別人傳過的檔案，", "隨時翻出來。"], ["A message you remember.", "A file someone sent.", "Find it again."]],
+  "closing": ["打开你的微信记录。", "打開你的微信記錄。", "Open your chat history."],
+  "faq_heading": ["开始前，先看这里。", "開始前，先看這裡。", "Before you get started."],
+  "footer": ["页脚", "頁尾", "Footer"],
+  "setup": ["首次设置", "首次設定", "First-run setup"],
+  "privacy_note": ["仅在你把消息交给云端 AI 时，所选内容才会发送给对应服务。", "只有當你把訊息交給雲端 AI，所選內容才會傳送到對應服務。", "Messages you share with a cloud AI are sent to that service."],
+  "stats": [
+    [["本机", "保存连接与加密缓存"], ["只读", "访问微信记录"], ["可控", "按会话限制 AI 访问"]],
+    [["本機", "儲存連線與加密快取"], ["唯讀", "存取微信記錄"], ["可控", "按會話限制 AI 存取"]],
+    [["Local", "Saved connections and encrypted cache"], ["Read-only", "Access to WeChat records"], ["Scoped", "Per-conversation AI access"]]
+  ],
+  "panels": [
+    [["在你的 Mac 上打开。", "首次设置授权后，已记住的连接可以在下次启动时恢复。"], ["找回一条消息。", "按会话和关键词查找，再回到消息所在的上下文。"], ["聊天里的文件，直接打开。", "预览可读取的图片、PDF 和合并转发详情。"], ["接着上一次读。", "已读内容跨重启恢复，向上翻阅时保持当前位置。"]],
+    [["在你的 Mac 上打開。", "首次設定授權後，已記住的連線可以在下次啟動時恢復。"], ["找回一則訊息。", "按會話和關鍵字搜尋，再回到訊息所在的脈絡。"], ["聊天裡的檔案，直接打開。", "預覽可讀取的圖片、PDF 和合併轉寄詳情。"], ["接著上一次讀。", "已讀內容跨重新啟動恢復，向上翻閱時保留位置。"]],
+    [["Open on your Mac.", "Grant access during setup, then restore your saved connection on the next launch."], ["Find a message.", "Search by conversation and keyword, then read the messages around the result."], ["Open chat attachments.", "Preview available images, PDFs, and forwarded conversations."], ["Pick up where you left off.", "Reopen cached chats and keep your place as you scroll back."]]
+  ],
+  "cards": [
+    [["关键词搜索", "按会话查找消息，直接回到上下文。", "关键词"], ["附件预览", "在原生窗口查看支持的图片和 PDF。", "图片 · PDF"], ["会话分类", "在个人、群聊和其他会话间切换。", "个人 · 群聊"], ["恢复阅读", "已读记录保存在本机加密缓存中。", "加密缓存"], ["AI 访问控制", "为不希望交给 AI 的会话设置黑名单。", "按会话设置"], ["Agent 技能", "检查连接，再查询允许读取的记录。", "we-sync-setup · we-search"]],
+    [["關鍵字搜尋", "按會話查找訊息，直接回到脈絡。", "關鍵字"], ["附件預覽", "在原生視窗查看支援的圖片和 PDF。", "圖片 · PDF"], ["會話分類", "在個人、群聊和其他會話間切換。", "個人 · 群聊"], ["恢復閱讀", "已讀記錄儲存在本機加密快取中。", "加密快取"], ["AI 存取控制", "為不希望交給 AI 的會話設定黑名單。", "按會話設定"], ["Agent 技能", "檢查連線，再查詢允許讀取的記錄。", "we-sync-setup · we-search"]],
+    [["Keyword search", "Find a message and jump back to its context.", "Keywords"], ["Attachment previews", "View supported images and PDFs in a native window.", "Images · PDF"], ["Conversation filters", "Switch between direct chats, groups, and other conversations.", "People · Groups"], ["Resume reading", "Reopen read history from the encrypted cache on your Mac.", "Encrypted cache"], ["AI access controls", "Exclude conversations you want to keep from AI.", "Per conversation"], ["Agent skills", "Check the connection, then search permitted chats.", "we-sync-setup · we-search"]]
+  ],
+  "questions": [
+    [["支持哪些 Mac？", "Apple 芯片机型，运行 macOS 14 或更新版本。"], ["需要什么权限？", "读取本机微信数据库时，需要为 we-sync 开启完全磁盘访问权限，并提供已有的数据库密钥。"], ["每次打开都要输密钥吗？", "勾选记住连接后，应用会从本机钥匙串恢复已验证的连接。"], ["聊天会上传到服务器吗？", "浏览、搜索和缓存都在 Mac 上进行。把消息交给云端 AI 时，相应内容会发送给该服务。"], ["在哪里安装？", "目前可在 GitHub 获取源码，按 README 构建并完成首次设置。"]],
+    [["支援哪些 Mac？", "Apple 晶片機型，執行 macOS 14 或更新版本。"], ["需要什麼權限？", "讀取本機微信資料庫時，需要為 we-sync 開啟完整磁碟取用權限，並提供現有的資料庫金鑰。"], ["每次打開都要輸入金鑰嗎？", "勾選記住連線後，應用程式會從本機鑰匙圈恢復已驗證的連線。"], ["聊天會上傳到伺服器嗎？", "瀏覽、搜尋和快取都在 Mac 上進行。把訊息交給雲端 AI 時，相關內容會傳送到該服務。"], ["在哪裡安裝？", "目前可在 GitHub 取得原始碼，按照 README 建置並完成首次設定。"]],
+    [["Which Macs are supported?", "Apple silicon Macs running macOS 14 or later."], ["What permissions are required?", "To read a local WeChat database, give we-sync Full Disk Access and provide your existing database key."], ["Do I need the key every time?", "When you remember a verified connection, we-sync restores it from your local Keychain."], ["Are my chats uploaded?", "Browsing, search, and caching run on your Mac. Messages you share with a cloud AI are sent to that service."], ["How do I install it?", "Get the source on GitHub, follow the build instructions, and complete first-run setup."]]
+  ],
+  "scene": [
+    ["连接聊天记录", "本机记录", "从这台 Mac 读取", "离线记录", "打开已导出的聊天", "连接设置", "已连接", "周末路线", "集合地点", "搜索结果"],
+    ["連線聊天記錄", "本機記錄", "從這台 Mac 讀取", "離線記錄", "打開已匯出的聊天", "連線設定", "已連線", "週末路線", "集合地點", "搜尋結果"],
+    ["Connect chat history", "Local history", "Read from this Mac", "Offline history", "Open an exported archive", "Connection", "Connected", "Weekend route", "Meeting point", "Search results"]
+  ],
+  "conversations": [
+    [["林溪", "周六 09:41", "明天在公园东门见吗？", "对，到了我们先去喝杯咖啡。", "好，我把路线发你了。"], ["周末散步", "周五 16:20", "天气预报说周日放晴。", "那我们带上相机吧。", "好，集合时间定在上午十点。"], ["阿澄", "周四 18:07", "上次说的那本书还在你那吗？", "在我这里，下次带给你。"]],
+    [["林溪", "週六 09:41", "明天在公園東門見嗎？", "對，到了我們先去喝杯咖啡。", "好，我把路線發給你了。"], ["週末散步", "週五 16:20", "天氣預報說週日放晴。", "那我們帶上相機吧。", "好，集合時間定在上午十點。"], ["阿澄", "週四 18:07", "上次提到的那本書還在你那嗎？", "在我這裡，下次帶給你。"]],
+    [["Lin", "Sat 09:41", "Meet at the park’s east gate tomorrow?", "Yes, let’s get coffee when we arrive.", "Great, I just sent you the route."], ["Weekend walk", "Fri 16:20", "It should be sunny on Sunday.", "Then let’s bring the camera.", "Perfect, meet at ten."], ["Cheng", "Thu 18:07", "Do you still have that book?", "I do. I’ll bring it next time."]]
+  ]
+}

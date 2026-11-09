@@ -4,7 +4,7 @@
 
 we-sync 是 macOS 上的本地微信记录浏览与 AI 上下文工具，基于 [GreenBubbles](https://github.com/bojieli/greenbubbles) 开发，保留上游 Git 历史、MIT 许可与归属。
 
-[产品首页与交互预览](https://wesync-mac.pages.dev/)
+[产品首页 V3 与交互预览](https://wesync-mac.pages.dev/)
 
 ## 当前能力
 

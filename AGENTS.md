@@ -89,4 +89,4 @@ SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；仅�
 
 首次启动的初始化设置先检查本机记录的磁盘访问，再接入原安全连接表单。允许稍后设置，备份和导出记录不依赖完全磁盘访问。旧连接优先自动恢复；权限失效时重新授权后复用钥匙串，见 [docs/FIRST_RUN_SETUP.md](docs/FIRST_RUN_SETUP.md)。
 
-产品首页位于 `website/`。Cloudflare Pages 仅上传静态站点文件，交互预览使用合成会话。部署和线上验收见 [docs/WEBSITE.md](docs/WEBSITE.md)。
+产品首页源文件位于 `website/`。`python3 scripts/build-website.py` 生成三语静态页面及 Cloudflare Pages 部署包，交互预览使用合成会话。V3 布局、部署和线上验收见 [docs/WEBSITE.md](docs/WEBSITE.md)。
