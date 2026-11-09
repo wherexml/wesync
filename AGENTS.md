@@ -41,6 +41,8 @@ Private repository: `wherexml/wesync`; `origin` is the private development repos
 
 左侧会话列表由数据库/WAL 文件变化触发，合并事件并将自动读取限为至少间隔 60 秒；无变化不查询。刷新按钮同时核对全目录与当前消息。保留选择、筛选及历史阅读位置，失败保留旧列表并暂停自动重试；见 [docs/CONVERSATION_REFRESH.md](docs/CONVERSATION_REFRESH.md)。
 
+SQLite 只能打开私有临时副本；原库、WAL 与回滚日志仅用只读文件描述符获取，不读取源 SHM。保留未 checkpoint 的已提交数据，避免原地创建或重建 sidecar；见 [docs/SOURCE_READ_ISOLATION.md](docs/SOURCE_READ_ISOLATION.md)。
+
 会话时间范围默认 1 个月，可选 1 周、1 个月、3 个月、1 年、所有；按最近消息时间筛选并持久化，保留缓存和分页。规则及原生重启验收见 [docs/CONVERSATION_RANGE.md](docs/CONVERSATION_RANGE.md)。
 
 Agent 只发布 `we-sync-setup` 和 `we-search`。重装先用 doctor 验证原连接，保留应用钥匙串和 CLI 的现有凭据，不重复采集。底层命令仍为 `greenbubbles`；安装、迁移与验收见 [docs/AGENT_SKILLS.md](docs/AGENT_SKILLS.md)。

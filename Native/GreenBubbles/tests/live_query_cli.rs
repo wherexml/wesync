@@ -609,6 +609,63 @@ fn encrypted_cli_reads_directly_and_wrong_key_fails_without_disclosure() {
 }
 
 #[test]
+fn cli_reads_wal_commits_without_changing_source_files() {
+    for encrypted in [true, false] {
+        let fixture = Fixture::new(encrypted);
+        let root = fixture.root.to_str().unwrap();
+        let session = fixture.root.join("session/session.db");
+        let wal = session.with_extension("db-wal");
+        let shm = session.with_extension("db-shm");
+        let writer = open_database_for_creation(&session, encrypted);
+        writer
+            .execute_batch(
+                "PRAGMA journal_mode = WAL;
+                 PRAGMA wal_autocheckpoint = 0;
+                 INSERT INTO SessionTable VALUES ('wxid_wal', 999, 'wal-only', 1, '', '');",
+            )
+            .unwrap();
+
+        // Model a stopped writer that left committed frames and no usable SHM.
+        // Copy the files before closing the synthetic writer checkpoints them.
+        let capture = tempfile::tempdir().unwrap();
+        let saved_database = capture.path().join("db");
+        let saved_wal = capture.path().join("wal");
+        fs::copy(&session, &saved_database).unwrap();
+        fs::copy(&wal, &saved_wal).unwrap();
+        drop(writer);
+        fs::copy(saved_database, &session).unwrap();
+        fs::copy(saved_wal, &wal).unwrap();
+        assert!(!shm.exists());
+        let before = (fs::read(&session).unwrap(), fs::read(&wal).unwrap());
+        let key = format!("{}\n", hex::encode(RAW_KEY));
+        let output = run(
+            &[
+                "conversations",
+                "list",
+                root,
+                if encrypted {
+                    "--passphrase-stdin"
+                } else {
+                    "--decrypted"
+                },
+                "--limit",
+                "1",
+            ],
+            encrypted.then_some(key.as_bytes()),
+        );
+        assert_success(&output);
+        let response: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(response["items"][0]["id"], "wxid_wal");
+        assert_eq!(fs::read(&session).unwrap(), before.0);
+        assert_eq!(fs::read(&wal).unwrap(), before.1);
+        assert!(
+            !shm.exists(),
+            "a query created a WAL index beside the source"
+        );
+    }
+}
+
+#[test]
 fn default_and_named_profiles_remove_repeated_source_arguments() {
     let fixture = Fixture::new(false);
     let profile_home = ProfileHome::new(serde_json::json!({

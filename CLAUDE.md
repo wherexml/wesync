@@ -12,6 +12,8 @@ Message cache behavior, capacity, privacy boundaries and E2E reproduction: [docs
 
 Conversation catalog refresh is triggered by database/WAL file changes, coalesced with at least 60 seconds between automatic reads; no changes means no query. Manual refresh reconciles the full catalog and current messages. Preserve selection, filters and loaded history, and pause automatic retries on failure. See [docs/CONVERSATION_REFRESH.md](docs/CONVERSATION_REFRESH.md).
 
+SQLite only opens private temporary copies. Open source DB, WAL and rollback journal with read-only descriptors; never use source SHM. Preserve committed WAL data without creating or rebuilding source sidecars. See [docs/SOURCE_READ_ISOLATION.md](docs/SOURCE_READ_ISOLATION.md).
+
 For a stable conversation ID, key the shared timestamp TimelineView by its message date so a refreshed summary cannot retain the old timestamp. Verify without switching categories; see [docs/CONVERSATION_TIMESTAMPS.md](docs/CONVERSATION_TIMESTAMPS.md).
 
 - Message timeline separators follow [docs/MESSAGE_TIMESTAMPS.md](docs/MESSAGE_TIMESTAMPS.md): centered, 15-minute adjacent-message gaps or day boundaries; shared by live and imported timelines.

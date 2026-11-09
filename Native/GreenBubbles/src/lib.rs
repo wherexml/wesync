@@ -40,6 +40,7 @@ pub mod send_outbox;
 pub mod send_profile;
 pub mod send_staging;
 pub mod snapshot_protector;
+mod source_read;
 pub mod sticker_metadata;
 pub mod tools;
 pub mod transport;

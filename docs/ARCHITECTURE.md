@@ -181,7 +181,7 @@ explicitly.
 
 ## The adapter
 
-The pinned `wx-db` dependency opens SQLCipher databases with
+The pinned `wx-db` dependency opens a private, per-connection copy with
 `SQLITE_OPEN_READ_ONLY`, applies `sqlite3_key()`, validates the key and sets
 `PRAGMA query_only = ON`. GreenBubbles reuses that and its typed decoders.
 
@@ -224,16 +224,19 @@ needing stable cross-page results should query a snapshot generation.
 
 ### WAL behaviour
 
-A read-only connection still participates in WAL visibility, and a long read
-transaction can pin an old frame and stall checkpointing. Hence: no transaction
-around caller work; select one bounded page and finalize immediately; close
-command-scoped connections before serializing where practical; impose a busy
-timeout and a wall-clock deadline; and never copy a `.db` file alone while it
-has uncheckpointed WAL state.
+SQLite's read-only and `query_only` flags protect SQL data writes; the default
+filesystem driver can still open or create WAL and SHM beside a source. we-sync
+only opens the original DB, WAL and optional rollback journal as read-only file
+descriptors. The adapter captures those files in a private directory (APFS
+copy-on-write when possible), checks identity, size and timestamps before and
+after the entire capture, and lets SQLite build its WAL index there. Source SHM
+is never opened. Connections do not pin frames in the live writer's WAL.
 
-Where policy requires zero interaction with live WAL/SHM state, the adapter can
-query an APFS clone of just the needed database and sidecars. That is query
-isolation, not restoration.
+The capture does not decrypt source files or change the source identity,
+cursor bindings, or access policy. The connection closes before its private
+files are removed. Capture retries once when it sees a rotation or write;
+bounded byte copying is used on filesystems without cloning. See
+[source isolation and regression verification](SOURCE_READ_ISOLATION.md).
 
 ## Pagination
 
@@ -329,8 +332,8 @@ payloads but does not claim to contain external image, video or document files.
 A durable snapshot must not depend on WeChat's key: losing access to the
 running application must not make an intact backup unreadable. Snapshot
 creation reads decrypted logical pages through SQLite's backup API and writes
-them into new databases under a random GreenBubbles key, so no plaintext SQLite
-staging file is ever required.
+them into new databases under a random GreenBubbles key, so encrypted sources
+are never staged as plaintext.
 
 The key hierarchy, the 24-word recovery material, protector rotation, retention
 and the recovery proof are in

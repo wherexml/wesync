@@ -24,6 +24,7 @@ use crate::snapshot_protector::{
     SnapshotLocalCredential, SnapshotPassphrase, SnapshotProtectorError, SnapshotRecoveryWords,
     WrappedSnapshotKey,
 };
+use crate::source_read::{DatabaseCopy, SourceConnection};
 use crate::SnapshotKey;
 
 pub const RECOVERABLE_SNAPSHOT_SCHEMA: &str = "greenbubbles.recoverable-snapshot.v1";
@@ -446,17 +447,20 @@ fn create_recoverable_snapshot_from_stable_capture_with_protection(
 fn open_stable_capture_database(
     path: &Path,
     source_access: QueryDatabaseAccess<'_>,
-) -> Result<Connection, RecoverableSnapshotError> {
+) -> Result<SourceConnection, RecoverableSnapshotError> {
     validate_private_capture_file(path, "stable acquisition database")?;
+    let copy = DatabaseCopy::capture(path)?;
+    let path = copy.path();
     let connection = match source_access {
-        QueryDatabaseAccess::LiveEncrypted(key) => wx_db::open_readonly_connection(path, Some(key))
-            .map_err(|_| {
+        QueryDatabaseAccess::LiveEncrypted(key) => {
+            wx_db::open_readonly_connection(&path, Some(key)).map_err(|_| {
                 RecoverableSnapshotError::Integrity(
                     "stable acquisition database could not be authenticated read-only".into(),
                 )
-            })?,
+            })?
+        }
         QueryDatabaseAccess::Decrypted => {
-            wx_db::open_readonly_connection(path, None).map_err(|_| {
+            wx_db::open_readonly_connection(&path, None).map_err(|_| {
                 RecoverableSnapshotError::Integrity(
                     "stable acquisition plaintext database could not be opened read-only".into(),
                 )
@@ -481,7 +485,7 @@ fn open_stable_capture_database(
         )
     })?;
     connection.query_row("SELECT count(*) FROM sqlite_schema", [], |_| Ok(()))?;
-    Ok(connection)
+    Ok(copy.bind(connection))
 }
 
 fn validate_private_capture_file(
@@ -641,7 +645,7 @@ fn create_recoverable_snapshot_from_connections<OpenDatabase, ValidateStableSour
     mut validate_stable_source: ValidateStableSource,
 ) -> Result<RecoverableSnapshotManifest, RecoverableSnapshotError>
 where
-    OpenDatabase: FnMut(&Path) -> Result<Connection, RecoverableSnapshotError>,
+    OpenDatabase: FnMut(&Path) -> Result<SourceConnection, RecoverableSnapshotError>,
     ValidateStableSource: FnMut() -> Result<(), RecoverableSnapshotError>,
 {
     if databases.is_empty() {

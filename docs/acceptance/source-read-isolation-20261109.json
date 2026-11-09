@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-09",
+  "syntheticWAL": {
+    "fixture": "Newest conversation exists only in committed WAL frames; source SHM is absent.",
+    "cliComparison": {
+      "preSqlCipherUpgradeBuild59": {
+        "readsCommittedWAL": true,
+        "databaseAndWALUnchanged": true,
+        "createdSourceSHM": true
+      },
+      "installedBuild61": {
+        "readsCommittedWAL": true,
+        "databaseAndWALUnchanged": true,
+        "createdSourceSHM": true
+      },
+      "fixedReleaseCLI": {
+        "readsCommittedWAL": true,
+        "databaseAndWALUnchanged": true,
+        "createdSourceSHM": false
+      }
+    },
+    "encryptedAndPlaintextRegression": "PASS",
+    "repeatCommand": "cargo test --locked --manifest-path Native/GreenBubbles/Cargo.toml --test live_query_cli cli_reads_wal_commits_without_changing_source_files -- --exact"
+  },
+  "installedApp": {
+    "previousBuild": 61,
+    "verifiedBuild": 62,
+    "stableSigningIdentity": true,
+    "exactToolDigestMigration": true,
+    "strictSignatureVerifiedAfterInstall": true,
+    "finderColdStartsVerified": 2,
+    "automaticConnection": true,
+    "conversationTimelineLoaded": true,
+    "timelineAvailableAfterManualRefresh": true,
+    "credentialInputRequired": false,
+    "screenshot": "Native connected state captured with an empty, synthetic sidebar filter and collapsed connection details; no screenshot committed.",
+    "repeat": [
+      "Use stage-local-tool-update.py with the existing signing identity and keep the prior app bundle for rollback.",
+      "Quit we-sync and confirm it has exited. Open we-sync.app from Finder.",
+      "Confirm Advanced Settings shows Connected without entering credentials. Close Settings, open a conversation, and refresh.",
+      "Repeat after another full quit. Record only aggregate observations."
+    ]
+  },
+  "localCI": {
+    "passed": 23,
+    "failed": 0,
+    "isolatedRustProcessTestsPassed": true,
+    "rustSecCheckoutMatchedUpstreamHEAD": true,
+    "auditWaiversAdded": false
+  },
+  "incidentScope": {
+    "sourceSidecarWriteReproduced": true,
+    "causeOfActualWeChatAlertConfirmed": false,
+    "wechatRepairInvoked": false
+  }
+}

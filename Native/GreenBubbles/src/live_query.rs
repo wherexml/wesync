@@ -18,6 +18,7 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 use zeroize::{Zeroize, Zeroizing};
 
+use crate::source_read::{DatabaseCopy, SourceConnection};
 use crate::tools::summarize_decoded_payload;
 use crate::ConversationKind;
 
@@ -174,7 +175,7 @@ impl<'a> LiveQuerySource<'a> {
     pub(crate) fn open_optional_database(
         &self,
         relative_path: &Path,
-    ) -> Result<Option<Connection>, LiveQueryError> {
+    ) -> Result<Option<SourceConnection>, LiveQueryError> {
         if relative_path.is_absolute()
             || relative_path
                 .components()
@@ -193,8 +194,21 @@ impl<'a> LiveQuerySource<'a> {
         }
     }
 
-    pub(crate) fn open_database(&self, relative_path: &Path) -> Result<Connection, LiveQueryError> {
+    pub(crate) fn open_database(
+        &self,
+        relative_path: &Path,
+    ) -> Result<SourceConnection, LiveQueryError> {
         let path = self.safe_database_path(relative_path)?;
+        let copy = DatabaseCopy::capture(&path).map_err(|error| {
+            if error.kind() == std::io::ErrorKind::WouldBlock {
+                database_error("database busy during capture")
+            } else {
+                LiveQueryError::Database(
+                    "a private read-only database copy could not be prepared".into(),
+                )
+            }
+        })?;
+        let path = copy.path();
         let mut connection = match self.access {
             QueryDatabaseAccess::LiveEncrypted(key) => {
                 wx_db::open_readonly_connection(&path, Some(key))
@@ -224,7 +238,7 @@ impl<'a> LiveQuerySource<'a> {
         connection
             .progress_handler(10_000, Some(move || Instant::now() >= deadline))
             .map_err(|error| database_error(&error.to_string()))?;
-        Ok(connection)
+        Ok(copy.bind(connection))
     }
 
     fn safe_database_path(&self, relative_path: &Path) -> Result<PathBuf, LiveQueryError> {
@@ -603,7 +617,7 @@ struct MessageShard {
 
 struct OpenMessageShard {
     shard_id: u32,
-    connection: Connection,
+    connection: SourceConnection,
 }
 
 struct OpenMessageShards {

@@ -314,9 +314,10 @@ cat wechat-key.txt | \
   --snapshot-local-credential /private/greenbubbles-local/.family-a-unlock
 ```
 
-The converter checks the saved copy's manifest and every file hash, opens only
-those files, read-only, and copies directly from one encrypted database to
-another, so no plaintext is ever written. It checks the whole copy again before
+The converter checks the saved copy's manifest and every file hash. It reads
+those files through [private per-database copies](SOURCE_READ_ISOLATION.md), so
+SQLite cannot change the saved sidecars. Encrypted input stays encrypted on
+disk. It checks the whole saved copy again before
 finishing. Partial, incremental copies are rejected; every current database
 must be present. The manifest labels the result
 `stableAcquisitionSnapshotConversion`.
@@ -343,7 +344,8 @@ cat snapshot-passphrase.txt | \
 GreenBubbles finds every `.db` file you own under the source folder, and
 requires `contact/contact.db` and `session/session.db`. For each file it:
 
-1. opens the source read-only, with `query_only` on;
+1. opens a [private copy of the source DB and sidecars](SOURCE_READ_ISOLATION.md),
+   with `query_only` on;
 2. creates a new encrypted SQLCipher database, mode `0600`, in a private
    temporary folder beside the destination;
 3. copies the decrypted data with SQLite's online backup API (not WeChat's
@@ -357,8 +359,9 @@ requires `contact/contact.db` and `session/session.db`. For each file it:
 8. saves files and folders to disk, then moves the finished snapshot into place
    in a single step.
 
-No unencrypted database is ever created; even the temporary copies are
-encrypted. If it fails before the last step, it deletes its temporary folder.
+Encrypted source files stay encrypted, including the private read copies.
+Explicit plaintext inputs are copied as plaintext in the private read directory.
+If snapshot creation fails before the last step, it deletes its temporary folder.
 
 An online backup is consistent within one database. So a backup made directly
 from WeChat's live folder reports `perDatabaseOnlineBackup` and
