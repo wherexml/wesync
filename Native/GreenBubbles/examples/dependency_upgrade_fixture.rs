@@ -4,7 +4,14 @@ use std::{fs, io, os::unix::fs::PermissionsExt, path::PathBuf};
 use zeroize::Zeroizing;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let root = PathBuf::from(std::env::args().nth(1).ok_or("missing fixture root")?);
+    let argument = std::env::args().nth(1).ok_or("missing fixture root")?;
+    if argument == "--engine-versions" {
+        let connection = Connection::open_in_memory()?;
+        let cipher: String = connection.query_row("PRAGMA cipher_version", [], |row| row.get(0))?;
+        println!("{}\n{cipher}", rusqlite::version());
+        return Ok(());
+    }
+    let root = PathBuf::from(argument);
     let mut input = Zeroizing::new(String::new());
     io::stdin().read_line(&mut input)?;
     let key = Zeroizing::new(hex::decode(input.trim())?);

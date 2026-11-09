@@ -1,231 +1,61 @@
-# Use WeChatSync skills with your own agent
+# we-sync Agent Skills
 
-You can have a coding agent you already use read your WeChat history and write
-notes from it: Codex, Claude Code, OpenCode, Kimi Code, Gemini CLI, Grok Build,
-or any other agent that can run shell commands. GreenBubbles reads the data;
-your agent does the summarizing and writing.
-
-The WeChatSync skill package teaches the agent how through **skills**: Markdown files of
-instructions, with a few helper files next to them. Your agent can read a skill
-straight from where it is. Installing it is optional.
-
-## Pick how the AI runs
-
-| Option | Who pays | Good for |
-| --- | --- | --- |
-| **Your coding agent + skills** (recommended) | Your agent's existing subscription or provider setup | Most people, especially if you already have a subscription with spare usage |
-| **Built-in summarizer** (`ai-summarize-direct`) | Your own `GEMINI_API_KEY`, billed by Google | A one-off cited summary made by GreenBubbles itself |
-| **Batch script** (`personal-memory-parallel.py`) | Whatever agent it launches | Scripted or scheduled runs (advanced) |
-
-These are separate tools, not different settings of one command. The built-in
-summarizer writes a new summary each run. The personal-memory skill keeps one
-set of notes, tracked with Git, and updates it over time. A subscription does
-not give the built-in summarizer an API key.
-
-Using a subscription you already pay for often costs nothing extra, which is
-why we suggest starting there. It is not unlimited: plan limits, overage, model
-choice, and how much you ask the agent to read all matter. Check that your agent
-is signed in with your subscription and not an API key. See
-[Codex authentication](https://learn.chatgpt.com/docs/auth) and
-[Claude Code costs](https://code.claude.com/docs/en/costs).
-
-## Skill naming and existing installations
-
-The three skills use the `wechatsync-` prefix. The underlying application and
-CLI remain GreenBubbles: run `greenbubbles`, and retain its existing source
-configuration, credentials, protocol names, and signing identity.
-
-Install the new names with the commands below. Earlier skill directories used
-the `greenbubbles-` prefix; the installer does not remove those copies. Compare
-and preserve any local customizations, then move the old three directories out
-of the agent discovery folder after verifying the new installation. Restart
-the agent session if its skill catalog still lists the old names.
-
-Repeatable packaging acceptance: run
-`python3 -m unittest discover -s scripts -p 'test_skill_package.py' -v`.
-This includes relocating a portable bundle and installing it twice for all six
-supported agent hosts, without reading messages or credentials.
-
-## Get started
-
-1. Finish key setup first. See [Getting your database key](PASSPHRASE_ACQUISITION.md).
-2. Find the skill file. With Homebrew:
-
-   ```sh
-   echo "$(brew --prefix greenbubbles)/libexec/skills/wechatsync-personal-memory/SKILL.md"
-   ```
-
-   In a source checkout or the extracted CLI ZIP, it is
-   `skills/wechatsync-personal-memory/SKILL.md`.
-3. Open your agent and ask it something like:
-
-   > Read `/absolute/path/to/wechatsync-personal-memory/SKILL.md` and follow
-   > it to build Markdown notes from my WeChat history in `~/memory/me`, in
-   > this session. If GreenBubbles isn't set up yet, read the setup skill at
-   > `../wechatsync-setup/SKILL.md` next to it.
-
-Keep each `SKILL.md` together with the files around it; the skill refers to
-them. The agent needs permission to run shell commands, run the `greenbubbles`
-command, and edit files in your notes folder.
-
-## What to ask your agent
-
-To build notes for the first time:
-
-> Use wechatsync-personal-memory to organize my WeChat history into a
-> private knowledge base at `~/memory/me`. Read the live database in
-> this session. Ask me what time range to cover if I haven't said. Revise the
-> articles in place.
-
-To bring them up to date later:
-
-> Refresh that knowledge base from my latest WeChat history. Keep the same
-> project, and tell me the dates covered and which chats are still unread.
-
-The agent will:
-
-1. check that GreenBubbles can read your data;
-2. rank your chats by how often you write in them, with `chats rank`;
-3. read them with `messages list` and `messages search`;
-4. write or update `index.md` (the front page), `manifest.md` (what was read
-   and when), and one article per life area in `domains/`.
-
-It writes in the language you usually use in WeChat, and it uses whatever model
-your agent is already set up with. No extra API key is needed. See
-[Personal memory](PERSONAL_MEMORY.md) for how the notes are organized.
-
-## Let your agent find the skills automatically (optional)
-
-Instead of giving the path each time, you can copy the skills into your agent's
-skills folder. Pick your agent:
-
-```sh
-python3 scripts/install-skills.py --agent codex
-python3 scripts/install-skills.py --agent claude
-python3 scripts/install-skills.py --agent opencode
-python3 scripts/install-skills.py --agent kimi
-python3 scripts/install-skills.py --agent gemini
-python3 scripts/install-skills.py --agent grok
-```
-
-Run these from a source checkout or the extracted CLI ZIP. With Homebrew, run
-them from `$(brew --prefix greenbubbles)/libexec`, or use the full path:
-
-```sh
-python3 "$(brew --prefix greenbubbles)/libexec/scripts/install-skills.py" --agent codex
-```
-
-This copies three skills:
-
-- `wechatsync-setup`: checks that GreenBubbles works and helps with first setup.
-- `wechatsync-context`: searches and retrieves messages.
-- `wechatsync-personal-memory`: builds and updates your notes.
-
-It only copies files. It doesn't change your agent's settings, sign-in, model,
-or permissions, and the copies keep working if you move the checkout.
-
-| Agent / `--agent` value | Installs to | With `--project PATH` |
-| --- | --- | --- |
-| Codex / `codex` | `~/.agents/skills` | `PATH/.agents/skills` |
-| Claude Code / `claude` | `~/.claude/skills` | `PATH/.claude/skills` |
-| OpenCode / `opencode` | `~/.config/opencode/skills` | `PATH/.opencode/skills` |
-| Kimi Code / `kimi` | `$KIMI_CODE_HOME/skills`, default `~/.kimi-code/skills` | `PATH/.kimi-code/skills` |
-| Gemini CLI / `gemini` | `~/.gemini/skills` | `PATH/.gemini/skills` |
-| Grok Build / `grok` | `~/.grok/skills` | `PATH/.grok/skills` |
-
-Other options:
-
-- `--project /absolute/path/to/project` installs for one project instead of for
-  your whole account.
-- `--dest /path/to/skills` installs into any other folder, for agents not listed
-  above or a custom setup.
-- `--update` replaces an older copy made by this script. If you edited your
-  copy, it is left alone and reported as a conflict; move your changes out
-  first.
-
-After installing, restart your agent if the skills don't appear. Then start the
-setup skill:
-
-| Agent | How to start the setup skill |
+| Skill | 用途 |
 | --- | --- |
-| Codex | `$wechatsync-setup` |
-| Claude Code, Grok Build | `/wechatsync-setup` |
-| Kimi Code | `/skill:wechatsync-setup` |
-| OpenCode | ask it to use `wechatsync-setup` |
-| Gemini CLI | run `/skills reload`, then ask it to use the skill |
+| [we-sync-setup](../skills/we-sync-setup/SKILL.md) | 安装、重装和验证本机连接 |
+| [we-search](../skills/we-search/SKILL.md) | 按会话、发言人和时间范围读取或搜索消息 |
 
-The `grok` option is for xAI's Grok Build command-line tool. It doesn't give the
-Grok website or phone app access to your files. If you use Grok models through
-OpenCode, use the `opencode` option instead.
+两项 skill 都使用本机 `greenbubbles` CLI。直接让 Agent 读取对应的
+`SKILL.md` 即可使用，也可以安装到 Agent 的发现目录。
 
-More about each agent's skills: [Codex](https://learn.chatgpt.com/docs/build-skills),
-[Claude Code](https://code.claude.com/docs/en/skills),
-[OpenCode](https://opencode.ai/docs/skills/),
-[Kimi Code](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html),
-[Gemini CLI](https://geminicli.com/docs/cli/using-agent-skills/),
-[Grok Build](https://docs.x.ai/build/features/skills-plugins-marketplaces).
+## 安装或重装
 
-## If something isn't working
-
-Run the setup check:
+在仓库或解压后的 CLI 包根目录执行：
 
 ```sh
-python3 skills/wechatsync-setup/scripts/doctor.py \
-  --greenbubbles /absolute/path/to/greenbubbles --profile live
+python3 scripts/install-skills.py --agent codex --update
 ```
 
-- **Exit code 0:** GreenBubbles and the chosen profile work.
-- **Exit code 1:** setup needs attention.
+重开 Agent 会话后使用 `$we-sync-setup` 或 `$we-search`。
+安装程序支持 `codex`、`claude`、`opencode`、`kimi`、`gemini` 和
+`grok`。用 `--project PATH` 限定到项目，用 `--dest PATH` 选择其他
+发现目录。用 `--bundle PATH` 生成只含两项 skill 的可移植包。
 
-The check only reads; it never captures keys or prints command output. Passing
-it doesn't prove every message is readable. If the key is missing, follow the
-[key setup guide](PASSPHRASE_ACQUISITION.md). Capturing the key may require
-restarting WeChat, logging in again, and re-signing it.
+`--update` 只覆盖安装器管理且未修改的同名文件。如果已有本机定制版本，
+先将其移到发现目录外备份，再安装或合并。旧的 `wechatsync-setup`、
+`wechatsync-context`、`wechatsync-personal-memory` 也可移出发现目录，
+避免出现重复入口。已有笔记和批处理继续使用
+[个人记忆工作流](PERSONAL_MEMORY.md)。
 
-## Privacy
-
-GreenBubbles decrypts and reads your data on your Mac. But every message page
-your agent reads is sent to the agent's model provider, if it uses a cloud
-model. Your notes are private files; installing the skills never copies them
-anywhere. Never paste your database key or recovery phrase into a prompt. See
-[PRIVACY.md](../PRIVACY.md).
-
-## Updating notes later, and limits
-
-An update opens the same notes folder, reads recent messages, and revises the
-articles.
-
-- **Old messages can be missed.** An update usually starts from the last date it
-  covered. Messages imported late with older dates, or old messages edited
-  later, fall before that date. If that matters, ask the agent to re-read the
-  chosen chats over the whole original date range.
-- **Missing isn't deleted.** If a search doesn't find a fact, that doesn't mean
-  the fact was removed.
-- **One agent at a time.** Two agents editing the same notes can overwrite each
-  other's changes, even with Git.
-- **No schedule is set up.** The skills don't run on their own.
-
-For scripted or scheduled runs, the batch script `personal-memory-parallel.py`
-is in the repository and the CLI ZIP. It has built-in support for Pi, Claude,
-Codex, and Gemini, plus `--agent command` for anything else. For example:
-`--agent codex --format markdown --shards 1 --parallel 1`. Use OpenCode, Kimi
-Code, and Grok Build interactively with the skills instead. If a run stops
-partway, it exits with an error and keeps its progress; run the same command
-again to continue. See [Personal memory](PERSONAL_MEMORY.md#batch-script-and-evidence-archive-advanced)
-for details.
-
-## Copy the skills to another Mac
+## 复用连接
 
 ```sh
-python3 scripts/install-skills.py --bundle /tmp/wechatsync-skills
+python3 skills/we-sync-setup/scripts/doctor.py
 ```
 
-This makes a standalone folder with the three skills, the installer, the
-license, and instructions. Copy or zip it to another Mac, then point an agent at
-a `SKILL.md` or run its `scripts/install-skills.py`. You still need to install
-GreenBubbles itself there. The folder contains no programs, keys, chat data, or
-personal settings.
+doctor 先检查 CLI 的消息查询能力，再调用 `source status`，不读聊天正文。
+可以用 `--greenbubbles PATH` 选择现有二进制，用 `--profile NAME` 验证
+已配置的其他来源。如果 PATH 里没有 CLI，它会查找已安装应用的内置工具。
+验证通过即可继续搜索，无需重复输入密钥或建立 profile。
 
-## AI read blacklist
+桌面应用通过 macOS 钥匙串恢复已记住的连接，CLI 通过已有私有凭据文件恢复。
+重装 skill 不改动两者。重装应用时按 [本机签名](LOCAL_SIGNING.md) 保持原签名
+身份、应用 ID 和工具摘要迁移，安装后退出再原生启动并验证自动连接。
 
-The native app settings can deny AI access to selected personal/group conversations. The current CLI enforces it independently of skills. Never work around `aiReadDenied` by using another binary, direct database access, exports, or alternate source paths. Global search/ranking and legacy bulk operations are unavailable while the blacklist is nonempty; use an allowed, explicit conversation. See [AI read blacklist](AI_READ_BLACKLIST.md).
+首次没有桌面连接时，只在原生连接表单输入一次已验证的数据库密钥。
+CLI 可直接使用已有私有密钥文件。初次没有可用凭据时，由账号所有者按
+[采集说明](PASSPHRASE_ACQUISITION.md) 完成授权。连接失败先按
+[setup 指引](../skills/we-sync-setup/references/setup.md) 判断是二进制、
+来源选择、凭据还是 macOS 权限问题。
+
+## 验收与隐私
+
+运行现有安装验收：
+
+```sh
+python3 -m unittest discover -s scripts -p 'test_skill_package.py' -v
+```
+
+验收会将可移植包移到带空格的路径，再在六种 Agent 的独立项目目录中安装两遍。
+本机 doctor 只输出连接状态。实际搜索受 [AI 读取黑名单](AI_READ_BLACKLIST.md)
+约束；使用云端模型时，提供给模型的消息由该模型服务处理。

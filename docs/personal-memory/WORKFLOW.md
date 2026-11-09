@@ -1,13 +1,8 @@
----
-name: wechatsync-personal-memory
-description: Build or revise private, cited Markdown notes from the user's WeChat history in the current agent session. Use for a maintained personal wiki or incremental notes; use wechatsync-context for a one-off lookup or summary.
----
-
 # Maintain personal notes
 
 Use the live GreenBubbles CLI to read evidence, then edit the user's notes.
 Work in the current agent session; no separate agent, model API key, or prepared
-corpus is needed. Resolve references relative to this skill.
+corpus is needed. Resolve references relative to this guide.
 
 ## Start or resume
 
@@ -19,7 +14,7 @@ corpus is needed. Resolve references relative to this skill.
    chats, rank by the account holder's participation before reading.
 3. Use [references/cli.md](references/cli.md) for names, message pages, searches,
    and time slices. If access fails, follow
-   [setup](../wechatsync-setup/SKILL.md) before making factual claims.
+   [setup](../../skills/we-sync-setup/SKILL.md) before making factual claims.
 4. Before writing, read [references/priorities.md](references/priorities.md) for
    evidence selection and [references/format-markdown.md](references/format-markdown.md)
    for article layout. Revise the same project on later passes.
@@ -48,4 +43,4 @@ remain marked partial. Deliver the articles instead of a transcript.
 
 For an explicitly requested Python artifact, read
 [references/format-python.md](references/format-python.md); otherwise use
-Markdown. For an ordinary lookup, use [context](../wechatsync-context/SKILL.md).
+Markdown. For an ordinary lookup, use [we-search](../../skills/we-search/SKILL.md).

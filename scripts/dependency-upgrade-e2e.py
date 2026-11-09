@@ -21,6 +21,8 @@ def main():
     parser.add_argument("candidate", type=Path)
     parser.add_argument("report", type=Path)
     parser.add_argument("--fixture-generator", type=Path, required=True)
+    parser.add_argument("--baseline-fixture-generator", type=Path)
+    parser.add_argument("--expect-engine", nargs=2, metavar=("SQLITE", "SQLCIPHER"))
     args = parser.parse_args()
     binaries = [args.baseline.resolve(), args.candidate.resolve()]
     checks = {}
@@ -39,8 +41,20 @@ def main():
             source = root / "source"
             conversation = "wxid_dependency_fixture"
             source_key = os.urandom(32).hex() + "\n"
-            subprocess.run([str(args.fixture_generator.resolve()), str(source)],
+            fixture = args.baseline_fixture_generator or args.fixture_generator
+            subprocess.run([str(fixture.resolve()), str(source)],
                            input=source_key, text=True, check=True, capture_output=True)
+            if args.expect_engine:
+                assert args.baseline_fixture_generator is not None
+                versions = []
+                for generator in (args.baseline_fixture_generator, args.fixture_generator):
+                    version = subprocess.check_output(
+                        [str(generator.resolve()), "--engine-versions"], text=True, timeout=15
+                    ).splitlines()
+                    versions.append([version[0], version[1].split()[0]])
+                assert versions[1] == args.expect_engine, versions
+                report["engines"] = versions
+                checks["candidate-engine-versions"] = "PASS"
 
             def run(binary, arguments, stdin=None, success=True):
                 result = subprocess.run([str(binary), *map(str, arguments)], input=stdin,

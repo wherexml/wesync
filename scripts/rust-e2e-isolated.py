@@ -31,7 +31,7 @@ try:
         source = Path(temporary)
         crate = source / 'Native/GreenBubbles'
         crate.mkdir(parents=True)
-        for name in ['Cargo.toml', 'Cargo.lock', 'src', 'tests', 'examples']:
+        for name in ['Cargo.toml', 'Cargo.lock', 'src', 'tests', 'examples', 'compat']:
             origin = ROOT / 'Native/GreenBubbles' / name
             destination = crate / name
             if origin.is_dir():

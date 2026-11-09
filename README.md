@@ -9,7 +9,7 @@ WeSync 是 macOS 上的本地微信记录浏览与 AI 上下文工具，基于 [
 - 原生聊天浏览：个人、群聊与其他分类，会话搜索、消息搜索、分页及阅读位置保持。
 - 本地附件：图片、表情、引用、文件、PDF 与合并转发详情；附件恢复有明确校验边界。
 - 本地加密缓存及可恢复备份；已读内容跨重启恢复。
-- Agent 通过 `wechatsync-*` skills 读取允许的会话，整理带原消息引用的私人 Markdown 笔记。
+- Agent 使用 `we-sync-setup` 验证连接，使用 `we-search` 查询允许的会话。
 - 会话级 AI 读取黑名单及不含消息正文的审计记录。
 
 读取源文件时保持只读。使用云端 Agent 或内置 Gemini 摘要时，提供给模型的消息会发送至对应模型服务。参见 [隐私说明](PRIVACY.md)、[AI 黑名单](docs/AI_READ_BLACKLIST.md) 与 [已知限制](docs/KNOWN_LIMITATIONS.md)。
@@ -51,7 +51,7 @@ greenbubbles source status
 
 列表支持 cursor 分页与时间范围。消息内容、密钥、数据库、缓存和未经复核的原生截图不得提交到仓库。
 
-Agent skills 保持 `wechatsync-setup`、`wechatsync-context`、`wechatsync-personal-memory` 名称。它们复用已有 CLI，不需要因品牌改名而重新获取数据库密钥。
+安装或重装 Agent skills：`python3 scripts/install-skills.py --agent codex --update`。用 `$we-sync-setup` 验证原连接，用 `$we-search` 查消息。重装复用已验证的本机凭据。见 [Agent skills](docs/AGENT_SKILLS.md)。
 
 ## 文档
 

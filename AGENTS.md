@@ -43,7 +43,7 @@ Private repository: `wherexml/wesync`; `origin` is the private development repos
 
 会话时间范围默认 1 个月，可选 1 周、1 个月、3 个月、1 年、所有；按最近消息时间筛选并持久化，保留缓存和分页。规则及原生重启验收见 [docs/CONVERSATION_RANGE.md](docs/CONVERSATION_RANGE.md)。
 
-Agent skills 统一使用 `wechatsync-setup`、`wechatsync-context`、`wechatsync-personal-memory`，见 [docs/AGENT_SKILLS.md](docs/AGENT_SKILLS.md)。底层程序仍为 `greenbubbles`，不要将 skill 名称改动传播到 CLI 命令、协议标识或应用签名身份。
+Agent 只发布 `we-sync-setup` 和 `we-search`。重装先用 doctor 验证原连接，保留应用钥匙串和 CLI 的现有凭据，不重复采集。底层命令仍为 `greenbubbles`；安装、迁移与验收见 [docs/AGENT_SKILLS.md](docs/AGENT_SKILLS.md)。
 
 会话侧栏折叠后为 76 pt 头像栏，保留选择、筛选和分页，持久化折叠状态；规范与原生验收见 `docs/DESIGN_SYSTEM.md`。
 
@@ -84,3 +84,5 @@ GitHub Actions 已按用户要求停用，日常检查统一先运行 `python3 s
 会话变化在应用后台也按 60 秒限频处理，并触发已缓存/当前会话正文更新；当前会话优先，历史阅读锚点和连续游标须保留，失败暂停、主动刷新恢复。见 `docs/MESSAGE_CACHE.md`、`docs/CONVERSATION_REFRESH.md`。
 
 依赖安全修复不得增加审计豁免；真实黑名单非空时，依赖升级双向快照验收使用 `scripts/dependency-upgrade-isolated.py` 的独立 Docker 账户与断网测试，见 `docs/DEPENDENCY_UPGRADES.md`。
+
+SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；仅在用户明确要求时对 we-sync 和自带输入助手执行应用级 TCC 重置，保留钥匙串连接。验收见 [docs/DEPENDENCY_UPGRADES.md](docs/DEPENDENCY_UPGRADES.md) 和 [docs/LOCAL_SIGNING.md](docs/LOCAL_SIGNING.md)。

@@ -28,7 +28,7 @@ pub fn enrich(source: &LiveQuerySource<'_>, message: &mut MessageItem) -> bool {
         return false;
     };
     let md5 = md5.to_ascii_lowercase();
-    let Ok(Some(connection)) = source.open_optional_database(Path::new("emoticon/emoticon.db"))
+    let Ok(Some(mut connection)) = source.open_optional_database(Path::new("emoticon/emoticon.db"))
     else {
         return false;
     };

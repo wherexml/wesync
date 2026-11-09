@@ -73,3 +73,27 @@ zstd 0.13.4 与 zstd-safe 7.4.0 的包内 LICENSE 已核对为 BSD-3-Clause；�
 本轮完整本机 CI 23 项及跨版本 14 项全部通过。build 57 → 58 保持原 Apple Development 身份，精确 CLI/helper 摘要迁移、许可证/SBOM 同步和严格验签通过；两次原生完整退出重开自动连接，消息读取和主动刷新均通过，未输入凭据或触发权限变更。证据见 [security-upgrade-20261106/summary.json](acceptance/security-upgrade-20261106/summary.json) 和 [compatibility.json](acceptance/security-upgrade-20261106/compatibility.json)。
 
 复现本轮旧依赖基线：`git show 33bede0:Native/GreenBubbles/Cargo.lock > /tmp/wesync-before-20261106.lock`，再运行 `python3 scripts/dependency-upgrade-isolated.py /tmp/wesync-before-20261106.lock .build/dependency-compatibility-repeat.json`。先通过 `python3 scripts/rust-e2e-isolated.py` 准备固定 Docker 镜像；全量本机 CI 也会准备该镜像。
+
+## RUSTSEC-2026-0459
+
+实施前核对以下失败情况：依赖审计变绿但实际仍编入旧 SQLCipher，wx-cli 与主程序链接不同版本，升级后读不到旧版生成的加密库或快照，以及同签名重装后丢失工具绑定。跨版本用旧版生成加密库，新旧 CLI 双向读快照和拒绝错误凭据，同时核对候选程序实际报告的 SQLite 和 SQLCipher 版本。仅重置 we-sync 的系统隐私授权，保留其钥匙串连接。重新授予所需文件访问后，验证连续两次原生冷启动免输密钥。
+
+`rusqlite` 升级至 0.41.1，`libsqlite3-sys` 升级至 0.39.1，实际链接
+SQLCipher 4.20.0 / SQLite 3.54.1。两个本地兼容包仅转发 API，分别让仍要求
+0.40 的 wx-cli 与主程序共享一个 Rust 类型和链接目标，以及将绑定库要求的
+旧源码定位器转发到新的 `sqlcipher-src`。移除转接层前先核对上游依赖约束。
+许可证和分发清单根据实际源码包更新。
+
+复验使用原修订的源码与锁文件，在独立账户生成旧加密库并测试双向快照。
+
+```sh
+git show 485c6d6:Native/GreenBubbles/Cargo.lock > .build/sqlcipher-baseline.lock
+python3 scripts/dependency-upgrade-isolated.py .build/sqlcipher-baseline.lock \
+  .build/sqlcipher-compatibility.json --baseline-revision 485c6d6 \
+  --expect-engine 3.54.1 4.20.0
+```
+
+2026-11-09，完整本机 CI 23 项通过。隔离账户 15 项兼容检查通过，旧数据
+由 SQLCipher 4.14.0 / SQLite 3.51.3 生成。新旧程序双向验证并读取加密快照，
+拒绝错误口令与恢复词。候选 macOS release 的实际版本也为 SQLCipher 4.20.0 /
+SQLite 3.54.1。见 [跨版本验收](acceptance/sqlcipher-20261109/compatibility.json)。

@@ -22,9 +22,11 @@ require_file Packaging/Homebrew/greenbubbles.rb.in
 require_file scripts/homebrew-release.py
 require_file .github/workflows/homebrew.yml
 require_file scripts/install-skills.py
-require_file skills/wechatsync-setup/SKILL.md
-require_file skills/wechatsync-setup/scripts/doctor.py
-require_file skills/wechatsync-personal-memory/references/wiki.md
+require_file skills/we-sync-setup/SKILL.md
+require_file skills/we-sync-setup/scripts/doctor.py
+require_file skills/we-search/SKILL.md
+require_file docs/personal-memory/WORKFLOW.md
+require_file docs/personal-memory/references/wiki.md
 require_file docs/AGENT_SKILLS.md
 require_file LICENSE
 require_file THIRD_PARTY_NOTICES.md
@@ -52,7 +54,7 @@ if ! grep -Fq "MIT License" LICENSE \
 fi
 
 for required_notice in \
-  "Copyright (c) 2008-2020 Zetetic LLC" \
+  "Copyright (c) 2025, ZETETIC LLC" \
   "Copyright (c) 2006-2012, Skype Limited" \
   "NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS" \
   "Copyright (c) Meta Platforms, Inc. and affiliates" \

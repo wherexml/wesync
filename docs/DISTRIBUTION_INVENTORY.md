@@ -74,7 +74,7 @@ families are:
 | `md5` | 0.7.0 | Apache-2.0/MIT | source-compatible media identifiers |
 | `prost` | 0.13.5 | Apache-2.0 | protobuf decoding |
 | `roxmltree` | 0.21.1 | MIT OR Apache-2.0 | bounded nested-message XML normalization |
-| `rusqlite` | 0.40.2 | MIT | SQLite/SQLCipher access; native source is bundled |
+| `rusqlite` | 0.41.1 | MIT | SQLite/SQLCipher access; native source is bundled |
 | `serde`, `serde_json` | 1.0.229, 1.0.151 | MIT OR Apache-2.0 | structured records |
 | `sha2` | 0.10.9 | MIT OR Apache-2.0 | integrity digests |
 | `tempfile` | 3.27.0 | MIT OR Apache-2.0 | private temporary workspaces |
@@ -134,9 +134,11 @@ The native build compiles more than Rust source:
 ### SQLCipher and SQLite
 
 The direct `rusqlite` dependency enables `backup` and `bundled-sqlcipher`.
-Selected upstream crates also enable `rusqlite`'s `bundled` feature. Cargo
-feature unification therefore selects `libsqlite3-sys` 0.38.2 with bundled and
-bundled-SQLCipher build features.
+The local compatibility packages forward wx-cli's 0.40 imports to the same
+`rusqlite` 0.41.1 and forward the source locator used by `libsqlite3-sys` 0.39.1
+to the registry's `sqlcipher-src` 420.0.0. The native executable embeds
+SQLCipher 4.20.0 on SQLite 3.54.1. The compatibility packages contain only
+Rust re-exports and do not ship the previous database engine.
 
 - `rusqlite` and `libsqlite3-sys` report MIT.
 - The vendored SQLCipher source carries Zetetic's BSD-style license. Its terms

@@ -868,7 +868,7 @@ pub fn prepare_personal_memory_corpus_with_progress(
         )
     };
 
-    let reader = LiveCorpusReader::open(source).map_err(corpus_query_error)?;
+    let mut reader = LiveCorpusReader::open(source).map_err(corpus_query_error)?;
     let inventory = reader.inventory().clone();
     let mut coverage = PersonalMemoryCoverage {
         source_coverage_complete: inventory.coverage_complete,
@@ -1911,7 +1911,7 @@ pub fn prepare_personal_memory_corpus_extend_with_progress(
     });
 
     // --- Step 4: Full metadata re-scan of the live source. ---
-    let live_reader = LiveCorpusReader::open(source).map_err(corpus_query_error)?;
+    let mut live_reader = LiveCorpusReader::open(source).map_err(corpus_query_error)?;
     let inventory = live_reader.inventory().clone();
     let mut coverage = PersonalMemoryCoverage {
         source_coverage_complete: inventory.coverage_complete,

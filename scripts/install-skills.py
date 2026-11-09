@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy portable WeChatSync skills into a host's discovery directory.
+"""Copy portable we-sync skills into a host's discovery directory.
 
 No host settings, credentials, permissions, or binaries are changed.
 """
@@ -11,7 +11,7 @@ from pathlib import Path
 import shutil
 import tempfile
 
-NAMES = ("wechatsync-setup", "wechatsync-context", "wechatsync-personal-memory")
+NAMES = ("we-sync-setup", "we-search")
 AGENT_DIRECTORIES = {
     "codex": ".agents",
     "claude": ".claude",
@@ -115,13 +115,13 @@ def main():
                                     ignore=shutil.ignore_patterns("__pycache__", "*.pyc", RECEIPT))
                 shutil.copy2(root / "LICENSE", staged / "LICENSE")
                 (staged / "README.md").write_text(
-                    "# WeChatSync portable skills\n\nRequires Python 3 and a separately installed GreenBubbles Rust CLI.\n\n"
-                    "No skill installation is required: ask your agent to read `skills/wechatsync-personal-memory/SKILL.md`.\n"
-                    "For setup, read `skills/wechatsync-setup/SKILL.md`; references and helpers remain alongside each skill.\n"
+                    "# we-sync portable skills\n\nRequires Python 3 and a local GreenBubbles Rust CLI (bundled with we-sync).\n\n"
+                    "For message lookup, use `skills/we-search/SKILL.md`.\n"
+                    "For setup, read `skills/we-sync-setup/SKILL.md`; references and helpers remain alongside each skill.\n"
                     "Optional discovery: `python3 scripts/install-skills.py --agent codex`\n"
                     "Targets: codex, claude, opencode, kimi, gemini, grok (Grok Build).\n"
                     "Add `--project /path/to/project` for project scope. Use `--update` for unmodified managed copies.\n"
-                    "Start with wechatsync-setup in your agent. No embedded agent is required.\n")
+                    "Start with we-sync-setup in your agent. No embedded agent is required.\n")
                 staged.rename(output)
             print(json.dumps({"bundle": str(output)}))
             return

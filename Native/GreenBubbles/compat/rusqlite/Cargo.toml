@@ -1,0 +1,14 @@
+[package]
+name = "rusqlite"
+version = "0.40.3"
+edition = "2021"
+description = "Compatibility adapter for wx-cli's rusqlite 0.40 dependency"
+license = "MIT"
+publish = false
+
+[dependencies]
+current = { package = "rusqlite", version = "=0.41.1", default-features = false, features = ["cache"] }
+
+[features]
+bundled = ["current/bundled"]
+bundled-sqlcipher = ["current/bundled-sqlcipher"]

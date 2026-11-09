@@ -1,0 +1,10 @@
+[package]
+name = "sqlcipher-src"
+version = "419.0.6"
+edition = "2021"
+description = "Source locator adapter for libsqlite3-sys's SQLCipher 4.19 pin"
+license = "MIT"
+publish = false
+
+[dependencies]
+current = { package = "sqlcipher-src", version = "=420.0.0" }

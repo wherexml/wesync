@@ -4,7 +4,9 @@ WeChat encrypts the chat databases it keeps on your Mac. To read them,
 GreenBubbles needs your account's key. This page shows how to copy that key
 out of your own running WeChat app. You only do this once.
 
-The [README](../README.md#getting-your-database-key) has the short version.
+For setup or reinstallation, start with the [connection check](AGENT_SKILLS.md#复用连接).
+If an existing credential works, keep it and skip capture. This procedure is
+only for the account owner to use when no working credential exists.
 
 ![Account key capture and per-database key derivation](../assets/key-flow.svg)
 

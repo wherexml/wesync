@@ -13,11 +13,12 @@ component. Package names and product names belong to their respective owners.
 
 ### SQLCipher
 
-`libsqlite3-sys` statically compiles SQLCipher. Its bundled source carries the
+`libsqlite3-sys` statically compiles SQLCipher 4.20.0 (SQLite 3.54.1) from
+`sqlcipher-src`. Its bundled source carries the
 following notice:
 
 ```text
-Copyright (c) 2008-2020 Zetetic LLC
+Copyright (c) 2025, ZETETIC LLC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -237,7 +238,7 @@ repository-level license checksum.
 - `itertools 0.14.0` — `MIT OR Apache-2.0` — https://github.com/rust-itertools/itertools
 - `itoa 1.0.18` — `MIT OR Apache-2.0` — https://github.com/dtolnay/itoa
 - `libc 0.2.189` — `MIT OR Apache-2.0` — https://github.com/rust-lang/libc
-- `libsqlite3-sys 0.38.2` — `MIT` — https://github.com/rusqlite/rusqlite
+- `libsqlite3-sys 0.39.1` — `MIT` — https://github.com/rusqlite/rusqlite
 - `litemap 0.8.3` — `Unicode-3.0` — https://github.com/unicode-org/icu4x
 - `lock_api 0.4.14` — `MIT OR Apache-2.0` — https://github.com/Amanieu/parking_lot
 - `log 0.4.34` — `MIT OR Apache-2.0` — https://github.com/rust-lang/log
@@ -274,7 +275,7 @@ repository-level license checksum.
 - `regex-syntax 0.8.11` — `MIT OR Apache-2.0` — https://github.com/rust-lang/regex
 - `ring 0.17.14` — `Apache-2.0 AND ISC` — https://github.com/briansmith/ring
 - `roxmltree 0.21.1` — `MIT OR Apache-2.0` — https://github.com/RazrFalcon/roxmltree
-- `rusqlite 0.40.2` — `MIT` — https://github.com/rusqlite/rusqlite
+- `rusqlite 0.41.1` — `MIT` — https://github.com/rusqlite/rusqlite
 - `rust-stemmers 1.2.0` — `MIT OR BSD-3-Clause` — https://github.com/CurrySoftware/rust-stemmers
 - `rustix 1.1.4` — `Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT` — https://github.com/bytecodealliance/rustix
 - `rustls 0.23.46` — `Apache-2.0 OR ISC OR MIT` — https://github.com/rustls/rustls
@@ -2402,8 +2403,8 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- `libsqlite3-sys 0.38.2`
-- `rusqlite 0.40.2`
+- `libsqlite3-sys 0.39.1`
+- `rusqlite 0.41.1`
 
 ```text
 Copyright (c) 2014 The rusqlite developers

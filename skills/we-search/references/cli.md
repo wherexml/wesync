@@ -5,9 +5,10 @@ help exits without opening private inputs or reading a key.
 
 ## Bounded live or snapshot query
 
-Ordinary live reads need no profile, source path, or access flag. They open
-the newest installed WeChat `db_storage` directory and read
-`~/.greenbubbles-acquire/passphrase.txt`:
+Ordinary live reads use the configured/default source and saved credential;
+no explicit source path or access flag is normally needed. Preserve the existing
+connection and do not inspect credential contents. These are command shapes;
+for message reads, always add the time bounds selected in SKILL.md:
 
 ```text
 greenbubbles chats --limit 100
@@ -55,11 +56,19 @@ then exact names, then unique partial names. Ambiguous names fail with IDs on
 stderr; select one rather than guessing. Names are shell arguments; use IDs
 when a name should stay out of command history.
 
-Recommend listing conversations with `chats`, then opening a selected one with
-`messages list --conversation "name"`. Lists default to 100 results (maximum
-500); search defaults to 50 hits (maximum 200). `--since` and `--until` are
-inclusive Unix seconds. Follow `nextCursor` only with the same source and
-filters. A message-list cursor reads older messages in the selected chat.
+For a known name, use `chats find` directly and reuse the resolved ID. List
+conversations only for browsing or when no usable name is available. Lists
+default to 100 results (maximum 500); search defaults to 50 hits (maximum 200).
+Use 50 as the initial skill page size. `--since` and `--until` are inclusive Unix
+seconds. Apply the 24-hour → 3-day → 7-day progression in SKILL.md when time is
+unspecified. Follow `nextCursor` only with the same source and filters; reset it
+for each new interval. A message-list cursor reads older messages in that chat.
+
+There is no sender-filter CLI option. In typed message/search items,
+`isAccountHolder` is optional: true means self, false means another known sender,
+and missing/null is unknown. Filter retrieved records by that field and stable
+`sender`; use `senderDisplayName` only for presentation. In groups, non-self
+includes all other members. Do not use a name keyword as an author filter.
 
 For a second account, a snapshot, or an explicit source, choose exactly one
 access mode:
@@ -112,11 +121,17 @@ For `--snapshot-key-stdin`, the input ordering is likewise snapshot key line,
 then query. For `--snapshot-passphrase-stdin`, it is passphrase line, then
 query. For `--snapshot-local-credential`, `--snapshot-recovery-kit`, and
 `--decrypted`, standard input contains only the query. A protector file path is
-an argument, but its contents and the unwrapped database key are not. Query text
-must never be a process argument. Search is capped at 200 returned results.
+an argument, but its contents and the unwrapped database key are not. Ordinary
+query text may use `--query`; use `--query-stdin` when it should stay out of
+process arguments or shell history. Keys must never be process arguments.
+Search is capped at 200 returned results.
 The fallback examines at most 500 source messages and 16 conversations per
 response, may return an empty page with `hasMore: true`, and identifies itself
-with `fallbackSearchSourceWindowBounded`. Continue until `hasMore` is false.
+with `fallbackSearchSourceWindowBounded`. Continue the same window while more
+evidence is needed; finish pagination before concluding that window has no
+matches or advancing to an older slice. Stop once the question is answered,
+unless the user requested an exhaustive result. If pagination is curtailed,
+report partial coverage, not absence.
 
 With `--json`, every success uses `greenbubbles.query.v1`. Check:
 

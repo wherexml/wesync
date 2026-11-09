@@ -97,3 +97,15 @@ build 38 → 39 将应用展示名、菜单栏与侧栏改为 WeSync，安装到
 `stage-local-tool-update.py` 在最终签名前同步仓库 LICENSE、NOTICE.md、THIRD_PARTY_NOTICES.md 与已审查的分发依赖基线（随包 sbom.json）。构建来源记录本机证书更新、当前源码提交及脏工作区状态、主程序/CLI 构建输入摘要、实际签名团队和保留的发送工具摘要；不得继续沿用旧包的 Developer ID 分发标签。它不会公证，也不把保留的 helper 标为本次重新构建。
 
 依赖升级仍按同身份摘要迁移流程执行；检查资源与仓库一致、严格签名及 DR 稳定，安装后验证两次原生冷启动自动连接与主动刷新。2026-10-17 的集成结果见 `docs/acceptance/dependency-upgrades-20261017.json`。
+
+## 用户要求清除隐私权限并重装
+
+先暂存同签名候选包，校验完整签名、Bundle ID 和工具摘要迁移，原生退出后
+使用系统 `tccutil reset All`，分别指定 `me.greenbubbles.GreenBubbles`
+与 `me.greenbubbles.InputHelper`。备份旧包，再将候选安装到
+`/Applications/we-sync.app`。保留应用自己的钥匙串连接和偏好设置。
+
+重置后先原生打开 we-sync，确认系统权限状态。若本机微信数据库的文件访问
+被拒绝，由用户在系统设置的「完全磁盘访问权限」中重新添加并启用 we-sync。
+恢复必要授权后，完整退出再开两次，每次确认自动连接、能加载会话正文并能主动
+刷新。分别记录操作系统授权与数据库密钥是否输入，避免混淆。

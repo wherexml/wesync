@@ -195,7 +195,7 @@ impl<'a> LiveQuerySource<'a> {
 
     pub(crate) fn open_database(&self, relative_path: &Path) -> Result<Connection, LiveQueryError> {
         let path = self.safe_database_path(relative_path)?;
-        let connection = match self.access {
+        let mut connection = match self.access {
             QueryDatabaseAccess::LiveEncrypted(key) => {
                 wx_db::open_readonly_connection(&path, Some(key))
                     .map_err(|error| database_error(&error.to_string()))?
@@ -1848,8 +1848,8 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
             .collect::<BTreeMap<_, _>>();
 
         let mut candidate_records = loaded_contacts.records;
-        let session = source.open_database(Path::new("session/session.db"))?;
-        reset_query_deadline(&session)?;
+        let mut session = source.open_database(Path::new("session/session.db"))?;
+        reset_query_deadline(&mut session)?;
         let session_columns = table_columns(&session, "SessionTable")?;
         if !session_columns.contains("username") {
             return Err(LiveQueryError::Database(
@@ -1897,7 +1897,7 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
         drop(statement);
         drop(session);
 
-        let open_shards = open_message_shards(source)?;
+        let mut open_shards = open_message_shards(source)?;
         let mut warnings = loaded_contacts.warnings;
         warnings.extend(open_shards.warnings.clone());
         if session_decode_failures > 0 {
@@ -1911,8 +1911,8 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
 
         let mut actual_tables = BTreeMap::<String, (String, BTreeSet<u32>)>::new();
         let mut table_inventory_complete = true;
-        for shard in &open_shards.shards {
-            reset_query_deadline(&shard.connection)?;
+        for shard in &mut open_shards.shards {
+            reset_query_deadline(&mut shard.connection)?;
             let mut statement = match shard.connection.prepare(
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'Msg_%' ORDER BY name ASC",
             ) {
@@ -2076,7 +2076,7 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
     }
 
     pub(crate) fn scan_metadata(
-        &self,
+        &mut self,
         conversation: &CorpusConversation,
     ) -> Result<CorpusMetadataScan, LiveQueryError> {
         let mut messages = Vec::new();
@@ -2085,15 +2085,15 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
         for shard in self
             .open_shards
             .shards
-            .iter()
+            .iter_mut()
             .filter(|shard| conversation.shard_ids.contains(&shard.shard_id))
         {
-            reset_query_deadline(&shard.connection)?;
-            if !message_table_exists(&shard.connection, &conversation.table_name)? {
+            reset_query_deadline(&mut shard.connection)?;
+            if !message_table_exists(&mut shard.connection, &conversation.table_name)? {
                 continue;
             }
             let Some(shape) = corpus_message_query_shape(
-                &shard.connection,
+                &mut shard.connection,
                 &conversation.table_name,
                 shard.shard_id,
                 &mut warnings,
@@ -2104,7 +2104,7 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
             };
             let mut after_row_id = i64::MIN;
             loop {
-                reset_query_deadline(&shard.connection)?;
+                reset_query_deadline(&mut shard.connection)?;
                 let sql = format!(
                     "SELECT m.rowid, m.sort_seq, m.server_id, m.local_type, {}, m.create_time \
                      FROM [{}] m {} WHERE m.rowid > ?1 ORDER BY m.rowid ASC LIMIT ?2",
@@ -2220,7 +2220,7 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
     }
 
     pub(crate) fn hydrate(
-        &self,
+        &mut self,
         conversation: &CorpusConversation,
         selected: &[CorpusMessageLocation],
         maximum_text_bytes: usize,
@@ -2237,7 +2237,7 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
         for shard in self
             .open_shards
             .shards
-            .iter()
+            .iter_mut()
             .filter(|shard| conversation.shard_ids.contains(&shard.shard_id))
         {
             let locations = selected
@@ -2247,8 +2247,8 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
             if locations.is_empty() {
                 continue;
             }
-            reset_query_deadline(&shard.connection)?;
-            if !message_table_exists(&shard.connection, &conversation.table_name)? {
+            reset_query_deadline(&mut shard.connection)?;
+            if !message_table_exists(&mut shard.connection, &conversation.table_name)? {
                 coverage_complete = false;
                 warnings.push(QueryWarning {
                     code: "corpusHydrationRowMissing",
@@ -2260,7 +2260,7 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
                 continue;
             }
             let Some(shape) = corpus_message_query_shape(
-                &shard.connection,
+                &mut shard.connection,
                 &conversation.table_name,
                 shard.shard_id,
                 &mut warnings,
@@ -2270,7 +2270,7 @@ impl<'source, 'key> LiveCorpusReader<'source, 'key> {
                 continue;
             };
             for chunk in locations.chunks(CORPUS_HYDRATION_ROWS) {
-                reset_query_deadline(&shard.connection)?;
+                reset_query_deadline(&mut shard.connection)?;
                 let placeholders = (1..=chunk.len())
                     .map(|index| format!("?{index}"))
                     .collect::<Vec<_>>()
@@ -2451,7 +2451,10 @@ struct CorpusMessageQueryShape {
     compressed_content: String,
 }
 
-fn message_table_exists(connection: &Connection, table_name: &str) -> Result<bool, LiveQueryError> {
+fn message_table_exists(
+    connection: &mut Connection,
+    table_name: &str,
+) -> Result<bool, LiveQueryError> {
     reset_query_deadline(connection)?;
     connection
         .query_row(
@@ -2464,7 +2467,7 @@ fn message_table_exists(connection: &Connection, table_name: &str) -> Result<boo
 }
 
 fn corpus_message_query_shape(
-    connection: &Connection,
+    connection: &mut Connection,
     table_name: &str,
     shard_id: u32,
     warnings: &mut Vec<QueryWarning>,
@@ -2526,7 +2529,7 @@ fn corpus_message_query_shape(
     }))
 }
 
-fn reset_query_deadline(connection: &Connection) -> Result<(), LiveQueryError> {
+fn reset_query_deadline(connection: &mut Connection) -> Result<(), LiveQueryError> {
     let deadline = Instant::now() + MAXIMUM_SQL_STATEMENT_DURATION;
     connection
         .progress_handler(10_000, Some(move || Instant::now() >= deadline))
@@ -2781,13 +2784,13 @@ pub fn rank_conversations(
         ));
     }
     let account_holder = source.account_holder_source_id().map(str::to_owned);
-    let open_shards = open_message_shards(source)?;
+    let mut open_shards = open_message_shards(source)?;
     let mut warnings = open_shards.warnings.clone();
     let mut coverage_complete = open_shards.warnings.is_empty();
     let mut counts = BTreeMap::<String, (u64, u64, Option<i64>, Option<i64>)>::new();
 
-    for shard in &open_shards.shards {
-        reset_query_deadline(&shard.connection)?;
+    for shard in &mut open_shards.shards {
+        reset_query_deadline(&mut shard.connection)?;
         let mut tables = match shard.connection.prepare(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'Msg_%' ORDER BY name ASC",
         ) {

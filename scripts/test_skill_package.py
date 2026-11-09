@@ -19,7 +19,7 @@ def load(name, path):
 
 
 installer = load("installer", ROOT / "scripts/install-skills.py")
-doctor = load("doctor", ROOT / "skills/wechatsync-setup/scripts/doctor.py")
+doctor = load("doctor", ROOT / "skills/we-sync-setup/scripts/doctor.py")
 
 
 class PortableInstallation(unittest.TestCase):
@@ -44,7 +44,7 @@ class PortableInstallation(unittest.TestCase):
                     self.assertEqual(installer.inventory(relocated / "skills" / name),
                                      installer.inventory(installed / name))
                 result = subprocess.run([sys.executable,
-                    str(installed / "wechatsync-setup/scripts/doctor.py"),
+                    str(installed / "we-sync-setup/scripts/doctor.py"),
                     "--greenbubbles", str(base / "missing")], capture_output=True, text=True)
                 self.assertEqual(result.returncode, 1)
                 self.assertEqual(json.loads(result.stdout)["checks"]["cli"], "missing")
@@ -106,7 +106,7 @@ class Diagnostics(unittest.TestCase):
         secret = "PRIVATE-SENTINEL"
         with patch.object(doctor.shutil, "which", return_value="/fake/greenbubbles"), \
              patch.object(doctor, "probe", side_effect=[
-                 (0, "prepare next page acknowledge commit --format"), (1, secret)]):
+                 (0, "--conversation --since --until --json --query-stdin"), (1, secret)]):
             result = doctor.check("greenbubbles", "live")
         self.assertFalse(result["ok"])
         self.assertNotIn(secret, json.dumps(result))
@@ -114,7 +114,7 @@ class Diagnostics(unittest.TestCase):
     def test_live_source_status_is_enough_without_a_profile(self):
         with patch.object(doctor.shutil, "which", return_value="/fake/greenbubbles"), \
              patch.object(doctor, "probe", side_effect=[
-                 (0, "prepare next page acknowledge commit --format"),
+                 (0, "--conversation --since --until --json --query-stdin"),
                  (0, '{"ok":true,"schema":"greenbubbles.query.v1"}')]) as probe:
             self.assertTrue(doctor.check("greenbubbles")["ok"])
             self.assertEqual(probe.call_args.args[1], ["source", "status"])
@@ -122,7 +122,7 @@ class Diagnostics(unittest.TestCase):
     def test_named_profile_uses_source_status(self):
         with patch.object(doctor.shutil, "which", return_value="/fake/greenbubbles"), \
              patch.object(doctor, "probe", side_effect=[
-                 (0, "prepare next page acknowledge commit --format"),
+                 (0, "--conversation --since --until --json --query-stdin"),
                  (0, '{"ok":true,"schema":"greenbubbles.query.v1"}')]) as probe:
             self.assertTrue(doctor.check("greenbubbles", "archive")["ok"])
             self.assertEqual(probe.call_args.args[1], ["source", "status", "--profile", "archive"])

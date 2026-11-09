@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "syntheticOnly": true,
+  "privateDataRecorded": false,
+  "checks": {
+    "candidate-engine-versions": "PASS",
+    "binary-0-toml-json-output": "PASS",
+    "binary-0-toml-reject-syntax": "PASS",
+    "binary-0-toml-reject-unknown": "PASS",
+    "binary-1-toml-json-output": "PASS",
+    "binary-1-toml-reject-syntax": "PASS",
+    "binary-1-toml-reject-unknown": "PASS",
+    "writer-0-reader-1-words-verify-and-read": "PASS",
+    "writer-0-reader-1-passphrase-verify-and-read": "PASS",
+    "writer-0-wrong-passphrase-rejected": "PASS",
+    "writer-0-wrong-recovery-words-rejected": "PASS",
+    "writer-1-reader-0-words-verify-and-read": "PASS",
+    "writer-1-reader-0-passphrase-verify-and-read": "PASS",
+    "writer-1-wrong-passphrase-rejected": "PASS",
+    "writer-1-wrong-recovery-words-rejected": "PASS"
+  },
+  "binarySHA256": [
+    "445069419e623c5eb46b304acde0703189bf507d3d832e17c28ff12b33cef72e",
+    "c118b84e3177aba4de0730a17a50ea305cc579d5077a02a2fbce9d7834e20e57"
+  ],
+  "engines": [
+    [
+      "3.51.3",
+      "4.14.0"
+    ],
+    [
+      "3.54.1",
+      "4.20.0"
+    ]
+  ],
+  "platform": "isolated local Linux container",
+  "testNetwork": "none",
+  "hostHomeMounted": false,
+  "hostPolicyUnchanged": true,
+  "buildScope": "baseline source 485c6d6 and candidate source"
+}
