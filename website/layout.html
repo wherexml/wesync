@@ -34,6 +34,11 @@
 
   <main id="main">
     <section class="hero" id="hero" aria-labelledby="hero-title">
+      <div class="chat-accents chat-accents-hero" aria-hidden="true">
+        <svg class="chat-bubble chat-bubble-ai" viewBox="0 0 64 48" focusable="false" aria-hidden="true"><path class="chat-bubble-shell" d="M13 1.5H51A11.5 11.5 0 0 1 62.5 13V27A11.5 11.5 0 0 1 51 38.5H24L13 46.5V38.5A11.5 11.5 0 0 1 1.5 27V13A11.5 11.5 0 0 1 13 1.5Z"/><path class="chat-bubble-mark" d="M31 9C32 16 35 19 42 20C35 21 32 24 31 31C30 24 27 21 20 20C27 19 30 16 31 9ZM46 9.5Q46.6 12.5 49.5 13Q46.6 13.5 46 16.5Q45.4 13.5 42.5 13Q45.4 12.5 46 9.5Z"/></svg>
+        <svg class="chat-bubble chat-bubble-human" viewBox="0 0 64 48" focusable="false" aria-hidden="true"><path class="chat-bubble-shell" d="M13 1.5H51A11.5 11.5 0 0 1 62.5 13V27A11.5 11.5 0 0 1 51 38.5V46.5L40 38.5H13A11.5 11.5 0 0 1 1.5 27V13A11.5 11.5 0 0 1 13 1.5Z"/><path class="chat-bubble-mark" d="M32 9.5A5 5 0 1 1 32 19.5A5 5 0 1 1 32 9.5ZM22.5 31C22.5 25 27 22.5 32 22.5C37 22.5 41.5 25 41.5 31Z"/></svg>
+      </div>
+      <canvas id="field" class="field" aria-hidden="true"></canvas>
       <div class="hero-halo" aria-hidden="true"></div>
       <div class="hero-copy">
         <h1 id="hero-title" aria-label="$hero_label">$hero_text</h1>
@@ -119,7 +124,11 @@
     </section>
 
     <section class="download" id="download" aria-labelledby="download-title">
-      <div class="hero-halo field-end" aria-hidden="true"></div>
+      <div class="chat-accents chat-accents-end" aria-hidden="true">
+        <svg class="chat-bubble chat-bubble-ai" viewBox="0 0 64 48" focusable="false" aria-hidden="true"><path class="chat-bubble-shell" d="M13 1.5H51A11.5 11.5 0 0 1 62.5 13V27A11.5 11.5 0 0 1 51 38.5H24L13 46.5V38.5A11.5 11.5 0 0 1 1.5 27V13A11.5 11.5 0 0 1 13 1.5Z"/><path class="chat-bubble-mark" d="M31 9C32 16 35 19 42 20C35 21 32 24 31 31C30 24 27 21 20 20C27 19 30 16 31 9ZM46 9.5Q46.6 12.5 49.5 13Q46.6 13.5 46 16.5Q45.4 13.5 42.5 13Q45.4 12.5 46 9.5Z"/></svg>
+        <svg class="chat-bubble chat-bubble-human" viewBox="0 0 64 48" focusable="false" aria-hidden="true"><path class="chat-bubble-shell" d="M13 1.5H51A11.5 11.5 0 0 1 62.5 13V27A11.5 11.5 0 0 1 51 38.5V46.5L40 38.5H13A11.5 11.5 0 0 1 1.5 27V13A11.5 11.5 0 0 1 13 1.5Z"/><path class="chat-bubble-mark" d="M32 9.5A5 5 0 1 1 32 19.5A5 5 0 1 1 32 9.5ZM22.5 31C22.5 25 27 22.5 32 22.5C37 22.5 41.5 25 41.5 31Z"/></svg>
+      </div>
+      <canvas id="field-end" class="field field-end" aria-hidden="true"></canvas>
       <h2 id="download-title">$closing</h2>
       $download_button
       <ul class="reqs" aria-label="$system_requirements"><li>$chip</li><li>$system</li><li>MIT</li></ul>

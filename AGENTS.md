@@ -89,6 +89,6 @@ SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；仅�
 
 首次启动的初始化设置先检查本机记录的磁盘访问，再接入原安全连接表单。允许稍后设置，备份和导出记录不依赖完全磁盘访问。旧连接优先自动恢复；权限失效时重新授权后复用钥匙串，见 [docs/FIRST_RUN_SETUP.md](docs/FIRST_RUN_SETUP.md)。
 
-产品首页源文件位于 `website/`。`python3 scripts/build-website.py` 生成三语静态页面及 Cloudflare Pages 部署包。连接、搜索和 Codex 提问演示使用同一组合成会话，见 [docs/WEBSITE.md](docs/WEBSITE.md)。
+产品首页源文件位于 `website/`。`python3 scripts/build-website.py` 生成三语静态页面及 Cloudflare Pages 部署包。首屏和底部下载区的 SVG 对话气泡位于波形后方，减少动态效果时波形静止。连接、搜索和 Codex 提问演示使用同一组合成会话，见 [docs/WEBSITE.md](docs/WEBSITE.md)。
 
 经用户授权的公开 DMG 在本机使用 Developer ID 签名，App 和 DMG 分别公证并贴票据。GitHub Releases 公开下载与校验和通过后再部署首页链接，见 [docs/MACOS_RELEASE.md](docs/MACOS_RELEASE.md)。

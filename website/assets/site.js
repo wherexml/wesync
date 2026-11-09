@@ -3,6 +3,9 @@
 
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var stickyMQ = window.matchMedia("(min-width: 900px)");
+  var rafId = 0;
+  var pageHidden = document.hidden;
+  var fields = [];
 
   document.documentElement.classList.add("js");
   if (reduced) document.documentElement.classList.add("reduced");
@@ -72,6 +75,146 @@
     stickyMQ.addEventListener("change", function () {
       if (stickyMQ.matches && nav.classList.contains("is-open")) set(false);
     });
+  }
+
+  function Field(canvas, opts) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d", { alpha: true });
+    this.density = (opts && opts.density) || 1;
+    this.lines = [];
+    this.mx = 0.5;
+    this.my = 0.5;
+    this.hover = 0;
+    this.visible = false;
+    this.w = 0;
+    this.h = 0;
+    this.resize();
+  }
+
+  Field.prototype.resize = function () {
+    var rect = this.canvas.getBoundingClientRect();
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.w = Math.max(1, Math.round(rect.width));
+    this.h = Math.max(1, Math.round(rect.height));
+    this.canvas.width = Math.round(this.w * dpr);
+    this.canvas.height = Math.round(this.h * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var count = Math.round(120 * this.density * clamp(this.w / 1280, 0.55, 1.2));
+    this.lines = [];
+    for (var i = 0; i < count; i++) {
+      this.lines.push({
+        x: (i + 0.5) / count,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.55 + Math.random() * 0.7,
+        base: 0.08 + Math.random() * 0.12,
+        dots: Math.random() > 0.62
+      });
+    }
+  };
+
+  Field.prototype.pointer = function (clientX, clientY) {
+    var r = this.canvas.getBoundingClientRect();
+    this.mx = clamp((clientX - r.left) / r.width, 0, 1);
+    this.my = clamp((clientY - r.top) / r.height, 0, 1);
+    this.hover = 1;
+  };
+
+  Field.prototype.draw = function (t) {
+    var ctx = this.ctx;
+    var w = this.w;
+    var h = this.h;
+    ctx.clearRect(0, 0, w, h);
+    var amp = 0.22;
+    var breath = reduced ? 0 : Math.sin(t * 0.0007) * 0.08;
+    var hover = this.hover;
+    this.hover *= reduced ? 0 : 0.94;
+    for (var i = 0; i < this.lines.length; i++) {
+      var L = this.lines[i];
+      var x = L.x * w;
+      var dx = L.x - this.mx;
+      var dy = 0.5 - this.my;
+      var dist = Math.sqrt(dx * dx + dy * dy * 0.35);
+      var bump = hover * Math.exp(-dist * dist * 18) * 0.55;
+      var wave = Math.sin(t * 0.0016 * L.speed + L.phase) * (L.base + breath);
+      var mag = clamp(L.base * 0.6 + wave + bump + amp * (0.18 + 0.12 * Math.sin(L.phase + t * 0.002)), 0.04, 0.78);
+      var len = h * mag * 0.72;
+      var y0 = h * 0.5 - len / 2;
+      var y1 = y0 + len;
+      var a = 0.18 + mag * 0.55;
+      ctx.strokeStyle = "rgba(91,231,255," + a + ")";
+      ctx.lineWidth = 1;
+      if (L.dots) {
+        ctx.fillStyle = "rgba(139,123,255," + (0.18 + mag * 0.5) + ")";
+        var steps = 9;
+        for (var s = 0; s <= steps; s++) {
+          var yy = y0 + (len * s) / steps;
+          ctx.beginPath();
+          ctx.arc(x, yy, 0.9 + mag * 1.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(x, y0);
+        ctx.lineTo(x, y1);
+        ctx.stroke();
+      }
+    }
+  };
+
+  function setupFields() {
+    var hero = document.getElementById("field");
+    var end = document.getElementById("field-end");
+    if (hero) fields.push(new Field(hero, { density: 1 }));
+    if (end) fields.push(new Field(end, { density: 0.55 }));
+
+    fields.forEach(function (f) {
+      onVisible(f.canvas, function (v) {
+        f.visible = v;
+        if (v) f.resize();
+        if (v && reduced) f.draw(0);
+        tick();
+      }, { threshold: 0.01 });
+    });
+
+    var heroEl = document.getElementById("hero");
+    if (heroEl && fields[0]) {
+      heroEl.addEventListener("pointermove", function (e) {
+        fields[0].pointer(e.clientX, e.clientY);
+      }, { passive: true });
+    }
+
+    function resizeAll() {
+      fields.forEach(function (f) { f.resize(); });
+      if (reduced) fields.forEach(function (f) { f.draw(0); });
+    }
+    window.addEventListener("resize", resizeAll);
+    window.addEventListener("load", resizeAll);
+
+    if (reduced) {
+      fields.forEach(function (f) {
+        f.visible = true;
+        f.draw(0);
+      });
+    }
+  }
+
+  function tick() {
+    if (rafId) return;
+    function loop(t) {
+      rafId = 0;
+      if (pageHidden) return;
+      var any = false;
+      if (!reduced) {
+        for (var i = 0; i < fields.length; i++) {
+          if (fields[i].visible) {
+            fields[i].draw(t);
+            any = true;
+          }
+        }
+      }
+      if (any) rafId = requestAnimationFrame(loop);
+    }
+    rafId = requestAnimationFrame(loop);
   }
 
   function setupTagline() {
@@ -315,11 +458,14 @@
   }
 
   document.addEventListener("visibilitychange", function () {
-    document.documentElement.classList.toggle("page-hidden", document.hidden);
+    pageHidden = document.hidden;
+    document.documentElement.classList.toggle("page-hidden", pageHidden);
+    if (!pageHidden) tick();
   });
 
   keepHash();
   setupNav();
+  setupFields();
   setupTagline();
   setupFeatures();
   setupBento();
