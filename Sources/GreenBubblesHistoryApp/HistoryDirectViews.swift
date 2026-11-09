@@ -59,13 +59,24 @@ struct HistoryDirectConnectionSheet: View {
                   }
 
                 }
-                Text("本机读取工具").font(.subheadline.weight(.semibold))
-                pathField(
-                  title: "读取工具",
-                  text: $model.liveExecutablePath,
-                  actionTitle: "选择…",
-                  action: chooseExecutable
-                )
+                if viewingConnection,
+                  HistoryRememberedConnection.bundledReadTool(
+                    matching: URL(fileURLWithPath: model.liveExecutablePath)) != nil
+                {
+                  HStack {
+                    Text("本机读取工具").foregroundStyle(.secondary)
+                    Spacer()
+                    Text(HistoryBrand.name)
+                  }
+                  .font(.callout)
+                } else {
+                  pathField(
+                    title: "本机读取工具",
+                    text: $model.liveExecutablePath,
+                    actionTitle: "选择…",
+                    action: chooseExecutable
+                  )
+                }
               }
 
               VStack(alignment: .leading, spacing: 10) {
@@ -470,7 +481,7 @@ struct HistoryDirectLibraryView: View {
       VStack(spacing: 0) {
         HStack(spacing: 4) {
           if !isSidebarCollapsed {
-            Text("WeSync").font(HistoryDesign.title)
+            Text(HistoryBrand.name).font(HistoryDesign.title)
             Spacer()
             Button {
               model.presentDirectConnection()

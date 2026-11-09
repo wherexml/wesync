@@ -98,6 +98,10 @@ build 38 → 39 将应用展示名、菜单栏与侧栏改为 WeSync，安装到
 
 依赖升级仍按同身份摘要迁移流程执行；检查资源与仓库一致、严格签名及 DR 稳定，安装后验证两次原生冷启动自动连接与主动刷新。2026-10-17 的集成结果见 `docs/acceptance/dependency-upgrades-20261017.json`。
 
+## we-sync 安装路径
+
+普通更新使用 `/Applications/we-sync.app`。从旧 `WeSync.app` 迁移时，对工具暂存脚本指定 `--source /Applications/WeSync.app`，使用同一证书及受签名保护的摘要迁移。旧 `WeSync.app` 和 `GreenBubbles.app` 路径保留为指向当前安装的软链接。步骤及验收见 [改名规范](WESYNC_RENAME.md)。
+
 ## 用户要求清除隐私权限并重装
 
 先暂存同签名候选包，校验完整签名、Bundle ID 和工具摘要迁移，原生退出后

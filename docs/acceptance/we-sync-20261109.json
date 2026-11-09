@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-09",
+  "baseRevision": "485c6d6",
+  "app": "/Applications/we-sync.app",
+  "sourceBuild": 58,
+  "installedBuild": 59,
+  "displayName": "we-sync",
+  "signing": {
+    "strictVerification": "PASS",
+    "sameDesignatedRequirement": true,
+    "sameBundleIdentifierAndEntitlements": true,
+    "exactQueryToolDigestMigration": true,
+    "stickerQueryDigestMatches": true,
+    "sendAndInputHelperBytesPreserved": true,
+    "launchAgentProgramResolves": true
+  },
+  "compatibility": {
+    "GreenBubbles.app": "we-sync.app",
+    "WeSync.app": "we-sync.app",
+    "legacyGreenbubblesCommand": "PASS"
+  },
+  "nativeColdStarts": [
+    {
+      "openVia": "/Applications/we-sync.app",
+      "quitAndProcessAbsent": true,
+      "automaticConnection": true,
+      "openedConversationAndRefreshed": true,
+      "settingsBundledToolDisplay": "we-sync"
+    },
+    {
+      "openVia": "/Applications/GreenBubbles.app",
+      "quitAndProcessAbsent": true,
+      "automaticConnection": true,
+      "openedConversationAndRefreshed": true,
+      "settingsBundledToolDisplay": "we-sync",
+      "settingsEditPath": "/Applications/we-sync.app/Contents/MacOS/greenbubbles",
+      "menuActions": [
+        "打开 we-sync",
+        "退出 we-sync"
+      ]
+    },
+    {
+      "quitVia": "退出 we-sync menu item",
+      "quitAndProcessAbsent": true,
+      "openVia": "Finder opening /Applications/we-sync.app",
+      "automaticConnection": true,
+      "openedConversationAndRefreshed": true,
+      "settingsBundledToolDisplay": "we-sync"
+    }
+  ],
+  "credentialInputRequired": false,
+  "credentialValuesRecorded": false,
+  "privateConversationDataRecorded": false,
+  "localCI": {
+    "status": "FAIL",
+    "blockingCheck": "Audit Rust dependencies",
+    "advisory": "RUSTSEC-2026-0459",
+    "dependencyLockIdenticalToBase": true,
+    "passedChecksIncludingIndependentRerun": 22,
+    "failedChecks": 1,
+    "auditWaiverAdded": false
+  },
+  "repeat": [
+    "Follow the staging and installation steps in docs/WESYNC_RENAME.md using the existing signing identity.",
+    "Quit the app and check that its process is gone, then open /Applications/we-sync.app through Launch Services.",
+    "Open a conversation and refresh. In Advanced Settings expand Connection Settings, verify connected status and the we-sync tool label.",
+    "Quit and repeat via the GreenBubbles.app alias. Open Edit Connection, check the current tool path, and cancel without reconnecting.",
+    "Open the menu bar item and check that both the open and quit actions use we-sync.",
+    "Run python3 scripts/local-ci.py and inspect the JSON report under .build/local-ci."
+  ],
+  "githubActionsEnabled": false
+}

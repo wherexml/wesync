@@ -18,6 +18,18 @@ struct HistoryRememberedConnection: Codable {
       .map { String(format: "%02x", $0) }.joined()
   }
 
+  static var bundledReadTool: URL? {
+    Bundle.main.executableURL?.deletingLastPathComponent().appending(path: "greenbubbles")
+      .resolvingSymlinksInPath().standardizedFileURL
+  }
+
+  static func bundledReadTool(matching executable: URL) -> URL? {
+    guard let bundledReadTool,
+      executable.resolvingSymlinksInPath().standardizedFileURL == bundledReadTool
+    else { return nil }
+    return bundledReadTool
+  }
+
   /// Exact predecessor/successor binding in the app's signed resource envelope.
   /// External tools and unsigned/ad-hoc apps never gain an automatic migration.
   static func acceptsSignedToolUpdate(_ executable: URL, previousDigest: String) -> Bool {
@@ -27,10 +39,7 @@ struct HistoryRememberedConnection: Codable {
       let currentSHA256: String
     }
     guard Bundle.main.bundleIdentifier == "me.greenbubbles.GreenBubbles",
-      let bundled = Bundle.main.executableURL?.deletingLastPathComponent().appending(
-        path: "greenbubbles"),
-      executable.resolvingSymlinksInPath().standardizedFileURL
-        == bundled.resolvingSymlinksInPath().standardizedFileURL,
+      bundledReadTool(matching: executable) != nil,
       let manifest = Bundle.main.url(forResource: "ToolUpdate", withExtension: "json"),
       let data = try? Data(contentsOf: manifest),
       let migration = try? JSONDecoder().decode(Migration.self, from: data),

@@ -8,7 +8,7 @@ checks={}
 with tempfile.TemporaryDirectory(prefix='gb-dat-e2e-') as tmp:
  root=Path(tmp);os.chmod(root,0o700)
  png=root/'original.png'
- subprocess.run(['/usr/bin/sips','-s','format','png','/Applications/WeSync.app/Contents/Resources/GreenBubbles.icns','--out',str(png)],check=True,stdout=subprocess.DEVNULL)
+ subprocess.run(['/usr/bin/sips','-s','format','png','/Applications/we-sync.app/Contents/Resources/GreenBubbles.icns','--out',str(png)],check=True,stdout=subprocess.DEVNULL)
  original=png.read_bytes();aes_size=1024
  aes=subprocess.run(['/usr/bin/openssl','enc','-aes-128-ecb','-K',b'cfcd208495d565ef'.hex()],input=original[:aes_size],capture_output=True,check=True).stdout
  account=root/'account';folder=account/'msg/attach'/hashlib.md5(b'synthetic_friend').hexdigest()/'2026-10/Img';folder.mkdir(parents=True)

@@ -318,7 +318,7 @@ see §11.
 `scripts/package-send-helper.sh` builds every executable from source, assembles
 
 ```
-GreenBubbles.app/Contents/
+we-sync.app/Contents/
   MacOS/{greenbubbles-history,greenbubbles-send,greenbubbles}
   Library/LaunchAgents/me.greenbubbles.InputHelper.plist
   Library/LoginItems/GreenBubblesInputHelper.app/
@@ -333,7 +333,7 @@ GreenBubbles.app/Contents/
 
 signs inside-out with Developer ID and **Hardened Runtime**, refuses to ship a
 helper that disables library validation, builds a DMG, and notarizes and
-staples it. The mounted DMG contains the complete `GreenBubbles.app` and an
+staples it. The mounted DMG contains the complete `we-sync.app` and an
 `Applications` shortcut, not a flattened copy of the bundle contents. Nothing
 is fetched at run time. Distribution is **Developer-ID direct only**; the Mac
 App Store forbids the cross-application control the helper needs, and the App

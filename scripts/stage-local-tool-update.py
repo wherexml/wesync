@@ -16,12 +16,14 @@ root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--identity', required=True)
 parser.add_argument('--output', required=True, type=Path)
+parser.add_argument('--source', type=Path, default=Path('/Applications/we-sync.app'))
 parser.add_argument('--migrate-signing-identity', action='store_true', help='Explicit migration to an Apple-issued signing identity; native permission acceptance required')
 args = parser.parse_args()
 if not re.fullmatch('[0-9a-fA-F]{40}', args.identity): parser.error('Exact certificate SHA-1 required')
-source = Path('/Applications/WeSync.app')
-target = args.output.resolve() / 'WeSync.app'
-if target.exists(): parser.error('Use a new staging output directory')
+source = args.source.resolve()
+output = args.output.resolve()
+target = output / 'we-sync.app'
+if output.exists() or source in output.parents: parser.error('Use a new staging output directory outside the installed bundle')
 
 def run(*command):
     return subprocess.run(command, check=True, capture_output=True, text=True)
@@ -51,9 +53,16 @@ manifest = {'previousSHA256':previous,'previousSHA256s':sorted(predecessors),'cu
 (target/'Contents/Resources/ToolUpdate.json').write_text(json.dumps(manifest)+'\n')
 info_path = target/'Contents/Info.plist'
 info = plistlib.loads(info_path.read_bytes())
+packaging_info = plistlib.loads((root/'Packaging/GreenBubbles/Info.plist').read_bytes())
+for key in ('CFBundleName', 'CFBundleDisplayName'):
+    info[key] = packaging_info[key]
 info['CFBundleVersion'] = str(int(info['CFBundleVersion'])+1)
 info['GBStickerQuerySHA256'] = digest(mac/'greenbubbles-sticker-query')
 info_path.write_bytes(plistlib.dumps(info))
+launch_agent = Path('me.greenbubbles.InputHelper.plist')
+bundled_agent = target/'Contents/Library/LaunchAgents'/launch_agent
+if bundled_agent.is_file():
+    shutil.copy2(root/'Packaging/GreenBubblesInputHelper'/launch_agent, bundled_agent)
 # Dependency updates must carry their reviewed notices and inventory into the
 # signed bundle, rather than inheriting the previously installed versions.
 resources = target/'Contents/Resources'
@@ -91,7 +100,7 @@ if new_requirement != old_requirement:
     team = re.search(r'TeamIdentifier=([A-Z0-9]+)', details)
     if not team: raise RuntimeError('Signing migration requires a verified Apple team identity')
 # Verify identity remains stable after a real resource/build update, without installation.
-probe = args.output.resolve() / 'identity-probe.app'
+probe = output / 'identity-probe.app'
 run('/usr/bin/ditto', str(target), str(probe))
 probe_info = probe/'Contents/Info.plist'
 probe_values = plistlib.loads(probe_info.read_bytes())

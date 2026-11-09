@@ -57,7 +57,7 @@ pub fn load() -> Result<BTreeSet<String>, LiveQueryError> {
 // Both the app and bundled CLI must share a certificate, and ad-hoc signatures fail.
 #[cfg(target_os = "macos")]
 fn native_parent() -> bool {
-    use std::process::Command;
+    use std::{path::Path, process::Command};
     unsafe extern "C" {
         fn proc_pidpath(pid: i32, buffer: *mut libc::c_void, size: u32) -> i32;
     }
@@ -68,17 +68,17 @@ fn native_parent() -> bool {
     }
     let parent = std::ffi::CStr::from_bytes_until_nul(&path)
         .ok()
-        .and_then(|p| p.to_str().ok());
-    let app = "/Applications/GreenBubbles.app";
-    if parent != Some("/Applications/GreenBubbles.app/Contents/MacOS/greenbubbles-history") {
+        .and_then(|p| p.to_str().ok())
+        .map(Path::new);
+    let app = "/Applications/we-sync.app";
+    let mac = Path::new(app).join("Contents/MacOS");
+    if parent != Some(mac.join("greenbubbles-history").as_path()) {
         return false;
     }
-    let Ok(exe) = std::env::current_exe() else {
+    let Ok(exe) = std::env::current_exe().and_then(fs::canonicalize) else {
         return false;
     };
-    if exe != PathBuf::from(app).join("Contents/MacOS/greenbubbles")
-        && exe != PathBuf::from(app).join("Contents/MacOS/greenbubbles-sticker-query")
-    {
+    if exe != mac.join("greenbubbles") && exe != mac.join("greenbubbles-sticker-query") {
         return false;
     }
     let Ok(details) = Command::new("/usr/bin/codesign")

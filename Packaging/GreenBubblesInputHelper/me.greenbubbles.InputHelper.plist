@@ -12,7 +12,7 @@
   <key>Label</key>
   <string>me.greenbubbles.InputHelper</string>
   <key>Program</key>
-  <string>/Applications/GreenBubbles.app/Contents/Library/LoginItems/GreenBubblesInputHelper.app/Contents/MacOS/greenbubbles-input-helper</string>
+  <string>/Applications/we-sync.app/Contents/Library/LoginItems/GreenBubblesInputHelper.app/Contents/MacOS/greenbubbles-input-helper</string>
   <key>MachServices</key>
   <dict>
     <key>me.greenbubbles.InputHelper</key>

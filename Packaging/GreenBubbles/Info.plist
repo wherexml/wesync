@@ -19,9 +19,9 @@
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>WeSync</string>
+  <string>we-sync</string>
   <key>CFBundleDisplayName</key>
-  <string>WeSync</string>
+  <string>we-sync</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

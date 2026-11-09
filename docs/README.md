@@ -1,6 +1,6 @@
-# WeSync documentation
+# we-sync documentation
 
-WeSync reads your own WeChat history on your Mac and lets you choose
+we-sync reads your own WeChat history on your Mac and lets you choose
 which parts, if any, an AI gets to see. Start with the
 [repository README](../README.md). Use this page to find the right guide next.
 
@@ -9,7 +9,7 @@ which parts, if any, an AI gets to see. Start with the
 | I want to… | Read |
 | --- | --- |
 | Install the command-line tool or check a download | [CLI releases and Homebrew](HOMEBREW.md) |
-| Set up the key WeSync needs | [Key setup guide](PASSPHRASE_ACQUISITION.md) |
+| Set up the key we-sync needs | [Key setup guide](PASSPHRASE_ACQUISITION.md) |
 | Install and browse my history | [User guide](USER_GUIDE.md) |
 | Set up the Mac app on first launch | [First-run setup](FIRST_RUN_SETUP.md) |
 | Have my coding agent write notes from my chats | [Agent skills](AGENT_SKILLS.md) |
@@ -46,9 +46,9 @@ which parts, if any, an AI gets to see. Start with the
 - [Key setup guide](PASSPHRASE_ACQUISITION.md): copying the database key from
   your own WeChat app, checking it, and fixing problems.
 
-## Using WeSync with AI
+## Using we-sync with AI
 
-- [Agent skills](AGENT_SKILLS.md): use WeSync from the coding agent you
+- [Agent skills](AGENT_SKILLS.md): use we-sync from the coding agent you
   already have (Claude Code, Codex, and others), including keeping notes up to
   date.
 - [Personal memory](PERSONAL_MEMORY.md): how the agent turns your chats into a
@@ -61,16 +61,16 @@ which parts, if any, an AI gets to see. Start with the
 - [AI memory integration](AI_MEMORY_INTEGRATION.md): feeding cited messages into
   local memory and search systems.
 - [Connector API](CONNECTOR_API.md): the request and response format for
-  programs that integrate with WeSync.
+  programs that integrate with we-sync.
 
 ## How it works
 
-- [Architecture](ARCHITECTURE.md): why WeSync reads WeChat's data in
+- [Architecture](ARCHITECTURE.md): why we-sync reads WeChat's data in
   place instead of exporting all of it, with the measurements behind that
   choice.
 - [Database format](WECHAT_DATABASE_FORMAT.md): the live directory layout, table discovery, message fields, media, XML, and CLI normalization.
 - [Storage format](STORAGE_FORMAT.md): what WeChat 4.1 writes to disk, how much
-  of it WeSync understands, and how gaps are reported.
+  of it we-sync understands, and how gaps are reported.
 - [Restoration specification](RESTORATION_SPEC.md): the full, lossless export
   format.
 - [Replica specification](REPLICA_SPEC.md) and
@@ -83,7 +83,7 @@ which parts, if any, an AI gets to see. Start with the
   date, and method, and what it doesn't prove.
 - [Auditing](AUDITING.md): independently checking exports, replicas, backups,
   key captures, and the AI access log.
-- [Known limitations](KNOWN_LIMITATIONS.md): everything WeSync doesn't
+- [Known limitations](KNOWN_LIMITATIONS.md): everything we-sync doesn't
   support or hasn't proven yet, in one place.
 - [Operational response plan](OPERATIONAL_RESPONSE_PLAN.md): what to do if a
   key, a backup, or a Mac is compromised.
@@ -93,7 +93,7 @@ which parts, if any, an AI gets to see. Start with the
 
 ## Safety boundaries
 
-- [Threat model](THREAT_MODEL.md): what WeSync protects, from whom, and
+- [Threat model](THREAT_MODEL.md): what we-sync protects, from whom, and
   what it doesn't try to do.
 - [Action safety contract](ACTION_SAFETY_CONTRACT.md): the rules any action
   visible to other people would have to follow.
@@ -103,7 +103,7 @@ which parts, if any, an AI gets to see. Start with the
 ## Where it's going
 
 - [Roadmap](ROADMAP.md): what's next, and what each step must prove first.
-- [Comparison](COMPARISON.md): how WeSync differs from WeChat export and
+- [Comparison](COMPARISON.md): how we-sync differs from WeChat export and
   forensic tools, including when those are the better choice.
 
 ## Old documents
@@ -121,4 +121,4 @@ notes for the record. They may be out of date; read
 
 - [图片消息对齐](IMAGE_ALIGNMENT.md)：缩略图边界、与同侧文字气泡的对齐规则及原生验收证据。
 
-- [WeSync rename](WESYNC_RENAME.md): display name, repository, legacy paths and permission continuity.
+- [we-sync rename](WESYNC_RENAME.md): display name, repository, legacy paths and permission continuity.

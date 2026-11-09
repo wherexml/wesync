@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage a signed WeSync presentation update without changing connection tools.
+"""Stage a signed we-sync presentation update without changing connection tools.
 
 An optional rebuilt main executable may update UI copy. Never installs or
 touches connection data, and requires the installed signing identity.
@@ -32,7 +32,7 @@ def requirement(app):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', type=Path, default=Path('/Applications/WeSync.app'))
+    parser.add_argument('--source', type=Path, default=Path('/Applications/we-sync.app'))
     parser.add_argument('--main-executable', type=Path,
                         help='Optional rebuilt greenbubbles-history; all helpers stay unchanged')
     parser.add_argument('--output', required=True, type=Path)
@@ -50,7 +50,7 @@ def main():
                 for p in source.rglob('*') if p.is_file()}
     output.mkdir(parents=True, mode=0o700)
     baseline = output / 'Baseline.app'
-    candidate = output / 'WeSync.app'
+    candidate = output / 'we-sync.app'
     # ditto preserves macOS metadata. The baseline also proves stable identity
     # across two different resource envelopes; both copies stay outside /Applications.
     for target in (baseline, candidate):
@@ -63,8 +63,8 @@ def main():
     plist = candidate / 'Contents/Info.plist'
     info = plistlib.loads(plist.read_bytes())
     info['CFBundleIconFile'] = 'GreenBubbles'
-    info['CFBundleName'] = 'WeSync'
-    info['CFBundleDisplayName'] = 'WeSync'
+    info['CFBundleName'] = 'we-sync'
+    info['CFBundleDisplayName'] = 'we-sync'
     info['CFBundleVersion'] = str(int(info['CFBundleVersion']) + 1)
     plist.write_bytes(plistlib.dumps(info))
     for target in (baseline, candidate):

@@ -290,8 +290,7 @@ final class HistoryBrowserModel {
       isDirectory: true)
   ) {
     let candidates = [
-      Bundle.main.executableURL?.deletingLastPathComponent().appending(
-        path: "greenbubbles"),
+      HistoryRememberedConnection.bundledReadTool,
       URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         .appending(path: "Native/GreenBubbles/target/debug/greenbubbles"),
     ].compactMap { $0 }
@@ -310,7 +309,9 @@ final class HistoryBrowserModel {
     if let rememberedCLI = defaults.string(forKey: "history.direct.executablePath"),
       FileManager.default.isExecutableFile(atPath: rememberedCLI)
     {
-      liveExecutablePath = rememberedCLI
+      let executable = URL(fileURLWithPath: rememberedCLI)
+      liveExecutablePath =
+        HistoryRememberedConnection.bundledReadTool(matching: executable)?.path ?? rememberedCLI
     }
     if let rememberedSource = defaults.string(forKey: "history.direct.sourcePath") {
       directSourcePath = rememberedSource
@@ -624,7 +625,9 @@ final class HistoryBrowserModel {
     } else {
       effectiveLocalCredentialURL = localCredentialURL
     }
-    liveExecutablePath = executableURL.standardizedFileURL.path
+    let executable =
+      HistoryRememberedConnection.bundledReadTool(matching: executableURL) ?? executableURL
+    liveExecutablePath = executable.standardizedFileURL.path
     directSourcePath = sourceURL.standardizedFileURL.path
     directAccessMode = accessMode
     directRecoveryKitPath = recoveryKitURL?.standardizedFileURL.path ?? directRecoveryKitPath
@@ -633,7 +636,7 @@ final class HistoryBrowserModel {
         localCredentialURL?.standardizedFileURL.path ?? directLocalCredentialPath
     }
     let configuration = HistoryDirectConfiguration(
-      executableURL: executableURL,
+      executableURL: executable,
       sourceURL: sourceURL,
       accessMode: accessMode,
       recoveryKitURL: recoveryKitURL,

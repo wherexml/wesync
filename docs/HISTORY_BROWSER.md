@@ -236,7 +236,7 @@ bookmarks. The Rust engine stays the source of truth; the Swift app consumes
 its stable bounded-JSON and explicit JSONL contracts.
 
 The release uses the same Swift Package executables exercised by the tests.
-`scripts/package-send-helper.sh` assembles them into `GreenBubbles.app`, embeds
+`scripts/package-send-helper.sh` assembles them into `we-sync.app`, embeds
 the matching Rust `greenbubbles` CLI and the privilege-separated input helper,
 adds the icon, notices, SBOM and build provenance, then signs every executable
 inside-out with Developer ID and Hardened Runtime. The release workflow submits

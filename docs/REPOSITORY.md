@@ -2,7 +2,7 @@
 
 - GitHub：`https://github.com/wherexml/wesync`，初始化为 Private。未经明确要求，不改为公开。
 - `origin`：上述私有仓库；`upstream`：`https://github.com/bojieli/greenbubbles.git`。
-- 保留 GreenBubbles Git 历史、原始许可和归属信息；应用展示名为 WeSync；bundle identifier、签名和底层 CLI 身份继续沿用。改名边界见 [WESYNC_RENAME.md](WESYNC_RENAME.md)。
+- 保留 GreenBubbles Git 历史、原始许可和归属信息。应用展示名为 `we-sync`，沿用 Bundle ID、签名和底层 CLI 身份。改名边界见 [WESYNC_RENAME.md](WESYNC_RENAME.md)。
 - 提交当前源码、品牌资源、模块文档和脱敏验收记录；本机安装目录、数据库、密钥、缓存及未经复核的原生截图不上传。已经跟踪的合成时间线截图保留。
 - 2026-10-17 起按用户要求关闭此仓库 GitHub Actions；推送与 PR 不再运行云端 CI，现有发布/Homebrew 自动化也暂停。先运行 `python3 scripts/local-ci.py`，本机全部通过后再提交推送；范围与证据见 [LOCAL_CI.md](LOCAL_CI.md)。不推送 release tags。
 - 初始化不代表新增应用功能通过验收，也不重新安装应用；各模块已有安装与重启证据、待验项以对应文档为准。

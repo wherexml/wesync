@@ -5829,7 +5829,7 @@ fn send_config_template() -> Result<String, Box<dyn std::error::Error>> {
         "draftDirectory": format!("{home}/.greenbubbles/drafts"),
         "helper": {
             "dispatcherExecutable":
-                "/Applications/GreenBubbles.app/Contents/MacOS/greenbubbles-send",
+                "/Applications/we-sync.app/Contents/MacOS/greenbubbles-send",
             "dispatcherArguments": [],
             "machServiceName": "me.greenbubbles.InputHelper",
             "statusTimeoutMilliseconds": 5000,

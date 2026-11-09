@@ -1,4 +1,4 @@
-# WeSync 品牌与图标
+# we-sync 品牌与图标
 
 2026-10-02：采用用户提供的 `01-twin-bots.svg`。原稿原样保存在
 `assets/greenbubbles-twin-bots.svg`，两个机器人的路径和绿色不变。
@@ -19,6 +19,6 @@
 
 获得稳定合法签名并验证权限迁移后，打包安装，再通过原生 UI 退出和重开应用，确认无需密钥自动连接，检查 Dock/Finder 产品图标、菜单栏亮暗外观与菜单打开行为。所有步骤通过后才可记录交付完成。
 
-## WeSync 展示名称
+## we-sync 展示名称
 
-2026-10-16 起应用及发行 App/DMG 名为 WeSync；原有双机器人图标、资源文件名和底层身份保持兼容。菜单栏、侧栏、欢迎页无障碍标签使用 WeSync。签名、旧路径兼容及验收以 [WESYNC_RENAME.md](WESYNC_RENAME.md) 和 [LOCAL_SIGNING.md](LOCAL_SIGNING.md) 的最新记录为准，以上 build 7/8 的等待状态仅为历史记录。
+应用及发行 App/DMG 名为 `we-sync`，内置工具在只读连接设置中同样显示该名称。菜单栏、侧栏及欢迎页无障碍标签沿用统一名称。签名、旧路径兼容及重启验收见 [改名规范](WESYNC_RENAME.md) 和 [本机签名](LOCAL_SIGNING.md)。

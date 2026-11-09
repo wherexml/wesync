@@ -94,7 +94,7 @@ private struct HistoryWelcomeView: View {
       Spacer()
       Image(nsImage: HistoryApplicationDelegate.menuIcon)
         .resizable().scaledToFit().frame(width: 112, height: 112)
-        .foregroundStyle(.primary).accessibilityLabel("WeSync")
+        .foregroundStyle(.primary).accessibilityLabel(HistoryBrand.name)
       VStack(spacing: 8) {
         Text("查看你的微信聊天记录")
           .font(.system(size: 28, weight: .semibold, design: .rounded))
@@ -123,7 +123,7 @@ private struct HistoryWelcomeView: View {
       welcomeAction(
         "打开已导出的聊天记录…", icon: "folder.badge.plus",
         explanation:
-          "打开由 WeSync / GreenBubbles 导出的聊天记录文件夹，离线浏览其中的会话和附件。请选择完整的导出文件夹；本机微信数据库或加密备份请使用上方的连接按钮。",
+          "打开由 we-sync 导出的聊天记录文件夹，离线浏览其中的会话和附件。请选择完整的导出文件夹；本机微信数据库或加密备份请使用上方的连接按钮。",
         action: openBundle)
 
       if let errorMessage {

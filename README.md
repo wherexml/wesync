@@ -1,8 +1,8 @@
-# WeSync
+# we-sync
 
-<p align="center"><img src="assets/greenbubbles-icon.svg" width="132" alt="WeSync icon"></p>
+<p align="center"><img src="assets/greenbubbles-icon.svg" width="132" alt="we-sync icon"></p>
 
-WeSync 是 macOS 上的本地微信记录浏览与 AI 上下文工具，基于 [GreenBubbles](https://github.com/bojieli/greenbubbles) 开发。当前私有开发仓库为 [wherexml/wesync](https://github.com/wherexml/wesync)，保留上游 Git 历史、MIT 许可与归属。
+we-sync 是 macOS 上的本地微信记录浏览与 AI 上下文工具，基于 [GreenBubbles](https://github.com/bojieli/greenbubbles) 开发。当前私有开发仓库为 [wherexml/wesync](https://github.com/wherexml/wesync)，保留上游 Git 历史、MIT 许可与归属。
 
 ## 当前能力
 
@@ -16,13 +16,13 @@ WeSync 是 macOS 上的本地微信记录浏览与 AI 上下文工具，基于 [
 
 ## 本机安装与升级
 
-当前桌面应用为 `/Applications/WeSync.app`，运行于 Apple silicon、macOS 14 或更高版本。已有安装使用原来的稳定 Apple Development 身份进行本机更新；它与 Developer ID 公证分发是不同流程。
+当前桌面应用为 `/Applications/we-sync.app`，运行于 Apple silicon、macOS 14 或更高版本。已有安装使用原来的稳定 Apple Development 身份进行本机更新；它与 Developer ID 公证分发是不同流程。
 
-应用显示名称为 **WeSync**，底层命令继续使用 `greenbubbles`。Bundle ID、签名证书、连接凭据服务、缓存位置和工具标识保持兼容。旧的 `/Applications/GreenBubbles.app` 为指向 WeSync 的兼容软链接，使原有连接和命令继续可用。
+应用显示名称为 **we-sync**，底层命令继续使用 `greenbubbles`。Bundle ID、签名证书、连接凭据服务、缓存位置和工具标识保持兼容。`/Applications/GreenBubbles.app` 和 `/Applications/WeSync.app` 为指向当前安装的兼容软链接，使原有连接和命令继续可用。
 
-更新必须先暂存签名候选包、核对原身份及工具摘要，再退出应用安装，最后通过原生入口冷启动并验证自动连接。具体步骤见 [本机签名](docs/LOCAL_SIGNING.md) 和 [WeSync 改名规范](docs/WESYNC_RENAME.md)。不要用上游 Homebrew 包覆盖这份本机安装。
+更新必须先暂存签名候选包、核对原身份及工具摘要，再退出应用安装，最后通过原生入口冷启动并验证自动连接。具体步骤见 [本机签名](docs/LOCAL_SIGNING.md) 和 [we-sync 改名规范](docs/WESYNC_RENAME.md)。不要用上游 Homebrew 包覆盖这份本机安装。
 
-本仓库保留上游发行基础设施。上游历史版本标注为 **Developer ID signed and Apple notarized**；该说明不表示当前私有 WeSync 已发布或公证。本次改名不发布标签、DMG 或 Homebrew 包。
+本仓库保留上游发行基础设施。上游历史版本标注为 **Developer ID signed and Apple notarized**；该说明不表示当前私有 we-sync 已发布或公证。本次改名不发布标签、DMG 或 Homebrew 包。
 
 ## 首次打开桌面应用
 
@@ -73,8 +73,8 @@ greenbubbles source status
 | 带引用的个人记忆 | [Personal memory](docs/PERSONAL_MEMORY.md) |
 | 原生界面规范 | [Design system](docs/DESIGN_SYSTEM.md) |
 | 仓库、上游与提交约定 | [Repository](docs/REPOSITORY.md) |
-| 改名与免重复授权验收 | [WeSync rename](docs/WESYNC_RENAME.md) |
+| 改名与免重复授权验收 | [we-sync rename](docs/WESYNC_RENAME.md) |
 
 ## 许可与归属
 
-[MIT](LICENSE)。保留 GreenBubbles 及原作者归属，详见 [NOTICE.md](NOTICE.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。WeSync 为独立项目，与腾讯无隶属或背书关系。
+[MIT](LICENSE)。保留 GreenBubbles 及原作者归属，详见 [NOTICE.md](NOTICE.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。we-sync 为独立项目，与腾讯无隶属或背书关系。
