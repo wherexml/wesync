@@ -61,7 +61,7 @@ let package = Package(
     ),
     .executableTarget(
       name: "GreenBubblesHistoryApp",
-      dependencies: ["GreenBubblesHistory"],
+      dependencies: ["GreenBubblesCore", "GreenBubblesHistory"],
       linkerSettings: [.linkedFramework("Security")]
     ),
     .executableTarget(

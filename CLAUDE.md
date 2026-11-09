@@ -73,3 +73,5 @@ GitHub Actions 已按用户要求停用，日常检查统一先运行 `python3 s
 依赖安全修复不得增加审计豁免；真实黑名单非空时，依赖升级双向快照验收使用 `scripts/dependency-upgrade-isolated.py` 的独立 Docker 账户与断网测试，见 `docs/DEPENDENCY_UPGRADES.md`。
 
 SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；用户要求重置 we-sync 隐私授权时保留钥匙串连接，重新授权后原生冷启动验证。见 [docs/DEPENDENCY_UPGRADES.md](docs/DEPENDENCY_UPGRADES.md) 和 [docs/LOCAL_SIGNING.md](docs/LOCAL_SIGNING.md)。
+
+首次启动的初始化设置先检查本机记录的磁盘访问，再接入原安全连接表单。允许稍后设置，备份和导出记录不依赖完全磁盘访问。旧连接优先自动恢复；权限失效时重新授权后复用钥匙串，见 [docs/FIRST_RUN_SETUP.md](docs/FIRST_RUN_SETUP.md)。

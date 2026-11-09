@@ -30,6 +30,9 @@ struct GreenBubblesHistoryApplication: App {
           .keyboardShortcut("m", modifiers: [.control, .option])
       }
       CommandGroup(replacing: .newItem) {
+        Button("初始化设置…") { model.presentSetupGuide() }
+        Divider()
+
         Button("连接微信记录或备份…") {
           model.presentDirectConnection()
         }

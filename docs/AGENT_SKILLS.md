@@ -48,6 +48,8 @@ CLI 可直接使用已有私有密钥文件。初次没有可用凭据时，由�
 [setup 指引](../skills/we-sync-setup/references/setup.md) 判断是二进制、
 来源选择、凭据还是 macOS 权限问题。
 
+桌面应用首次启动时可跟随[初始化引导](FIRST_RUN_SETUP.md)配置磁盘访问。CLI 仍使用上面的连接检查。
+
 ## 验收与隐私
 
 运行现有安装验收：

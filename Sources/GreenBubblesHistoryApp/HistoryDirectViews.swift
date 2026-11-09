@@ -25,23 +25,25 @@ struct HistoryDirectConnectionSheet: View {
       Divider()
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
-          HistoryAIReadBlacklistSection(model: model, showsHelp: $showsBlacklistHelp)
-          HistorySettingsGroup(title: "会话显示") {
-            HStack(spacing: 8) {
-              Text("联系人和群聊时间范围")
-              Spacer()
-              Picker("联系人和群聊时间范围", selection: $model.conversationRange) {
-                ForEach(HistoryConversationRange.allCases) { range in
-                  Text(range.title).tag(range)
+          if model.isDirectHistoryOpen {
+            HistoryAIReadBlacklistSection(model: model, showsHelp: $showsBlacklistHelp)
+            HistorySettingsGroup(title: "会话显示") {
+              HStack(spacing: 8) {
+                Text("联系人和群聊时间范围")
+                Spacer()
+                Picker("联系人和群聊时间范围", selection: $model.conversationRange) {
+                  ForEach(HistoryConversationRange.allCases) { range in
+                    Text(range.title).tag(range)
+                  }
                 }
+                .labelsHidden()
+                .fixedSize()
+                .accessibilityIdentifier("conversation-time-range")
+                HistoryHelpButton(
+                  title: "会话时间范围说明",
+                  text: "按最近消息时间显示会话，选择后立即生效并自动保存。选择“所有”可查看全部会话。",
+                  presented: $showsRangeHelp)
               }
-              .labelsHidden()
-              .fixedSize()
-              .accessibilityIdentifier("conversation-time-range")
-              HistoryHelpButton(
-                title: "会话时间范围说明",
-                text: "按最近消息时间显示会话，选择后立即生效并自动保存。选择“所有”可查看全部会话。",
-                presented: $showsRangeHelp)
             }
           }
           HistorySettingsGroup {

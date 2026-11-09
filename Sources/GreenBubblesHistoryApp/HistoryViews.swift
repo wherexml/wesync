@@ -33,6 +33,14 @@ struct HistoryRootView: View {
     .background(HistoryDesign.canvas)
     .task {
       #if DEBUG
+        if Bundle.main.bundleIdentifier == "me.greenbubbles.SetupPreview",
+          Bundle.main.object(forInfoDictionaryKey: "GBSetupAcceptance") as? Bool == true
+        {
+          model.setupGuideFixtureSource = Bundle.main.bundleURL.deletingLastPathComponent()
+            .appending(path: "setup-guide-fixture", directoryHint: .isDirectory)
+          model.openStartupBundleIfNeeded()
+          return
+        }
         if [
           "me.greenbubbles.PresentationPreview", "me.greenbubbles.PolishPreview",
           "me.greenbubbles.ChinesePreview", "me.greenbubbles.DarkModePreview",
@@ -60,6 +68,9 @@ struct HistoryRootView: View {
       else { return false }
       model.openBundle(directory)
       return true
+    }
+    .sheet(isPresented: $model.showsSetupGuide, onDismiss: model.finishSetupGuide) {
+      HistorySetupGuide(model: model)
     }
     .sheet(isPresented: $model.showsDirectConnection) {
       HistoryDirectConnectionSheet(model: model)

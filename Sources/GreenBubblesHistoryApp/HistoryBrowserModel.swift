@@ -1,6 +1,7 @@
 import AppKit
 import CryptoKit
 import Foundation
+import GreenBubblesCore
 import GreenBubblesHistory
 import Observation
 import PDFKit
@@ -100,6 +101,17 @@ final class HistoryBrowserModel {
   var liveAuditPath = ""
   var showsDirectConnection = false
   var showsSnapshotCreation = false
+  var showsSetupGuide = false
+  private static let setupDeferredKey = "history.setupGuide.deferred"
+  private var setupRecoverySource: URL?
+  private enum SetupContinuation {
+    case connect(URL?)
+    case restore
+  }
+  private var setupContinuation: SetupContinuation?
+  #if DEBUG
+    var setupGuideFixtureSource: URL?
+  #endif
   var directCategoryOverrides: [String: String] = [:]
   var directChatCategory = "personal"
   var rememberDirectConnection = true
@@ -495,6 +507,57 @@ final class HistoryBrowserModel {
     showsDirectConnection = true
   }
 
+  var setupGuideSource: URL? {
+    #if DEBUG
+      if let setupGuideFixtureSource { return setupGuideFixtureSource }
+    #endif
+    if let setupRecoverySource { return setupRecoverySource }
+    guard directAccessMode == .liveEncrypted, directSourcePath.hasPrefix("/") else { return nil }
+    return URL(fileURLWithPath: directSourcePath, isDirectory: true)
+  }
+
+  var setupGuideWillRestoreConnection: Bool { setupRecoverySource != nil }
+
+  func presentSetupGuide() {
+    guard !showsDirectConnection, !showsSnapshotCreation, !isDirectConnecting else { return }
+    showsSetupGuide = true
+  }
+
+  func deferSetupGuide() {
+    UserDefaults.standard.set(true, forKey: Self.setupDeferredKey)
+    showsSetupGuide = false
+  }
+
+  func continueSetupGuide(access: WeChatLocalDatabaseAccess) {
+    switch access {
+    case .permissionRequired: return
+    case .readable(let source):
+      setupContinuation = setupGuideWillRestoreConnection ? .restore : .connect(source)
+    case .sourceUnavailable: setupContinuation = .connect(nil)
+    }
+    showsSetupGuide = false
+  }
+
+  func finishSetupGuide() {
+    let continuation = setupContinuation
+    setupContinuation = nil
+    switch continuation {
+    case .connect(let source):
+      if let source, directSourcePath.isEmpty {
+        directSourcePath = source.path
+        directAccessMode = .liveEncrypted
+      }
+      presentDirectConnection()
+    case .restore:
+      guard setupRecoverySource != nil, directStatus == nil, session == nil else { return }
+      setupRecoverySource = nil
+      clearDirectState()
+      libraryError = nil
+      restoreRememberedConnection()
+    case nil: break
+    }
+  }
+
   func presentSnapshotCreation() {
     libraryError = nil
     showsSnapshotCreation = true
@@ -627,6 +690,7 @@ final class HistoryBrowserModel {
         try Task.checkCancellation()
         guard activeDirectLoadID == loadID, directConfiguration == configuration else { return }
         directStatus = status
+        setupRecoverySource = nil
         enqueueChangedBodies(page.items)
         conversationRefreshItems = page.items
         let freshIDs = Set(page.items.map(\.id))
@@ -656,12 +720,27 @@ final class HistoryBrowserModel {
         if activeDirectLoadID == loadID { isDirectConnecting = false }
       } catch {
         guard activeDirectLoadID == loadID else { return }
+        let needsAccess: Bool
+        if restoring && accessMode == .liveEncrypted {
+          needsAccess = await Task.detached(priority: .utility) {
+            WeChatAccountDiscovery().localDatabaseAccess(preferredRoot: configuration.sourceURL)
+              == .permissionRequired
+          }.value
+        } else {
+          needsAccess = false
+        }
+        guard !Task.isCancelled, activeDirectLoadID == loadID else { return }
         isDirectConnecting = false
         libraryError = historyUserError(error)
         if directConversations.isEmpty {
           clearDirectState()
         } else {
           directConversationError = "连接暂不可用，显示本地缓存。"
+        }
+        if needsAccess {
+          setupRecoverySource = configuration.sourceURL
+          libraryError = "无法读取本机记录，请在初始化设置中检查磁盘访问。"
+          presentSetupGuide()
         }
       }
     }
@@ -1257,12 +1336,26 @@ final class HistoryBrowserModel {
   func openStartupBundleIfNeeded() {
     guard !processedStartupBundle else { return }
     processedStartupBundle = true
+    #if DEBUG
+      if setupGuideFixtureSource != nil {
+        showSetupGuideForNewUser()
+        return
+      }
+    #endif
     guard let pendingStartupBundleURL else {
       restoreRememberedConnection()
+      showSetupGuideForNewUser()
       return
     }
     self.pendingStartupBundleURL = nil
     openBundle(pendingStartupBundleURL)
+  }
+
+  private func showSetupGuideForNewUser() {
+    guard directConfiguration == nil, directSourcePath.isEmpty, libraryError == nil,
+      !UserDefaults.standard.bool(forKey: Self.setupDeferredKey)
+    else { return }
+    presentSetupGuide()
   }
 
   func restoreRememberedConnection() {
@@ -1284,6 +1377,7 @@ final class HistoryBrowserModel {
   }
 
   func forgetRememberedConnection() {
+    setupRecoverySource = nil
     if let url = persistentHistory?.url { try? FileManager.default.removeItem(at: url) }
     persistentHistory = nil
     rememberDirectConnection = false
@@ -1303,6 +1397,9 @@ final class HistoryBrowserModel {
   }
 
   func openBundle(_ url: URL) {
+    setupContinuation = nil
+    setupRecoverySource = nil
+    showsSetupGuide = false
     clearDirectState()
     showsDirectConnection = false
     loadTask?.cancel()

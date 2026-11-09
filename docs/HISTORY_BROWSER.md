@@ -5,6 +5,11 @@ database key, never runs an agent server, and cannot send anything. For setup
 and daily use start with the [user guide](USER_GUIDE.md); this document is the
 implementation and its trust boundaries.
 
+The [first-run guide](FIRST_RUN_SETUP.md) checks local file access before opening
+the direct connection form. A remembered connection is restored first. If its
+source is no longer readable due to permissions, the guide can retry that same
+connection after access is restored.
+
 ## Two source modes
 
 **Direct** — bounded queries against live WeChat databases or a GreenBubbles

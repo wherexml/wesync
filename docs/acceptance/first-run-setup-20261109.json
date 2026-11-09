@@ -1,0 +1,43 @@
+{
+  "previousBuild": 60,
+  "installedBuild": 61,
+  "sameSigningIdentity": true,
+  "queryAndSendToolsUnchanged": true,
+  "originalAppBackedUp": true,
+  "wechatProcessUnchanged": true,
+  "coldStart": "PASS",
+  "completedAt": "2026-11-09T21:03:16+08:00",
+  "coldStartsWithoutKey": 2,
+  "existingConnectionSkippedGuide": true,
+  "manualGuideRecognizedExistingAccess": true,
+  "installedTimelineRead": true,
+  "installedRefresh": {
+    "parentWasInstalledApp": true,
+    "directoryQuery": true,
+    "selectedConversationQuery": true,
+    "bothQueriesExited": true
+  },
+  "tccChangedDuringUpgrade": false,
+  "firstLaunchPreview": {
+    "permissionDeniedBlocksContinue": true,
+    "opensFullDiskAccessPane": true,
+    "returnsFromSettingsAndAutomaticallyRechecks": true,
+    "continuesToSecureConnectionForm": true,
+    "uniqueSourcePrefilled": true,
+    "deferralSurvivesColdStart": true,
+    "backupAndExportEntriesAvailable": true,
+    "missingLocalSourceAllowsManualSelection": true,
+    "manualRecheckWorks": true,
+    "usesSyntheticAccessChangesOnly": true
+  },
+  "ci": {
+    "status": "PASS",
+    "count": 23
+  },
+  "noCredentialsOrChatContentsRecorded": true,
+  "repeat": "docs/FIRST_RUN_SETUP.md",
+  "scope": {
+    "onboardingPermissionChanges": "synthetic fixture",
+    "installedColdStartAndRefresh": "same-signed local build with existing access"
+  }
+}

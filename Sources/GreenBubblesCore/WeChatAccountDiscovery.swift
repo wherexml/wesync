@@ -1,4 +1,11 @@
+import Darwin
 import Foundation
+
+public enum WeChatLocalDatabaseAccess: Equatable, Sendable {
+  case readable(URL?)
+  case permissionRequired
+  case sourceUnavailable
+}
 
 public struct WeChatAccountLocation: Codable, Equatable, Sendable {
   public let accountID: String
@@ -46,6 +53,58 @@ public struct WeChatAccountDiscovery: Sendable {
 
   public func accountRoot(accountID: String) -> URL? {
     resolvedAccounts().first { $0.report.accountID == accountID }?.root
+  }
+
+  /// Checks access to the core files without reading bytes, acquiring a key, or opening SQLite.
+  public func localDatabaseAccess(preferredRoot: URL? = nil) -> WeChatLocalDatabaseAccess {
+    if let preferredRoot { return checkDatabaseAccess(at: preferredRoot) }
+
+    let manager = FileManager.default
+    var readableRoots = Set<URL>()
+    var needsPermission = false
+    for container in xwechatFileRoots(fileManager: manager) {
+      do {
+        let children = try manager.contentsOfDirectory(
+          at: container, includingPropertiesForKeys: [.isDirectoryKey], options: .skipsHiddenFiles)
+        for account in children where safeDirectory(account) {
+          let root = account.appending(path: "db_storage", directoryHint: .isDirectory)
+          switch checkDatabaseAccess(at: root) {
+          case .readable: readableRoots.insert(root.standardizedFileURL)
+          case .permissionRequired: needsPermission = true
+          case .sourceUnavailable: break
+          }
+        }
+      } catch {
+        let failure = error as NSError
+        let underlying = failure.userInfo[NSUnderlyingErrorKey] as? NSError
+        if (failure.domain == NSCocoaErrorDomain && failure.code == NSFileReadNoPermissionError)
+          || [failure, underlying].compactMap({ $0 }).contains(where: {
+            $0.domain == NSPOSIXErrorDomain && [Int(EACCES), Int(EPERM)].contains($0.code)
+          })
+        {
+          needsPermission = true
+        }
+      }
+    }
+    if !readableRoots.isEmpty {
+      return .readable(readableRoots.count == 1 && !needsPermission ? readableRoots.first : nil)
+    }
+    return needsPermission ? .permissionRequired : .sourceUnavailable
+  }
+
+  private func checkDatabaseAccess(at root: URL) -> WeChatLocalDatabaseAccess {
+    for relative in ["session/session.db", "contact/contact.db"] {
+      let file = root.appending(path: relative)
+      let descriptor = Darwin.open(file.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK)
+      guard descriptor >= 0 else {
+        return errno == EACCES || errno == EPERM ? .permissionRequired : .sourceUnavailable
+      }
+      var info = stat()
+      let regular = fstat(descriptor, &info) == 0 && (info.st_mode & S_IFMT) == S_IFREG
+      Darwin.close(descriptor)
+      guard regular else { return .sourceUnavailable }
+    }
+    return .readable(root)
   }
 
   struct ResolvedAccount: Sendable {
@@ -121,9 +180,7 @@ public struct WeChatAccountDiscovery: Sendable {
     }
 
     var seen = Set<String>()
-    return candidates.filter {
-      fileManager.fileExists(atPath: $0.path) && seen.insert($0.standardizedFileURL.path).inserted
-    }
+    return candidates.filter { seen.insert($0.standardizedFileURL.path).inserted }
   }
 
   private func safeDirectory(_ url: URL) -> Bool {

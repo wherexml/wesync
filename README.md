@@ -24,6 +24,14 @@ WeSync 是 macOS 上的本地微信记录浏览与 AI 上下文工具，基于 [
 
 本仓库保留上游发行基础设施。上游历史版本标注为 **Developer ID signed and Apple notarized**；该说明不表示当前私有 WeSync 已发布或公证。本次改名不发布标签、DMG 或 Homebrew 包。
 
+## 首次打开桌面应用
+
+1. 在「初始化设置」中检查本机微信记录是否可读。如果显示「需要授权」，点击「打开系统设置」，在「隐私与安全性 → 完全磁盘访问权限」里添加并开启当前应用。
+2. 返回应用，等状态更新为「可读取」后点击「继续连接」。如果未找到记录，可手动选择 `db_storage`；多个账户需自行确认对应目录。
+3. 在安全输入框输入已有的数据库密钥并连接。勾选「记住此连接，下次启动自动打开」后，应用会从本机钥匙串恢复该连接。
+
+只想打开已有备份或导出的记录时，可选择「稍后设置」。之后可以从「文件 → 初始化设置…」重新打开引导。已有连接的用户启动后会直接进入记录；如果系统权限被撤销，恢复访问后可用原连接重试。[首次设置与复验](docs/FIRST_RUN_SETUP.md)
+
 ## 从源码构建
 
 需要 Swift 6、Xcode 命令行工具和 Rust：
@@ -58,6 +66,7 @@ greenbubbles source status
 | 目的 | 文档 |
 | --- | --- |
 | 浏览与使用 | [用户指南](docs/USER_GUIDE.md) |
+| 首次启动、磁盘权限与连接恢复 | [首次设置](docs/FIRST_RUN_SETUP.md) |
 | 模块入口与完整索引 | [文档索引](docs/README.md) |
 | CLI 命令 | [CLI reference](docs/CLI_REFERENCE.md) |
 | Agent 接入 | [Agent skills](docs/AGENT_SKILLS.md) |
