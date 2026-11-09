@@ -12,6 +12,7 @@ which parts, if any, an AI gets to see. Start with the
 | Set up the key we-sync needs | [Key setup guide](PASSPHRASE_ACQUISITION.md) |
 | Install and browse my history | [User guide](USER_GUIDE.md) |
 | Set up the Mac app on first launch | [First-run setup](FIRST_RUN_SETUP.md) |
+| Preview or deploy the product homepage | [Website](WEBSITE.md) |
 | Have my coding agent write notes from my chats | [Agent skills](AGENT_SKILLS.md) |
 | Understand how those notes are organized | [Personal memory](PERSONAL_MEMORY.md) |
 | Give an AI access to only some chats | [Give an AI access to only some chats](AI_CONTEXT_CLI.md), then [AI tool boundary](AI_TOOL_BOUNDARY.md) |

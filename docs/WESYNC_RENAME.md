@@ -1,6 +1,6 @@
 # we-sync 改名与兼容边界
 
-应用、内置读取工具的界面名称和发行包统一使用 `we-sync`。安装路径为 `/Applications/we-sync.app`。项目源自 GreenBubbles，私有仓库仍为 `wherexml/wesync`，沿用上游历史、MIT 许可与归属。
+应用、内置读取工具的界面名称和发行包统一使用 `we-sync`。安装路径为 `/Applications/we-sync.app`。项目源自 GreenBubbles，源码仓库为 `wherexml/wesync`，沿用上游历史、MIT 许可与归属。
 
 ## 实施前的失败场景
 

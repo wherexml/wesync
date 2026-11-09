@@ -1,6 +1,6 @@
 # 本机检查
 
-2026-10-17 起，私有仓库 `wherexml/wesync` 停用 GitHub Actions，推送和 PR 不再启动云端 CI。Swift、Rust、macOS 构建及合成 E2E 在本机运行。发布和 Homebrew 工作流保留，仓库级 Actions 关闭期间也暂停；重新启用须经用户要求。
+2026-10-17 起，仓库 `wherexml/wesync` 停用 GitHub Actions，推送和 PR 不再启动云端 CI。Swift、Rust、macOS 构建及合成 E2E 在本机运行。发布和 Homebrew 工作流保留，仓库级 Actions 关闭期间也暂停；重新启用须经用户要求。
 
 ## 实施前失败场景
 
@@ -39,7 +39,7 @@ gh api repos/wherexml/wesync/actions/permissions
 gh run list --repo wherexml/wesync --limit 5
 ```
 
-权限返回 `enabled: false`。关闭范围仅为此私有仓库，不修改账户套餐、预算或其他仓库。远端旧失败记录保留为历史，不再要求 GitHub `test` 状态作为日常交付门槛。
+权限返回 `enabled: false`。关闭范围仅为此仓库，不修改账户套餐、预算或其他仓库。远端旧失败记录保留为历史，不再要求 GitHub `test` 状态作为日常交付门槛。
 
 2026-10-17 合并依赖 PR 时，GitHub 仍记录 `workflowName: Dependabot Updates`、`event: dynamic` 的机器人分支更新。这不表示仓库 CI 被重新开启，也不能替代本机检查；检查新记录时同时核对工作流名称和事件，而非仅判断 run 列表是否变化。仓库权限仍须为 `enabled: false`，不得恢复 push/PR CI。
 

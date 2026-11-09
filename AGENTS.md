@@ -61,7 +61,7 @@ AI 读取黑名单位于高级设置的“会话显示”之前，支持个人/�
 
 同身份更新免重复授权的 build 36 → 37 实机冷启动与刷新验收见 `docs/LOCAL_SIGNING.md`、`docs/acceptance/reconnect-upgrade-20261016.json`；普通更新不得重新迁移签名身份，CLI 改动仍需摘要迁移及重启验收。
 
-应用及内置工具显示名为 `we-sync`，安装到 `/Applications/we-sync.app`。私有仓库为 `wherexml/wesync`。保留原 Bundle ID、证书、凭据及 CLI/helper 身份，旧安装路径使用兼容软链接。改名、打包与重启验收见 [docs/WESYNC_RENAME.md](docs/WESYNC_RENAME.md)。
+应用及内置工具显示名为 `we-sync`，安装到 `/Applications/we-sync.app`。源码仓库为 `wherexml/wesync`。保留原 Bundle ID、证书、凭据及 CLI/helper 身份，旧安装路径使用兼容软链接。改名、打包与重启验收见 [docs/WESYNC_RENAME.md](docs/WESYNC_RENAME.md)。
 
 高级设置使用紧凑分组与可折叠连接配置，已连接时默认折叠并以“完成”关闭；首次连接默认展开。标题与操作栏固定，详见 `docs/DESIGN_SYSTEM.md`。
 
@@ -88,3 +88,5 @@ GitHub Actions 已按用户要求停用，日常检查统一先运行 `python3 s
 SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；仅在用户明确要求时对 we-sync 和自带输入助手执行应用级 TCC 重置，保留钥匙串连接。验收见 [docs/DEPENDENCY_UPGRADES.md](docs/DEPENDENCY_UPGRADES.md) 和 [docs/LOCAL_SIGNING.md](docs/LOCAL_SIGNING.md)。
 
 首次启动的初始化设置先检查本机记录的磁盘访问，再接入原安全连接表单。允许稍后设置，备份和导出记录不依赖完全磁盘访问。旧连接优先自动恢复；权限失效时重新授权后复用钥匙串，见 [docs/FIRST_RUN_SETUP.md](docs/FIRST_RUN_SETUP.md)。
+
+产品首页位于 `website/`。Cloudflare Pages 仅上传静态站点文件，交互预览使用合成会话。部署和线上验收见 [docs/WEBSITE.md](docs/WEBSITE.md)。

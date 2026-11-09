@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#090b0a">
+  <meta name="description" content="we-sync 是 macOS 上的本地微信聊天记录浏览工具。搜索会话、打开附件，自行决定 AI 可以读取哪些会话。">
+  <meta property="og:title" content="we-sync · Mac 上的微信记录浏览器">
+  <meta property="og:description" content="在 Mac 上浏览和搜索你的微信记录。">
+  <title>we-sync · Mac 上的微信记录浏览器</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/demo.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="top">
+    <nav class="nav" aria-label="主导航">
+      <a class="wordmark" href="#"><img src="assets/icon.svg" width="26" height="26" alt="">we-sync</a>
+      <div class="nav-links">
+        <a href="#preview">预览</a>
+        <a href="#privacy">隐私</a>
+      </div>
+      <a class="nav-source" href="https://github.com/wherexml/wesync">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <h1 id="hero-title">在 Mac 上<br>浏览<span>微信记录</span></h1>
+      <p>查找聊天、打开附件，按会话控制 AI 的读取范围。</p>
+      <div class="hero-actions">
+        <a class="primary" href="https://github.com/wherexml/wesync#从源码构建">从源码构建 <span aria-hidden="true">↗</span></a>
+        <a class="secondary" href="#preview">试试预览 <span aria-hidden="true">↓</span></a>
+      </div>
+      <p class="requirements">Apple 芯片 · macOS 14 或更新版本</p>
+    </section>
+
+    <section class="preview wrap" id="preview" aria-labelledby="preview-title">
+      <figure>
+        <div class="window">
+          <div class="window-bar">
+            <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+            <span id="preview-title">we-sync</span>
+            <span class="sample">合成数据</span>
+          </div>
+          <div class="workspace">
+            <div class="sidebar">
+              <label class="search" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>
+                <input type="search" aria-label="搜索示例会话和消息" placeholder="搜索聊天">
+              </label>
+              <div id="conversations" class="conversations">
+                <div class="conversation active"><span class="avatar mint">林</span><span><b>林溪</b><small>我把路线发你了。</small></span></div>
+                <div class="conversation"><span class="avatar blue">周</span><span><b>周末散步</b><small>集合时间定在上午十点。</small></span></div>
+                <div class="conversation"><span class="avatar rose">阿</span><span><b>阿澄</b><small>书在我这里，下次带给你。</small></span></div>
+              </div>
+            </div>
+            <div class="timeline" id="timeline" aria-live="polite">
+              <article class="chat">
+                <div class="chat-head"><span class="avatar mint">林</span><h2>林溪</h2></div>
+                <div class="messages">
+                  <div class="time">周六 09:41</div>
+                  <p class="bubble">明天还是在公园东门见吗？</p>
+                  <p class="bubble sent">对，到了我们先去喝杯咖啡。</p>
+                  <p class="bubble">好，我把路线发你了。</p>
+                  <p class="file"><span class="file-icon" aria-hidden="true">PDF</span><span><b>周末路线.pdf</b><small>路线与集合地点</small></span></p>
+                </div>
+              </article>
+              <article class="chat" hidden>
+                <div class="chat-head"><span class="avatar blue">周</span><h2>周末散步</h2></div>
+                <div class="messages">
+                  <div class="time">周五 16:20</div>
+                  <p class="bubble">天气预报说周日放晴。</p>
+                  <p class="bubble sent">那我们带上相机吧。</p>
+                  <p class="bubble">好，集合时间定在上午十点。</p>
+                </div>
+              </article>
+              <article class="chat" hidden>
+                <div class="chat-head"><span class="avatar rose">阿</span><h2>阿澄</h2></div>
+                <div class="messages">
+                  <div class="time">周四 18:07</div>
+                  <p class="bubble sent">上次说的那本书还在你那吗？</p>
+                  <p class="bubble">在我这里，下次带给你。</p>
+                </div>
+              </article>
+              <p class="empty" hidden>没有找到匹配的聊天</p>
+            </div>
+          </div>
+        </div>
+      </figure>
+    </section>
+
+    <section class="features wrap" id="privacy" aria-labelledby="features-title">
+      <h2 id="features-title">查找、浏览与隐私</h2>
+      <div class="feature-grid">
+        <article>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <h3>找回一条消息</h3>
+          <p>按会话和关键词检索，回到消息所在的上下文。</p>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h8M8 16h6"/></svg>
+          <h3>打开聊天里的附件</h3>
+          <p>在原生窗口查看可读取的图片、PDF 和合并转发记录。</p>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v2"/></svg>
+          <h3>决定 AI 能读什么</h3>
+          <p>聊天记录在 Mac 上读取。连接 AI 时，可按会话限制读取范围。</p>
+          <a href="https://github.com/wherexml/wesync/blob/main/PRIVACY.md">隐私说明 <span aria-hidden="true">↗</span></a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer wrap">
+    <a class="wordmark" href="#"><img src="assets/icon.svg" width="24" height="24" alt="">we-sync</a>
+    <div>
+      <a href="https://github.com/wherexml/wesync/blob/main/docs/FIRST_RUN_SETUP.md">首次设置</a>
+      <a href="https://github.com/wherexml/wesync">GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>
