@@ -22,12 +22,12 @@
       <nav class="nav-links" aria-label="$navigation">$nav_links</nav>
       <div class="nav-end">
         $language_links
-        <a class="btn btn-tiny" href="#download">$start</a>
+        <a class="btn btn-tiny" href="$download_url">$start</a>
         <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="$open_menu" data-open="$open_menu" data-close="$close_menu"><span></span><span></span></button>
       </div>
     </div>
     <div class="nav-panel" id="menu" hidden>
-      <nav aria-label="$navigation">$nav_links<a href="#download">$start</a></nav>
+      <nav aria-label="$navigation">$nav_links<a href="$download_url">$start</a></nav>
       $language_links
     </div>
   </header>
@@ -39,7 +39,7 @@
       <div class="hero-copy">
         <h1 id="hero-title" aria-label="$hero_label">$hero_text</h1>
         <p class="lede">$lede</p>
-        <div class="cta">$build_button<a class="text-link" href="$repo">GitHub</a></div>
+        <div class="cta">$download_button<a class="text-link" href="$repo">GitHub</a></div>
         <p class="fine">$requirements</p>
       </div>
     </section>
@@ -97,7 +97,7 @@
     <section class="download" id="download" aria-labelledby="download-title">
       <canvas id="field-end" class="field field-end" aria-hidden="true"></canvas>
       <h2 id="download-title">$closing</h2>
-      $build_button
+      $download_button
       <ul class="reqs" aria-label="$system_requirements"><li>$chip</li><li>$system</li><li>MIT</li></ul>
     </section>
   </main>

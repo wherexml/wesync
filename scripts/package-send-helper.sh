@@ -24,8 +24,8 @@
 #                                   calibration profile, so the send path can
 #                                   never leave the dry-run stage. That is the
 #                                   safe default, not an oversight.
-#   GREENBUBBLES_NOTARY_PROFILE     `notarytool` keychain profile; when unset the
-#                                   bundle is signed but not notarized.
+#   GREENBUBBLES_NOTARY_PROFILE     `notarytool` keychain profile for the app and
+#                                   disk image; when unset only signing runs.
 #   GREENBUBBLES_OUTPUT_DIRECTORY   Where to write the bundle, SBOM, and DMG.
 set -euo pipefail
 
@@ -46,6 +46,29 @@ trust_source="Sources/GreenBubblesSendKit/SendReleaseTrust.swift"
 fail() {
   echo "error: $*" >&2
   exit 1
+}
+
+notarize_and_staple() {
+  local payload="$1" artifact="$2" receipt="$3" submission attempt
+  xcrun notarytool submit "$payload" --keychain-profile "$notary_profile" \
+    --output-format json >"$receipt.submit.json"
+  submission=$(/usr/bin/plutil -extract id raw "$receipt.submit.json")
+  echo "==> Apple submission: $submission"
+  xcrun notarytool wait "$submission" --keychain-profile "$notary_profile" \
+    --timeout 25m --output-format json >"$receipt.json"
+  if [ "$(/usr/bin/plutil -extract status raw "$receipt.json")" != "Accepted" ]; then
+    xcrun notarytool log "$submission" "$receipt.log.json" \
+      --keychain-profile "$notary_profile"
+    fail "notarization was not Accepted for $artifact"
+  fi
+  for attempt in $(seq 1 12); do
+    if xcrun stapler staple "$artifact"; then
+      xcrun stapler validate "$artifact"
+      return
+    fi
+    [ "$attempt" -lt 12 ] && sleep 10
+  done
+  fail "could not staple the accepted ticket for $artifact"
 }
 
 [ -n "$signing_identity" ] || fail "set GREENBUBBLES_SIGNING_IDENTITY to a Developer ID Application identity"
@@ -203,6 +226,15 @@ if codesign --display --entitlements - "$helper_bundle" 2>&1 |
   fail "the helper must not disable library validation"
 fi
 
+if [ -n "$notary_profile" ]; then
+  echo "==> notarizing and stapling the application"
+  app_archive="$output_directory/we-sync-app-notary.zip"
+  /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$app_bundle" "$app_archive"
+  notarize_and_staple "$app_archive" "$app_bundle" "$output_directory/app-notary"
+  codesign --verify --deep --strict "$app_bundle"
+  spctl --assess --type execute --verbose=4 "$app_bundle"
+fi
+
 disk_image="$output_directory/we-sync.dmg"
 dmg_staging="$output_directory/GreenBubbles-dmg-root"
 echo "==> building $disk_image"
@@ -216,10 +248,10 @@ rm -rf "$dmg_staging"
 codesign --force --timestamp --sign "$signing_identity" "$disk_image"
 
 if [ -n "$notary_profile" ]; then
-  echo "==> notarizing and stapling"
-  xcrun notarytool submit "$disk_image" --keychain-profile "$notary_profile" --wait
-  xcrun stapler staple "$disk_image"
-  xcrun stapler validate "$disk_image"
+  echo "==> notarizing and stapling the disk image"
+  notarize_and_staple "$disk_image" "$disk_image" "$output_directory/dmg-notary"
+  codesign --verify --strict "$disk_image"
+  spctl --assess --type open --context context:primary-signature --verbose=4 "$disk_image"
 else
   echo "GREENBUBBLES_NOTARY_PROFILE is unset: signed but not notarized"
 fi

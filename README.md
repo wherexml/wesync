@@ -4,7 +4,7 @@
 
 we-sync 是 macOS 上的本地微信记录浏览与 AI 上下文工具，基于 [GreenBubbles](https://github.com/bojieli/greenbubbles) 开发，保留上游 Git 历史、MIT 许可与归属。
 
-[产品首页 V3 与交互预览](https://wesync-mac.pages.dev/)
+[产品首页与交互预览](https://wesync-mac.pages.dev/) · [下载 macOS 版](https://github.com/wherexml/wesync/releases/latest)
 
 ## 当前能力
 
@@ -24,7 +24,7 @@ we-sync 是 macOS 上的本地微信记录浏览与 AI 上下文工具，基于 
 
 更新必须先暂存签名候选包、核对原身份及工具摘要，再退出应用安装，最后通过原生入口冷启动并验证自动连接。具体步骤见 [本机签名](docs/LOCAL_SIGNING.md) 和 [we-sync 改名规范](docs/WESYNC_RENAME.md)。不要用上游 Homebrew 包覆盖这份本机安装。
 
-本仓库保留上游发行基础设施。上游历史版本标注为 **Developer ID signed and Apple notarized**。当前 we-sync 从源码构建。
+公开 DMG 使用 **Developer ID signed and Apple notarized** 分发。打开 DMG，将 `we-sync.app` 拖到「应用程序」。已有 Apple Development 本机安装的用户，请先按[本机签名规范](docs/LOCAL_SIGNING.md)核对身份迁移。
 
 ## 首次打开桌面应用
 
@@ -76,6 +76,7 @@ greenbubbles source status
 | 原生界面规范 | [Design system](docs/DESIGN_SYSTEM.md) |
 | 仓库、上游与提交约定 | [Repository](docs/REPOSITORY.md) |
 | 产品首页与 Pages 部署 | [Website](docs/WEBSITE.md) |
+| DMG 签名、公证与发布 | [macOS Release](docs/MACOS_RELEASE.md) |
 | 改名与免重复授权验收 | [we-sync rename](docs/WESYNC_RENAME.md) |
 
 ## 许可与归属

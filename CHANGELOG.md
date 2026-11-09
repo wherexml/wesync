@@ -4,6 +4,15 @@ Notable changes to GreenBubbles are documented here. The project follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and intends to use
 [Semantic Versioning](https://semver.org/).
 
+## 0.10.1 - 2026-11-09
+
+- First we-sync macOS DMG for Apple silicon, with Developer ID signatures and
+  stapled Apple notarization tickets on the application and disk image.
+- The product homepage links directly to the DMG and introduces we-sync as a
+  way to give AI controlled access to local chat history.
+- Includes the first-run setup guide, the local connection recovery flow, and
+  the previously integrated SQLCipher security update.
+
 ## 0.10.0 - 2026-10-01
 
 ### Added

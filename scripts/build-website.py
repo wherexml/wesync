@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "website"
 OUTPUT = ROOT / ".build" / "website"
 REPO = "https://github.com/wherexml/wesync"
+DOWNLOAD_VERSION = "0.10.1"
+DOWNLOAD_URL = f"{REPO}/releases/download/v{DOWNLOAD_VERSION}/we-sync-{DOWNLOAD_VERSION}-macos-arm64.dmg"
 LOCALES = (
     ("zh-Hans", "index.html", "简", "简体中文"),
     ("zh-Hant", "zh-hant.html", "繁", "繁體中文"),
@@ -83,6 +85,7 @@ def render(template, copy, index):
     values = {name: escape(value) for name, value in data.items() if isinstance(value, str)}
     values["lang"] = lang
     values["repo"] = REPO
+    values["download_url"] = DOWNLOAD_URL
     values["alternates"] = "\n  ".join(
         f'<link rel="alternate" hreflang="{code}" href="{file}">' for code, file, _, _ in LOCALES
     ) + '\n  <link rel="alternate" hreflang="x-default" href="index.html">'
@@ -93,7 +96,7 @@ def render(template, copy, index):
     values["language_links"] = f'<nav class="lang" aria-label="{values["language"]}">{"".join(links)}</nav>'
     values["nav_links"] = "".join(f'<a href="#{key}">{values[key]}</a>' for key in ("features", "privacy", "faq"))
     values["requirements"] = f'{values["chip"]} · {values["system"]}'
-    values["build_button"] = f'<a class="btn btn-glow" href="{REPO}#从源码构建">{APPLE}{values["build"]}</a>'
+    values["download_button"] = f'<a class="btn btn-glow" href="{DOWNLOAD_URL}">{APPLE}{values["download"]}</a>'
     first, second, accent = data["hero"]
     values["hero_label"] = escape(f"{first} {second}{accent}")
     values["hero_text"] = (
