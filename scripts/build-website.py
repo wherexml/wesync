@@ -43,7 +43,7 @@ def split_text(text, css_class, english):
     return "".join(f'<span class="{css_class}">{escape(unit)}</span>' for unit in units)
 
 
-def conversation_markup(data, scene, interactive=True):
+def conversation_markup(data, scene):
     rows = []
     chats = []
     for index, (name, time, *messages) in enumerate(data):
@@ -51,22 +51,20 @@ def conversation_markup(data, scene, interactive=True):
         avatar = f'<span class="avatar {color}" aria-hidden="true">{escape(name[0])}</span>'
         active = " active" if index == 0 else ""
         rows.append(f'<div class="demo-row{active}">{avatar}<span><b>{escape(name)}</b><small>{escape(messages[-1])}</small></span></div>')
-        if not interactive and index != 0:
+        if index != 0:
             continue
         bubbles = "".join(
             f'<p class="bubble{" sent" if idx == 1 else ""}">{escape(message)}</p>'
             for idx, message in enumerate(messages)
         )
-        if index == 0:
-            bubbles += f'<div class="bubble sample-file"><span class="file-icon" aria-hidden="true">PDF</span><span><b>{escape(scene[7])}.pdf</b><small>{escape(scene[8])}</small></span></div>'
-        hidden = " hidden" if index else ""
-        chats.append(f'<article class="demo-chat"{hidden}><h3>{escape(name)}</h3><div class="demo-messages"><div class="demo-time">{escape(time)}</div>{bubbles}</div></article>')
+        bubbles += f'<div class="bubble sample-file"><span class="file-icon" aria-hidden="true">PDF</span><span><b>{escape(scene[7])}.pdf</b><small>{escape(scene[8])}</small></span></div>'
+        chats.append(f'<article class="demo-chat"><h3>{escape(name)}</h3><div class="demo-messages"><div class="demo-time">{escape(time)}</div>{bubbles}</div></article>')
     return "".join(rows), "".join(chats)
 
 
 def feature_panels(data, search_icon):
     scene = list(map(escape, data["scene"]))
-    rows, chat = conversation_markup(data["conversations"], data["scene"], interactive=False)
+    rows, chat = conversation_markup(data["conversations"], data["scene"])
     scenes = (
         f'<div class="scene-content"><h4>{scene[0]}</h4><div class="scene-choice"><div class="scene-card"><span class="scene-icon">◉</span><strong>{scene[1]}</strong><small>{scene[2]}</small></div><div class="scene-card"><span class="scene-icon">◎</span><strong>{scene[3]}</strong><small>{scene[4]}</small></div></div><div class="scene-strip"><span>{scene[5]}</span><b>{scene[6]}</b></div></div>',
         f'<div class="scene-content search-scene"><h4>{escape(data["search"])}</h4><div class="scene-strip">{search_icon}<span>{scene[7]}</span></div><div class="scene-card"><strong>{scene[9]}</strong><small>{escape(data["conversations"][0][-1])}</small></div></div>',
@@ -110,10 +108,31 @@ def render(template, copy, index):
         f'<span class="tag-line" aria-hidden="true">{split_text(line, "t-ch", lang == "en")}</span>'
         for line in data["tagline"]
     )
-    values["demo_headline"] = "".join(f"<span>{escape(line)}</span>" for line in data["demo"])
+    steps = ("connect", "search", "codex")
+    values["demo_headline"] = " ".join(
+        f'<a href="#demo-{step}">{escape(label)}</a>' for step, label in zip(steps, data["demo"])
+    )
+    for key, label in zip(("connect_step", "search_step", "analysis_step"), data["demo"]):
+        values[key] = escape(label)
+    values["connection_settings"] = escape(data["scene"][5])
+    values["local_history"] = escape(data["scene"][1])
+    values["connected"] = escape(data["scene"][6])
     values["lights"] = LIGHTS
     values["search_icon"] = icon(ICONS[0])
-    values["rows"], values["chats"] = conversation_markup(data["conversations"], data["scene"])
+    keyword = re.escape(data["sample_query"])
+    results = []
+    for conversation, sender, time, message in data["demo_results"]:
+        parts = re.split(f"({keyword})", message, flags=re.IGNORECASE)
+        snippet = "".join(
+            f"<mark>{escape(part)}</mark>" if position % 2 else escape(part)
+            for position, part in enumerate(parts)
+        )
+        hidden = "" if len(parts) > 1 else " hidden"
+        results.append(
+            f'<article class="demo-result"{hidden}><div><strong>{escape(conversation)}</strong>'
+            f'<time>{escape(time)}</time></div><p>{snippet}</p><small>{escape(sender)}</small></article>'
+        )
+    values["search_results"] = "\n".join(results)
     values["panels"] = feature_panels(data, values["search_icon"])
     values["cards"] = "\n".join(
         f'<article class="bento-card"><span class="bento-icon">{icon(path)}</span><h3>{escape(title)}</h3><p>{escape(body)}</p><div class="mini mini-{kind}" aria-hidden="true">{icon(path)}<span>{escape(hint)}</span><i></i></div></article>'
