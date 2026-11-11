@@ -1,0 +1,99 @@
+{
+  "date": "2026-11-11",
+  "applicationVersion": "0.10.0",
+  "installedBuild": "72",
+  "status": "Local fixes and installed acceptance passed; residual timing gaps and unconfirmed field cause remain.",
+  "userFeedback": {
+    "direction": "Visible in we-sync, absent in WeChat on the same Mac",
+    "fieldCaseReproduced": false,
+    "reason": "No specific conversation/message/time was supplied."
+  },
+  "installedAcceptance": {
+    "build": "72",
+    "candidateMainSHA256": "56df6180023ecb7dff257862c871e50d31c457499e11f7bd4a1a3e394bf08998",
+    "allCandidateFilesEqualBeforeLaunch": true,
+    "helpersEqualOriginalBuild65": true,
+    "sameSigningDesignatedRequirement": true,
+    "checkpointBeforeLaunch": "56df6180023ecb7dff257862c871e50d31c457499e11f7bd4a1a3e394bf08998",
+    "checkpointColdStart1": "56df6180023ecb7dff257862c871e50d31c457499e11f7bd4a1a3e394bf08998",
+    "checkpointColdStart2": "56df6180023ecb7dff257862c871e50d31c457499e11f7bd4a1a3e394bf08998",
+    "twoNativeColdStartsAutoConnected": true,
+    "settingsAboutRefreshAndScrollPassed": true,
+    "diagnosticsRestoredAndNoWritesOnNormalColdStart": true
+  },
+  "syntheticE2E": {
+    "reconciliation": {
+      "checks": 17,
+      "passed": true,
+      "variant": "Final source, including partial-first-catalog-page guard."
+    },
+    "preload": {
+      "checks": 316,
+      "passed": true,
+      "variant": "After asynchronous hydration; before catalog-only coverage guard."
+    },
+    "message-cache": {
+      "checks": 17,
+      "passed": true,
+      "variant": "After asynchronous hydration; before catalog-only coverage guard."
+    },
+    "body-refresh": {
+      "checks": 11,
+      "passed": true,
+      "variant": "Same body-verification implementation; before hydration-only and catalog-only follow-ups. This scenario disables persistence."
+    }
+  },
+  "syntheticChecksTotal": 361,
+  "localCI": {
+    "passedChecks": 23,
+    "totalChecks": 23,
+    "report": "local-ci.json"
+  },
+  "privacy": {
+    "wechatOperated": false,
+    "sourceChatsModified": false,
+    "credentialEntry": false,
+    "keychainEnumeration": false,
+    "tccOrACLChanged": false,
+    "diagnosticsDefaultOffAndRestored": true,
+    "publishedScreenshots": "Synthetic production bubbles and public About metadata only",
+    "repositoryVerifiedPublic": true,
+    "rawNativeProfilesPublished": false
+  },
+  "delivery": {
+    "localInstallOnly": true,
+    "cloudActionsEnabled": false,
+    "releaseOrWebsiteDeployed": false
+  },
+  "binaryProvenanceNote": "An earlier installed main binary differed from its intended staged candidate; cause unconfirmed. Replaced with final build 72 and verified candidate equality before launch and after both native cold starts. Helpers match the original installed build65.",
+  "remainingLimits": [
+    "Native timer gaps remain; do not declare the app stutter-free or blame the framework as a whole.",
+    "Source reconciliation is bounded to at most 400 loaded messages; records outside reliable coverage are not assumed deleted.",
+    "The reported same-Mac mismatch could also involve source/display semantics; this change proves a synthetic stale-cache path only.",
+    "Native response figures are six cached switches and six synthetic wheel inputs, not uncached navigation or physical frame rate."
+  ],
+  "sourceSHA256": {
+    "Sources/GreenBubblesHistoryApp/GreenBubblesHistoryApp.swift": "245f8cfb4e106bff0e5f7d59e869e468b87ca78153e4bd17f01d1dd242ebb969",
+    "Sources/GreenBubblesHistoryApp/HistoryBrowserModel.swift": "216b3a57e5293c997afea286fb616dbe900efc74aa4472dd9a7ce870b42b9caa",
+    "Sources/GreenBubblesHistoryApp/HistoryDirectViews.swift": "746b9d13357cc0960d9e1c085d38b6da2a8c8436459ba814a927167996537987",
+    "Sources/GreenBubblesHistoryApp/HistoryScrollPrefetch.swift": "d8adba8ee6c6d4766b28c84a91cc173678d9fb87cc130634514c52d55c4267c2",
+    "Sources/GreenBubblesHistoryApp/HistoryInteractionTrace.swift": "2aa62e83a7511f0fa79c9b96fa8c38d4196ea510dfa47a4442aa3d5e0b1e8681",
+    "Sources/GreenBubblesHistoryApp/OfflinePresentationAcceptance.swift": "37c4e0d344bb4096c094c72ff05bf0db73bae4bed01e9bca8d43f098c0f6037c",
+    "scripts/presentation-fixture/greenbubbles": "51b013d6526a94938da67aaa2ce3ec586e72295724fcb2fdf373f09387dc0ae8"
+  },
+  "artifactSHA256": {
+    "README.md": "17e9b154e1356b81c723991b3a8df99824c0d8dfc0a53b1c87b0cee35a0e159b",
+    "about.png": "516f2544fef7a44a8feedcbb766c62900f6b0dd8d315a55006aed0b32af2dfd4",
+    "body-refresh.json": "a0ab0b6e731b39000cecd03027ed3d308ed6d61a88a0cb16b3c48e6f1a6637ec",
+    "cache-after.png": "4cbf1f10d46f6173986acc2517684ccc9ce4259f6ae58119d543c8a215dfea0f",
+    "cache-before.png": "4c2c7316fc8090671be183d21e1ebfa855e9ae7c7bdceee588f82c3a9bc9414a",
+    "local-ci.json": "4af652efb0564c1751b7da9c31b8c698b787bb7292f65a94946abcde74e90003",
+    "message-cache.json": "76b8c57412ec350d204de69d832d8f50dadbb342123a1d312c5c9c461ed341ac",
+    "performance.json": "e028a2e0def36ae7bf99a3cc4c3c99172a62b8b92d4f16f7359ff8046de5df9a",
+    "preload-before.json": "f510d4ab6e06c95e1ce68a90eccf7c5a797075bbbe9c76eba7ba504ee297388e",
+    "preload.json": "e5d55e428ef173492259884716c39bbd15eb3edda281d1dda10cd4768133cf57",
+    "reconciliation-before.json": "7add23ca030a638dc2bb88c2f8b15df1357c5c6476b2ab7e4fae649eef2005a6",
+    "reconciliation.json": "68efa57fcc508657931ac30e3d4a8249035590258c011a284f9769b24ddd8c43",
+    "sample-symbols.json": "3b3d7e1e5354c0064ffb43837b80df369bde1aa08ef3282afab6c1cb423b0a57"
+  }
+}

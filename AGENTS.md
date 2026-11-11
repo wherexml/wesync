@@ -26,7 +26,7 @@ Inherit parent repository instructions and user privacy constraints.
 
 Image thumbnail bounds and native alignment acceptance: see [docs/IMAGE_ALIGNMENT.md](docs/IMAGE_ALIGNMENT.md). Keep portrait thumbnails aligned with the same-side text bubble edge.
 
-Private repository: `wherexml/wesync`; `origin` is the private development repository and `upstream` preserves the original project. See [docs/REPOSITORY.md](docs/REPOSITORY.md). Do not publish personal data, credentials, local app bundles, or unreviewed native screenshots.
+Public repository: `wherexml/wesync` (GitHub verified 2026-11-11); `origin` is the development repository and `upstream` preserves the original project. See [docs/REPOSITORY.md](docs/REPOSITORY.md). Do not publish personal data, credentials, local app bundles, or unreviewed native screenshots.
 
 正文表情、仅 MD5 的图片表情恢复、专用签名 helper 与原生验收：见 [docs/EMOJI_DISPLAY.md](docs/EMOJI_DISPLAY.md)。保留原消息及复制内容，不绕过 TLS、摘要校验或已记住连接的工具绑定。
 
@@ -97,3 +97,5 @@ SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；仅�
 经用户授权的公开 DMG 在本机使用 Developer ID 签名，App 和 DMG 分别公证并贴票据。GitHub Releases 公开下载与校验和通过后再部署首页链接，见 [docs/MACOS_RELEASE.md](docs/MACOS_RELEASE.md)。
 
 应用菜单与菜单栏图标均保留设置、关于入口；折叠列表不得叠加 inset 缩进。缓存头像去重、编码、加密与写盘在串行后台执行，退出等待末次保存；规范与原生验收见 [docs/INTERACTION_RESPONSIVENESS.md](docs/INTERACTION_RESPONSIVENESS.md)。
+
+缓存核验覆盖已加载窗口（最多 400 条），不完整读取不据此删除；源变化即使摘要不变也标记待核验，完整目录后清理已移除会话。切换/滚动内容无关诊断默认关闭，测量后恢复偏好；规范与现场边界见 [docs/TIMELINE_INVESTIGATION.md](docs/TIMELINE_INVESTIGATION.md)。

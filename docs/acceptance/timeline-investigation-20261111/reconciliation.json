@@ -1,0 +1,25 @@
+{
+  "checks" : {
+    "cancelled-cache-hydration-cannot-reopen-source" : true,
+    "complete-empty-source-clears-timeline" : true,
+    "deletion-keeps-catalog-summary-and-date" : true,
+    "failure-keeps-readable-content" : true,
+    "file-change-reconciles-unchanged-catalog" : true,
+    "initial-eighty-messages" : true,
+    "invalidated-unopened-cache-verifies-on-selection" : true,
+    "partial-coverage-keeps-readable-content" : true,
+    "partial-first-catalog-page-cannot-remove-selection" : true,
+    "removed-conversation-clears-selection" : true,
+    "removed-history-message-disappears" : true,
+    "restart-cannot-resurrect-cleared-source" : true,
+    "restart-restores-readable-cache-before-verification" : true,
+    "restart-revalidates-deleted-records" : true,
+    "revoked-body-replaced" : true,
+    "switch-cannot-resurrect-removed-message" : true,
+    "unremoved-history-preserved" : true
+  },
+  "error" : "",
+  "passed" : true,
+  "source" : "synthetic-only",
+  "wechatRead" : false
+}

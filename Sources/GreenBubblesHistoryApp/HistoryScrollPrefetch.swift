@@ -27,6 +27,9 @@ struct HistoryScrollPrefetch: NSViewRepresentable {
     var load: (() -> Void)?
     var bottomDistance: ((CGFloat) -> Void)?
     private var previousY: CGFloat?
+    private var pendingDistance: CGFloat?
+    private var distanceScheduled = false
+    private var previousDistance: CGFloat?
 
     override func viewDidMoveToWindow() {
       super.viewDidMoveToWindow()
@@ -60,6 +63,7 @@ struct HistoryScrollPrefetch: NSViewRepresentable {
 
     @objc private func scrolled(_ notification: Notification) {
       guard let clip = notification.object as? NSClipView else { return }
+      HistoryInteractionTrace.shared.scrollBoundsChanged()
       let y = clip.bounds.minY
       defer { previousY = y }
       if let previous = previousY, y < previous - 0.5, y < 600 { load?() }
@@ -77,10 +81,19 @@ struct HistoryScrollPrefetch: NSViewRepresentable {
         0,
         document.isFlipped
           ? document.bounds.maxY - visible.maxY : visible.minY - document.bounds.minY)
-      // AppKit may notify during layout; publish after SwiftUI's update finishes.
+      guard distanceScheduled || (previousDistance.map({ abs($0 - distance) > 0.5 }) ?? true)
+      else { return }
+      pendingDistance = distance
+      guard !distanceScheduled else { return }
+      distanceScheduled = true
+      // AppKit may notify several times during one layout pass. Publish only its final geometry.
       DispatchQueue.main.async { [weak self] in
-        guard let self, window != nil else { return }
-        bottomDistance?(distance)
+        guard let self else { return }
+        distanceScheduled = false
+        guard window != nil, let latest = pendingDistance else { return }
+        pendingDistance = nil
+        previousDistance = latest
+        bottomDistance?(latest)
       }
     }
 

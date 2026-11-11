@@ -11,6 +11,8 @@ with (root/'requests.jsonl').open('a') as f:f.write(json.dumps({'operation':oper
 def option(n):return a[a.index(n)+1]
 base={'schema':'greenbubbles.query.v1','formatVersion':1,'operation':operation,'ok':True,'source':{'mode':'decrypted','identity':'synthetic-presentation-v1'},'warnings':[],'consistency':{'guarantee':'fixture','databaseCount':1,'crossDatabaseAtomic':True,'coverageComplete':True,'observedAtUnixMilliseconds':1790910000000}}
 if operation=='source.status':
+ if (root/'slow-source-status').exists():
+  (root/'status-entered').touch();time.sleep(0.6)
  base.update(observedAtUnixMilliseconds=1790910000000,databaseCount=1,databaseBytes=1024,writeAheadLogCount=0,writeAheadLogBytes=0,sharedMemoryCount=0,sharedMemoryBytes=0,rollbackJournalCount=0,rollbackJournalBytes=0,totalSqliteStorageBytes=1024,entries=[])
 elif operation=='conversations.list':
  base.update(page={'limit':100,'returned':1,'hasMore':False},items=[{'id':'demo-room','displayName':'离线验收 · 合成会话','summary':'头像 · 图片 · 引用回复 · 失败重试','summaryDecodeState':'complete','summaryTruncated':False,'sortTimestamp':1790910000}])
@@ -92,10 +94,11 @@ elif operation=='messages.list':
   if (root/'body-refresh-acceptance').exists() and '--cursor' not in a:
    offset=-int((root/'body-stage').read_text())
   items=[]
-  for i in range(offset,offset+40):
+  requested=int(option('--limit'))
+  for i in range(offset,offset+requested):
    item=dict(base['items'][0]);item.update(id=f'cache-{i}',sortSequence=1000-i,messageType=1,messageTypeLabel='text',messageSubtype=0,messageSubtypeLabel='text',content={'Text':f'Synthetic cache message {i}'})
    items.append(item)
-  base.update(items=items,page={'limit':40,'returned':40,'hasMore':True,'nextCursor':str(offset+40)})
+  base.update(items=items,page={'limit':requested,'returned':requested,'hasMore':True,'nextCursor':str(offset+requested)})
 
 elif operation=='messages.search':
  query=sys.stdin.buffer.read()
@@ -119,4 +122,28 @@ elif operation=='attachment.materialize':
  os.chmod(output,0o600)
  base={'schema':'greenbubbles.attachment.v1','formatVersion':1,'operation':operation,'ok':True,'attachmentId':'demo-attachment','kind':'document' if document else 'image','decodedFormat':'pdf' if document else 'wxgf' if option('--message')=='demo-4' else 'png','decodedByteCount':len(data),'decodedSha256':('0'*64 if (root/'bad-digest').exists() else hashlib.sha256(data).hexdigest())}
 else:raise SystemExit('Unsupported fixture operation')
+# Dedicated finite source: deletions do not change catalog summaries or timestamps.
+if (root/'cache-reconciliation-acceptance').exists():
+ stage=int((root/'reconcile-stage').read_text()) if (root/'reconcile-stage').exists() else 0
+ if operation=='conversations.list':
+  ids=['reconcile-b'] if stage==3 else ['reconcile-a','reconcile-b']
+  base.update(items=[{'id':ident,'displayName':f'Synthetic {ident}','summary':'Unchanged latest summary','summaryDecodeState':'complete','summaryTruncated':False,'sortTimestamp':1793910000} for ident in ids],page={'limit':100,'returned':len(ids),'hasMore':False})
+  if stage==7:
+   base.update(items=[] if '--cursor' in a else [base['items'][-1]],page={'limit':100,'returned':0 if '--cursor' in a else 1,'hasMore':'--cursor' not in a})
+   if '--cursor' not in a:
+    base['page']['nextCursor']='100';base['consistency']['coverageComplete']=False
+ elif operation=='messages.list':
+  if (root/'reconcile-fail').exists():raise SystemExit('Synthetic query failure')
+  ids=[i for i in range(120) if not (stage in [1,4,6] and i==60)]
+  if stage==6:ids=[i for i in ids if i!=65]
+  if stage==2:ids=[]
+  limit=int(option('--limit'));offset=int(option('--cursor')) if '--cursor' in a else 0
+  page_ids=ids[offset:offset+limit];items=[]
+  for i in page_ids:
+   item=dict(base['items'][0]);item.update(id=f'reconcile-{i}',conversationId=option('--conversation'),sortSequence=1000-i,messageType=1,messageTypeLabel='text',messageSubtype=0,messageSubtypeLabel='text',content={'Text':'Synthetic revoked replacement' if stage==1 and i==5 else f'Synthetic original {i}'})
+   items.append(item)
+  base.update(items=items,page={'limit':limit,'returned':len(items),'hasMore':offset+limit<len(ids)})
+  if offset+limit<len(ids):base['page']['nextCursor']=str(offset+limit)
+  if stage==4:base['consistency']['coverageComplete']=False
+
 print(json.dumps(base,ensure_ascii=False))

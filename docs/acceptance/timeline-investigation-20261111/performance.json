@@ -1,0 +1,68 @@
+{
+  "measurement": "Installed macOS application; content-free internal instrumentation. Timer intervals do not by themselves prove a continuously blocked main thread.",
+  "baselineBuild": "66",
+  "finalBuild": "72",
+  "switchTrials": 6,
+  "loadedMessageCounts": [
+    265,
+    7,
+    265,
+    7,
+    265,
+    7
+  ],
+  "baselineSwitchToFirstLayoutMs": [
+    88.06712506338954,
+    55.21037522703409,
+    131.62345835007727,
+    70.81287493929267,
+    125.02937507815659,
+    54.69087488017976
+  ],
+  "finalSwitchToFirstLayoutMs": [
+    80.41887497529387,
+    52.68674995750189,
+    140.81112504936755,
+    51.78412515670061,
+    125.02833316102624,
+    49.76462502963841
+  ],
+  "baselineSwitchMedianMs": 79.4400000013411,
+  "finalSwitchMedianMs": 66.55281246639788,
+  "scrollTrials": 6,
+  "finalScrollEventDeliveryMs": [
+    6.112042581662536,
+    2.6502921245992184,
+    5.29258418828249,
+    0.24191709235310555,
+    0.2560419961810112,
+    0.23520924150943756
+  ],
+  "scrollBatchWindowMs": [
+    23000.75616571121,
+    24303.302916605026
+  ],
+  "scrollBatchMainThreadGapsOver50ms": [
+    89.1209167893976,
+    92.9760835133493,
+    53.549124859273434,
+    55.19237508997321
+  ],
+  "scrollBatchMaxMainThreadGapMs": 92.9760835133493,
+  "switchAndScrollObservationMaxMainThreadGapMs": 223.21512480266392,
+  "extendedObservationIncludingSettingsMenusAndAXErrorMaxMainThreadGapMs": 3646.9122499693185,
+  "extendedObservationNote": "Settings, refresh and About succeeded. A subsequent quit-menu click returned cannotClickOffscreenElement; Cancel then Raise restored native focus and quit succeeded. This interval includes automation/menu tracking and is not a chat-rendering stall measurement.",
+  "messageTransportQueryMs": [
+    2529.672000091523,
+    2616.9874584302306
+  ],
+  "preloadBeforeMaxMainThreadGapMs": 1517.260875,
+  "preloadAfterMaxMainThreadGapMs": 302.339417,
+  "limits": [
+    "First AppKit probe layout is not physical screen presentation or frame rate.",
+    "Timer gaps include OS scheduling, rendering, menu tracking and AX observation overhead; they do not identify a single blocked function.",
+    "The scroll burst has no intermediate AX query; its window ends 100ms after the final delivered wheel event.",
+    "Six switch trials do not establish statistically significant acceleration.",
+    "AX action/confirmation durations and old unmatched wheel-boundary records are excluded from application-latency claims."
+  ]
+}

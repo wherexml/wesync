@@ -1,0 +1,11 @@
+{
+  "checks" : {
+    "deletion-keeps-catalog-summary-and-date" : true,
+    "initial-eighty-messages" : true,
+    "removed-history-message-disappears" : false
+  },
+  "error" : "removed-history-message-disappears",
+  "passed" : false,
+  "source" : "synthetic-only",
+  "wechatRead" : false
+}

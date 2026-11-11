@@ -1,0 +1,20 @@
+{
+  "baseline-sample": {
+    "inclusiveFrameSamplesNonAdditive": {
+      "@objc NSHostingView.layout()": 2213,
+      "NSHostingView.layout()": 2212,
+      "closure #1 in NSHostingView.layout()": 2109,
+      "HistoryBrowserModel.directCategoryKey(_:)": 141,
+      "HistoryBrowserModel.filteredDirectConversations.getter": 150
+    }
+  },
+  "scroll-sample": {
+    "inclusiveFrameSamplesNonAdditive": {
+      "@objc NSHostingView.layout()": 1335,
+      "NSHostingView.layout()": 1332,
+      "closure #1 in NSHostingView.layout()": 1296,
+      "HistoryBrowserModel.filteredDirectConversations.getter": 621,
+      "HistoryBrowserModel.directCategoryKey(_:)": 576
+    }
+  }
+}

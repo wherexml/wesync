@@ -1,0 +1,25 @@
+{
+  "checks" : {
+    "all-conversations-loaded-without-click" : true,
+    "cancelled-query-cannot-overwrite-selection" : true,
+    "corrupt-cache-is-ignored" : true,
+    "corrupt-cache-rebuilt-from-source" : true,
+    "disconnect-clears-visible-content" : true,
+    "disk-has-no-plaintext-chat" : true,
+    "first-page" : true,
+    "fixture-connected" : true,
+    "reconnect-does-not-reuse-prior-session" : true,
+    "reconnect-restores-full-list-before-live-query" : true,
+    "reconnect-restores-history-and-cursor" : true,
+    "refresh-failure-keeps-content" : true,
+    "refresh-preserves-contiguous-history" : true,
+    "refresh-retains-readable-content" : true,
+    "reselect-does-not-query" : true,
+    "return-after-nine-chats-keeps-history-immediately" : true,
+    "second-page" : true
+  },
+  "error" : "",
+  "passed" : true,
+  "source" : "synthetic-only",
+  "wechatRead" : false
+}

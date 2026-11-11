@@ -50,6 +50,166 @@
     }
     var failure: String?
     if FileManager.default.fileExists(
+      atPath: root.appending(path: "cache-reconciliation-acceptance").path)
+    {
+      func stage(_ value: Int) throws {
+        try Data(String(value).utf8).write(to: root.appending(path: "reconcile-stage"))
+      }
+      func captureWindow(_ name: String) throws {
+        let sample = model.directMessages.filter { message in
+          (56...66).map { "reconcile-\($0)" }.contains(message.id)
+        }.reversed()
+        let view = VStack(alignment: .leading, spacing: 10) {
+          ForEach(Array(sample)) { message in
+            HistoryDirectMessageBubble(model: model, message: message, highlighted: false)
+          }
+        }.padding(18).frame(width: 820).background(HistoryChatPalette.timeline)
+        let renderer = ImageRenderer(content: view)
+        guard let tiff = renderer.nsImage?.tiffRepresentation,
+          let bitmap = NSBitmapImageRep(data: tiff),
+          let png = bitmap.representation(using: .png, properties: [:])
+        else { throw PresentationError.invalidImage }
+        try png.write(to: root.appending(path: "cache-\(name).png"))
+      }
+      do {
+        model.rememberDirectConnection = true
+        model.conversationRange = .all
+        try stage(0)
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try await waitFor { !model.isDirectConnecting && !model.isPreloadingRecentConversations }
+        model.selectDirectConversation("reconcile-a")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.loadOlderDirectMessages()
+        try await waitFor { !model.isLoadingDirectMessages }
+        let originalIDs = Set(model.directMessages.map(\.id))
+        try require(originalIDs.count == 80, "initial-eighty-messages")
+        try captureWindow("before")
+        let catalog = model.directConversations
+        try stage(1)
+        model.refreshDirectHistory()
+        try await waitFor {
+          !model.isLoadingDirectMessages && !model.isRefreshingDirectConversations
+        }
+        try require(model.directConversations == catalog, "deletion-keeps-catalog-summary-and-date")
+        try captureWindow("after")
+        try require(
+          !model.directMessages.contains { $0.id == "reconcile-60" },
+          "removed-history-message-disappears")
+        try require(
+          originalIDs.subtracting(["reconcile-60"]).isSubset(
+            of: Set(model.directMessages.map(\.id))), "unremoved-history-preserved")
+        try require(
+          model.directMessages.first { $0.id == "reconcile-5" }?.displayText
+            == "Synthetic revoked replacement", "revoked-body-replaced")
+        model.selectDirectConversation("reconcile-b")
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.loadOlderDirectMessages()
+        try await waitFor { !model.isLoadingDirectMessages }
+        model.selectDirectConversation("reconcile-a")
+        try await waitFor { !model.isLoadingDirectMessages }
+        try require(
+          !model.directMessages.contains { $0.id == "reconcile-60" },
+          "switch-cannot-resurrect-removed-message")
+        try stage(6)
+        try Data("Synthetic older-message deletion, catalog unchanged".utf8).write(
+          to: root.appending(path: "session/session.db-wal"))
+        for _ in 0..<1800 {
+          if !model.directMessages.contains(where: { $0.id == "reconcile-65" }) { break }
+          try await Task.sleep(for: .milliseconds(50))
+        }
+        try require(
+          !model.directMessages.contains { $0.id == "reconcile-65" },
+          "file-change-reconciles-unchanged-catalog")
+        model.selectDirectConversation("reconcile-b")
+        try await waitFor { !model.isLoadingDirectMessages }
+        try require(
+          !model.directMessages.contains { $0.id == "reconcile-65" },
+          "invalidated-unopened-cache-verifies-on-selection")
+        model.selectDirectConversation("reconcile-a")
+        try await waitFor { !model.isLoadingDirectMessages }
+        await model.flushHistoryCache()
+        model.closeBundle()
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try await waitFor { !model.directConversations.isEmpty }
+        model.selectDirectConversation("reconcile-a")
+        try require(
+          !model.directMessages.isEmpty, "restart-restores-readable-cache-before-verification")
+        try await waitFor { !model.isDirectConnecting && !model.isLoadingDirectMessages }
+        try require(
+          !model.directMessages.contains { $0.id == "reconcile-60" || $0.id == "reconcile-65" },
+          "restart-revalidates-deleted-records")
+        let beforePartial = model.directMessages
+        try stage(4)
+        model.refreshDirectHistory()
+        try await waitFor {
+          !model.isLoadingDirectMessages && !model.isRefreshingDirectConversations
+        }
+        try require(
+          model.directMessages == beforePartial, "partial-coverage-keeps-readable-content")
+        try Data().write(to: root.appending(path: "reconcile-fail"))
+        model.refreshDirectHistory()
+        try await waitFor { !model.isLoadingDirectMessages }
+        try require(model.directMessages == beforePartial, "failure-keeps-readable-content")
+        try FileManager.default.removeItem(at: root.appending(path: "reconcile-fail"))
+        try stage(7)
+        model.refreshDirectConversations(reloadAll: true)
+        try await waitFor {
+          !model.isRefreshingDirectConversations && !model.isLoadingDirectConversations
+            && model.directConversationCursor == nil
+        }
+        try require(
+          model.directSelectedConversationID == "reconcile-a"
+            && model.directConversations.contains { $0.id == "reconcile-a" }
+            && model.directMessages == beforePartial,
+          "partial-first-catalog-page-cannot-remove-selection")
+        try stage(2)
+        model.refreshDirectHistory()
+        try await waitFor {
+          !model.isLoadingDirectMessages && !model.isRefreshingDirectConversations
+        }
+        try require(
+          model.directMessages.isEmpty && model.directMessageCursor == nil,
+          "complete-empty-source-clears-timeline")
+        await model.flushHistoryCache()
+        model.closeBundle()
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try await waitFor { !model.directConversations.isEmpty }
+        model.selectDirectConversation("reconcile-a")
+        try await waitFor { !model.isDirectConnecting && !model.isLoadingDirectMessages }
+        try require(model.directMessages.isEmpty, "restart-cannot-resurrect-cleared-source")
+        try stage(3)
+        model.refreshDirectConversations(reloadAll: true)
+        try await waitFor {
+          !model.isRefreshingDirectConversations && !model.isLoadingDirectConversations
+        }
+        try require(
+          model.directSelectedConversationID == nil && model.directMessages.isEmpty,
+          "removed-conversation-clears-selection")
+        await model.flushHistoryCache()
+        model.closeBundle()
+        model.connectDirectSource(
+          executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [], restoring: true)
+        model.closeBundle()
+        try await Task.sleep(for: .milliseconds(100))
+        try require(
+          model.directConfiguration == nil && model.directConversations.isEmpty
+            && model.directMessages.isEmpty, "cancelled-cache-hydration-cannot-reopen-source")
+      } catch { failure = error.localizedDescription }
+      let report: [String: Any] = [
+        "checks": checks, "passed": failure == nil, "error": failure ?? "",
+        "source": "synthetic-only", "wechatRead": false,
+      ]
+      if let data = try? JSONSerialization.data(
+        withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+      {
+        try? data.write(to: root.appending(path: "cache-reconciliation-acceptance.json"))
+      }
+      return
+    }
+    if FileManager.default.fileExists(
       atPath: root.appending(path: "conversation-refresh-acceptance").path)
     {
       func waitForRefresh(_ ready: @escaping () -> Bool) async throws {
@@ -531,10 +691,11 @@
         model.closeBundle()
         model.connectDirectSource(
           executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try await waitForWarm { !model.directConversations.isEmpty }
         model.selectDirectConversation("warm-group-49@chatroom")
         try require(
           model.directMessages.count == 40 && model.directMessageCursor == "40",
-          "restart-restores-warmed-pages-synchronously")
+          "restart-restores-warmed-pages-before-query")
         // An older disk snapshot may refresh in the background while remaining readable.
         try await waitForWarm { !model.isLoadingDirectMessages }
         try require(
@@ -652,22 +813,33 @@
           encrypted.range(of: Data("Synthetic cache message".utf8)) == nil,
           "disk-has-no-plaintext-chat")
         model.closeBundle()
+        try Data().write(to: root.appending(path: "slow-source-status"))
+        try? FileManager.default.removeItem(at: root.appending(path: "status-entered"))
         model.connectDirectSource(
           executableURL: cli, sourceURL: root,
           accessMode: .decrypted, keyUTF8: [], restoring: true)
+        try await waitFor { !model.directConversations.isEmpty }
         try require(
-          model.directConversations.count == 230, "reconnect-restores-full-list-synchronously")
+          model.directConversations.count == 230 && model.isDirectConnecting,
+          "reconnect-restores-full-list-before-live-query")
         model.selectDirectConversation("demo-room")
         try require(
-          model.directMessages.count == 80 && !model.isLoadingDirectMessages,
+          model.directMessages.count == 80 && model.directMessageCursor == "80",
           "reconnect-restores-history-and-cursor")
         try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
         model.closeBundle()
+        await model.flushHistoryCache()
         try Data("corrupt".utf8).write(to: disk.url)
+        try? FileManager.default.removeItem(at: root.appending(path: "status-entered"))
         model.connectDirectSource(
           executableURL: cli, sourceURL: root,
           accessMode: .decrypted, keyUTF8: [], restoring: true)
-        try require(model.directConversations.isEmpty, "corrupt-cache-is-ignored")
+        try await waitFor {
+          FileManager.default.fileExists(atPath: root.appending(path: "status-entered").path)
+        }
+        try require(
+          model.directConversations.isEmpty && model.isDirectConnecting, "corrupt-cache-is-ignored")
+        try FileManager.default.removeItem(at: root.appending(path: "slow-source-status"))
         try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
         try require(model.directConversations.count == 230, "corrupt-cache-rebuilt-from-source")
         await model.flushHistoryCache()

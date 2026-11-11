@@ -113,6 +113,7 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
   }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    HistoryInteractionTrace.shared.start()
     ensureStatusItem()
     activateHistoryWindow()
   }

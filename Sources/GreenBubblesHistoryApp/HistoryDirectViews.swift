@@ -903,6 +903,73 @@ private struct HistoryDirectConversationList: View {
   }
 }
 
+private struct HistoryDirectMessageRows: View {
+  @Bindable var model: HistoryBrowserModel
+
+  var body: some View {
+    LazyVStack(spacing: 10) {
+      if model.directIsSearchContext {
+        Button("返回最新消息") {
+          model.returnToLatestDirectMessages()
+        }
+        .buttonStyle(HistoryActionStyle())
+      } else if model.directMessageCursor != nil {
+        HStack {
+          if model.isLoadingDirectMessages { ProgressView().controlSize(.small) }
+          Text(model.isLoadingDirectMessages ? "正在加载更早消息…" : "向上滚动查看更早消息")
+            .font(.caption).foregroundStyle(.secondary)
+        }
+
+      }
+
+      let messages = Array(model.directMessages.reversed())
+      ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+        VStack(spacing: 10) {
+          if let date = message.createdAt as Date?,
+            HistoryMessageTime.showsSeparator(
+              for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
+          {
+            HistoryMessageTimestamp(date: date)
+          }
+          HistoryDirectMessageBubble(
+            model: model, message: message,
+            highlighted: message.id == model.directHighlightedMessageID
+          )
+        }
+        .id(message.id)
+      }
+
+      if model.isLoadingDirectMessages && model.directMessages.isEmpty {
+        VStack(spacing: 22) {
+          ForEach(0..<4) { index in
+            HStack(alignment: .top, spacing: 10) {
+              if index % 2 == 1 { Spacer(minLength: 80) }
+              RoundedRectangle(cornerRadius: 9).fill(.primary.opacity(0.05)).frame(
+                width: 34, height: 34)
+              RoundedRectangle(cornerRadius: 12).fill(.primary.opacity(0.045)).frame(
+                width: index % 2 == 0 ? 230 : 170, height: 54)
+              if index % 2 == 0 { Spacer(minLength: 80) }
+            }
+          }
+          Label("正在加载消息…", systemImage: "clock").font(.caption).foregroundStyle(.secondary)
+        }.padding(.vertical, 14).accessibilityLabel("正在加载消息")
+      } else if !model.isLoadingDirectMessages && model.directMessages.isEmpty
+        && model.directMessageError == nil
+      {
+        ContentUnavailableView(
+          "暂无消息",
+          systemImage: "bubble.left",
+          description: Text("本次查询未找到消息。")
+        )
+        .padding(40)
+      }
+      Color.clear.frame(height: 1).id("latest")
+    }
+    .scrollTargetLayout()
+    .padding(18)
+  }
+}
+
 private struct HistoryDirectTimelineView: View {
   @Bindable var model: HistoryBrowserModel
   let conversationID: String
@@ -974,76 +1041,26 @@ private struct HistoryDirectTimelineView: View {
 
       ScrollViewReader { proxy in
         ScrollView {
-          LazyVStack(spacing: 10) {
-            if model.directIsSearchContext {
-              Button("返回最新消息") {
-                model.returnToLatestDirectMessages()
-              }
-              .buttonStyle(HistoryActionStyle())
-            } else if model.directMessageCursor != nil {
-              HStack {
-                if model.isLoadingDirectMessages { ProgressView().controlSize(.small) }
-                Text(model.isLoadingDirectMessages ? "正在加载更早消息…" : "向上滚动查看更早消息")
-                  .font(.caption).foregroundStyle(.secondary)
-              }
-
-            }
-
-            let messages = Array(model.directMessages.reversed())
-            ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
-              VStack(spacing: 10) {
-                if let date = message.createdAt as Date?,
-                  HistoryMessageTime.showsSeparator(
-                    for: date, after: index > 0 ? messages[index - 1].createdAt : nil)
-                {
-                  HistoryMessageTimestamp(date: date)
+          HistoryDirectMessageRows(model: model)
+            .background(
+              HistoryScrollPrefetch(bottomDistance: { distance in
+                model.directTimelineFollowingLatest = distance <= 32
+                let show = distance > 320
+                if showsJumpToLatest != show { showsJumpToLatest = show }
+              }) {
+                guard !model.isLoadingDirectMessages, model.directMessageCursor != nil else {
+                  return
                 }
-                HistoryDirectMessageBubble(
-                  model: model, message: message,
-                  highlighted: message.id == model.directHighlightedMessageID
-                )
-              }
-              .id(message.id)
-            }
-
-            if model.isLoadingDirectMessages && model.directMessages.isEmpty {
-              VStack(spacing: 22) {
-                ForEach(0..<4) { index in
-                  HStack(alignment: .top, spacing: 10) {
-                    if index % 2 == 1 { Spacer(minLength: 80) }
-                    RoundedRectangle(cornerRadius: 9).fill(.primary.opacity(0.05)).frame(
-                      width: 34, height: 34)
-                    RoundedRectangle(cornerRadius: 12).fill(.primary.opacity(0.045)).frame(
-                      width: index % 2 == 0 ? 230 : 170, height: 54)
-                    if index % 2 == 0 { Spacer(minLength: 80) }
-                  }
-                }
-                Label("正在加载消息…", systemImage: "clock").font(.caption).foregroundStyle(.secondary)
-              }.padding(.vertical, 14).accessibilityLabel("正在加载消息")
-            } else if !model.isLoadingDirectMessages && model.directMessages.isEmpty
-              && model.directMessageError == nil
-            {
-              ContentUnavailableView(
-                "暂无消息",
-                systemImage: "bubble.left",
-                description: Text("本次查询未找到消息。")
-              )
-              .padding(40)
-            }
-            Color.clear.frame(height: 1).id("latest")
+                paginationAnchor = readingPosition ?? model.directMessages.last?.id
+                model.loadOlderDirectMessages()
+              })
+        }
+        .background {
+          if HistoryInteractionTrace.shared.isEnabled {
+            HistoryTimelineLayoutTrace(
+              conversationID: conversationID, messageCount: model.directMessages.count,
+              loading: model.isLoadingDirectMessages)
           }
-          .scrollTargetLayout()
-          .padding(18)
-          .background(
-            HistoryScrollPrefetch(bottomDistance: { distance in
-              model.directTimelineFollowingLatest = distance <= 32
-              let show = distance > 320
-              if showsJumpToLatest != show { showsJumpToLatest = show }
-            }) {
-              guard !model.isLoadingDirectMessages, model.directMessageCursor != nil else { return }
-              paginationAnchor = readingPosition ?? model.directMessages.last?.id
-              model.loadOlderDirectMessages()
-            })
         }
         .defaultScrollAnchor(.bottom)
         .scrollPosition(id: $readingPosition, anchor: .top)

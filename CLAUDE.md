@@ -22,7 +22,7 @@ For a stable conversation ID, key the shared timestamp TimelineView by its messa
 
 Image thumbnail bounds and native alignment acceptance: see [docs/IMAGE_ALIGNMENT.md](docs/IMAGE_ALIGNMENT.md). Keep portrait thumbnails aligned with the same-side text bubble edge.
 
-Private repository: `wherexml/wesync`; `origin` is the private development repository and `upstream` preserves the original project. See [docs/REPOSITORY.md](docs/REPOSITORY.md). Do not publish personal data, credentials, local app bundles, or unreviewed native screenshots.
+Public repository: `wherexml/wesync` (GitHub verified 2026-11-11); `origin` is the development repository and `upstream` preserves the original project. See [docs/REPOSITORY.md](docs/REPOSITORY.md). Do not publish personal data, credentials, local app bundles, or unreviewed native screenshots.
 
 正文表情、仅 MD5 的图片表情恢复、专用签名 helper 与原生验收：见 [docs/EMOJI_DISPLAY.md](docs/EMOJI_DISPLAY.md)。保留原消息及复制内容，不绕过 TLS、摘要校验或已记住连接的工具绑定。
 
@@ -85,3 +85,5 @@ SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；用�
 经用户授权的公开 DMG 在本机使用 Developer ID 签名，App 和 DMG 分别公证并贴票据。GitHub Releases 公开下载与校验和通过后再部署首页链接，见 [docs/MACOS_RELEASE.md](docs/MACOS_RELEASE.md)。
 
 Application/status menus expose Settings (⌘,) and About. Keep the 76 pt avatar rail centered without native inset-list margins. Cache compaction, encoding, encryption and atomic writes run on a serial background actor; await the last save on termination. See [docs/INTERACTION_RESPONSIVENESS.md](docs/INTERACTION_RESPONSIVENESS.md).
+
+Cache verification rereads the loaded window (up to 400 messages); never infer deletions from partial coverage. Source changes invalidate cached timelines even when catalog summaries stay unchanged, and complete catalogs prune removed chats. Native content-free interaction diagnostics stay opt-in and must be restored after measurement. See [docs/TIMELINE_INVESTIGATION.md](docs/TIMELINE_INVESTIGATION.md).

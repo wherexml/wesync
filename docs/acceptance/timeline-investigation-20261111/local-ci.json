@@ -1,0 +1,161 @@
+{
+  "startedAt": "2026-11-11T14:03:18.243155+00:00",
+  "completedAt": "2026-11-11T14:06:32.984043+00:00",
+  "status": "PASS",
+  "sourceRevision": "9db85ad2202206f83824c0b7c8dd536613f3694a",
+  "sourceSHA256": "6f492fcb1ba8ea7f36a4b76f21022ca5a566e29af8a0ccc6382ebe0a947918dc",
+  "workingTreeChanged": true,
+  "syntheticOnly": true,
+  "checks": [
+    {
+      "name": "Verify pinned audit tools",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.14
+    },
+    {
+      "name": "Show Swift version",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.15
+    },
+    {
+      "name": "Check formatting",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.7
+    },
+    {
+      "name": "Run tests",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 4.06
+    },
+    {
+      "name": "Verify text emoji and bounded local stickers end to end",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 3.47
+    },
+    {
+      "name": "Build release executable",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 27.6
+    },
+    {
+      "name": "Check distribution dependency baseline",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.74
+    },
+    {
+      "name": "Check secret hygiene",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.75
+    },
+    {
+      "name": "Check cross-language pinned build profile",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.38
+    },
+    {
+      "name": "Test the personal-memory driver",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.88
+    },
+    {
+      "name": "Check Homebrew formula syntax",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.1
+    },
+    {
+      "name": "Check packaging manifests",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.21
+    },
+    {
+      "name": "Check the release helper contains no diagnostic bypass",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.32
+    },
+    {
+      "name": "Check the send path ships closed",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.01
+    },
+    {
+      "name": "Show Rust version",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.15
+    },
+    {
+      "name": "Audit Rust dependencies",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 2.52
+    },
+    {
+      "name": "Reproduce the third-party notice bundle",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 2.57
+    },
+    {
+      "name": "Check Rust formatting",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.74
+    },
+    {
+      "name": "Lint restoration engine",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.44
+    },
+    {
+      "name": "Run restoration-engine tests",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 142.15
+    },
+    {
+      "name": "Verify exact-message sticker metadata end to end",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.61
+    },
+    {
+      "name": "Verify AI read blacklist end to end",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.32
+    },
+    {
+      "name": "Check the cross-language send vectors are current",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.57
+    }
+  ],
+  "previousSameSourceAttempt": {
+    "status": "FAIL",
+    "step": "Run restoration-engine tests",
+    "test": "connector_hydration_cache_advances_with_the_replica_checkpoint",
+    "error": "SQLCipher key initialization error during bootstrap_replica in isolated Linux E2E",
+    "sourceChangedBeforeRerun": false,
+    "rootCauseConfirmed": false,
+    "report": ".build/local-ci/20261111T133245.554090Z/summary.json",
+    "scope": "Earlier run before the final catalog-coverage guard; Rust sources unchanged throughout."
+  },
+  "completeRerunReport": ".build/local-ci/20261111T140318.243155Z/summary.json",
+  "documentationAndEvidenceUpdatedAfterRun": true
+}
