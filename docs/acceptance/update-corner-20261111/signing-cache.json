@@ -1,0 +1,12 @@
+{
+  "scope": "same-certificate local development packaging",
+  "reusedUnchangedSignedFramework": true,
+  "signedFrameworkBytesIdentical": true,
+  "frameworkSigningCallsOnCacheHit": 0,
+  "mainAppSigningCallsPerBrandStage": 1,
+  "keyIncludesOriginalBytesArchitectureEntitlementsPermissionsCertificateAndPolicy": true,
+  "tamperedCacheRejectedBeforeResigning": true,
+  "distributionStillUsesDeveloperIDAndNotarizationGates": true,
+  "keychainACLOrPartitionListModified": false,
+  "privateKeyExported": false
+}

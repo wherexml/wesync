@@ -146,4 +146,10 @@ if (root/'cache-reconciliation-acceptance').exists():
   if offset+limit<len(ids):base['page']['nextCursor']=str(offset+limit)
   if stage==4:base['consistency']['coverageComplete']=False
 
+if (root/'update-notice-acceptance').exists() and operation=='messages.list':
+ items=[]
+ for i,text in enumerate(['资料已经整理好了。','收到，我们下午三点见。','好，到时见。']):
+  item=dict(base['items'][i%2]);item.update(id=f'update-chat-{i}',messageType=1,messageTypeLabel='text',messageSubtype=0,messageSubtypeLabel='text',sortSequence=1000-i,content={'Text':text})
+  items.append(item)
+ base.update(items=items,page={'limit':40,'returned':len(items),'hasMore':False})
 print(json.dumps(base,ensure_ascii=False))

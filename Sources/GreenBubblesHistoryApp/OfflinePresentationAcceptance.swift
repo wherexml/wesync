@@ -49,6 +49,20 @@
       return
     }
     var failure: String?
+    if FileManager.default.fileExists(atPath: root.appending(path: "update-notice-acceptance").path)
+    {
+      NSApp.appearance = NSAppearance(named: .aqua)
+      model.rememberDirectConnection = false
+      model.conversationRange = .all
+      model.connectDirectSource(
+        executableURL: cli, sourceURL: root, accessMode: .decrypted, keyUTF8: [])
+      do {
+        try await waitFor { !model.isDirectConnecting && !model.directConversations.isEmpty }
+        model.selectDirectConversation("demo-room")
+        try await waitFor { !model.isLoadingDirectMessages }
+      } catch { model.libraryError = "合成会话未能加载" }
+      return
+    }
     if FileManager.default.fileExists(
       atPath: root.appending(path: "cache-reconciliation-acceptance").path)
     {

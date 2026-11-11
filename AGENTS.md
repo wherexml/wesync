@@ -101,3 +101,5 @@ SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；仅�
 缓存核验覆盖已加载窗口（最多 400 条），不完整读取不据此删除；源变化即使摘要不变也标记待核验，完整目录后清理已移除会话。切换/滚动内容无关诊断默认关闭，测量后恢复偏好；规范与现场边界见 [docs/TIMELINE_INVESTIGATION.md](docs/TIMELINE_INVESTIGATION.md)。
 
 GitHub 更新使用固定 Sparkle 版本、签名 appcast 与签名 DMG，用户确认安装；公开通道只接收既有 Developer ID 团队，本机开发身份不自动迁移。嵌入 framework 必须先同身份签署嵌套代码，CLI 更新保留发布前驱摘要。更新密钥不重建、不导出，生产不可通过环境变量切换 feed/key；规范及原生升级验收见 [docs/GITHUB_UPDATES.md](docs/GITHUB_UPDATES.md)。
+
+更新采用 CyberMe V6 式右下角 24pt 卡片，后台检查并自动下载，已就绪后重启；正常升级端只验签，不调用签名私钥/签名工具。测试默认使用完整合成聊天界面，结束关闭测试窗口并恢复真实聊天。本机同证书封装可复用按原始内容、权限、证书和策略绑定的签名 framework；损坏复用记录必须报错，不静默重签。见 [docs/GITHUB_UPDATES.md](docs/GITHUB_UPDATES.md)。

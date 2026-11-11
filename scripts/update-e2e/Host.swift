@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftUI
 
 @MainActor
 final class UpdatePreviewDelegate: NSObject, NSApplicationDelegate {
@@ -34,18 +35,27 @@ final class UpdatePreviewDelegate: NSObject, NSApplicationDelegate {
     updater.start()
     record("launched")
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 480, height: 220),
+      contentRect: NSRect(x: 0, y: 0, width: 1040, height: 700),
       styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-    window.title = "we-sync 更新验收"
+    window.title = "we-sync"
     let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
-    let label = NSTextField(labelWithString: "we-sync 0.10.0（\(version)）")
-    label.font = .systemFont(ofSize: 24, weight: .semibold)
-    let button = NSButton(title: "检查更新…", target: self, action: #selector(check))
-    button.bezelStyle = .rounded
-    let stack = NSStackView(views: [label, button])
-    stack.orientation = .vertical
-    stack.spacing = 24
-    window.contentView = stack
+    window.contentView = NSHostingView(
+      rootView:
+        VStack(alignment: .leading, spacing: 18) {
+          HStack {
+            Text("we-sync").font(.system(size: 18, weight: .semibold))
+            Spacer()
+            Text("0.10.0（\(version)）").foregroundStyle(.secondary)
+            Button("检查更新…") { self.updater.check() }
+          }
+          Divider()
+          Spacer()
+        }
+        .padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(HistoryDesign.canvas)
+        .overlay(alignment: .bottomTrailing) {
+          HistoryUpdateNotice(updater: updater).padding(24)
+        })
     window.center()
     window.makeKeyAndOrderFront(nil)
     self.window = window

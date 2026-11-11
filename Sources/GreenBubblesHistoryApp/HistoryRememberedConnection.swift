@@ -102,6 +102,8 @@ struct HistoryConnectionVault {
             atPath: $0.appending(path: "offline-fixture/preload-acceptance").path)
             || FileManager.default.fileExists(
               atPath: $0.appending(path: "offline-fixture/body-refresh-acceptance").path)
+            || FileManager.default.fileExists(
+              atPath: $0.appending(path: "offline-fixture/update-notice-acceptance").path)
         } == true
     }
   #endif

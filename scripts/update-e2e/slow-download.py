@@ -23,7 +23,8 @@ candidate = root / 'cancel-candidate/we-sync Update Preview.app'
 subprocess.run(['/usr/bin/ditto', str(root / 'we-sync Update Preview.app'), str(candidate)], check=True)
 p = candidate / 'Contents/Info.plist'
 info = plistlib.loads(p.read_bytes())
-assert info['CFBundleIdentifier'] == 'me.greenbubbles.UpdaterPreview'
+assert info['CFBundleIdentifier'] in ['me.greenbubbles.UpdaterPreview','me.greenbubbles.PresentationPreview']
+assert info.get('GBUpdatePreview') is True
 info['CFBundleVersion'] = str(int(info['CFBundleVersion']) + 1)
 p.write_bytes(plistlib.dumps(info))
 subprocess.run(['codesign', '--force', '--sign', args.identity, str(candidate)], check=True, capture_output=True)

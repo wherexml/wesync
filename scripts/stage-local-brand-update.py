@@ -69,12 +69,15 @@ def main():
     info['CFBundleVersion'] = str(int(info['CFBundleVersion']) + 1)
     plist.write_bytes(plistlib.dumps(info))
     if args.main_executable:
-        embed_sparkle(candidate, args.identity)
+        sparkle_reused = embed_sparkle(candidate, args.identity)
+    else:
+        sparkle_reused = None
     for target in (baseline, candidate):
         # Do not use --deep while signing: preserve the query-tool bytes and
         # its remembered digest. Do not preserve the old ad-hoc requirement.
-        run('/usr/bin/codesign', '--force', '--sign', args.identity,
-            '--preserve-metadata=entitlements,flags,runtime', str(target))
+        if target == candidate:
+            run('/usr/bin/codesign', '--force', '--sign', args.identity,
+                '--preserve-metadata=entitlements,flags,runtime', str(target))
         run('/usr/bin/codesign', '--verify', '--deep', '--strict', str(target))
     baseline_requirement = requirement(baseline)
     candidate_requirement = requirement(candidate)
@@ -103,6 +106,7 @@ def main():
         'allHelperBinariesUnchanged': True,
         'applicationDisplayName': info['CFBundleDisplayName'],
         'mainExecutableRebuilt': bool(args.main_executable),
+        'signedSparkleFrameworkReused': sparkle_reused,
         'installedBundleUnchanged': True,
         'sourceFilesSHA256': original,
         'installedRestartAcceptance': 'PENDING',

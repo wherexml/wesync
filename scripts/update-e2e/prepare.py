@@ -20,6 +20,9 @@ from sparkle_feed import signed_feed, SIGN
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--identity', required=True)
 parser.add_argument('--out', type=Path, required=True)
+parser.add_argument('--product-ui', action='store_true', default=True, help='Use the real application with synthetic chats (default)')
+parser.add_argument('--minimal-host', dest='product_ui', action='store_false', help='Only for isolated transport debugging; not UI acceptance')
+parser.add_argument('--automatic', action='store_true', help='Check and download without a manual click')
 args = parser.parse_args()
 root = args.out.resolve()
 root.mkdir(mode=0o700)
@@ -37,10 +40,16 @@ public = subprocess.run(['swift', '-', str(key)], input=generator, text=True,
                         check=True, capture_output=True).stdout.strip()
 key.chmod(0o600)
 binary = root / 'update-preview'
-subprocess.run(['swiftc', '-D', 'DEBUG', '-parse-as-library', '-target', 'arm64-apple-macos14',
+if args.product_ui:
+ subprocess.run(['swift','build','--product','greenbubbles-history'],cwd=ROOT,check=True)
+ shutil.copy2(ROOT/'.build/debug/greenbubbles-history',binary)
+else:
+ subprocess.run(['swiftc', '-D', 'DEBUG', '-parse-as-library', '-target', 'arm64-apple-macos14',
                 '-F', str(framework.parent), '-framework', 'Sparkle',
                 '-Xlinker', '-rpath', '-Xlinker', '@executable_path/../Frameworks',
                 str(ROOT / 'Sources/GreenBubblesHistoryApp/HistoryUpdater.swift'),
+                str(ROOT / 'Sources/GreenBubblesHistoryApp/HistoryUpdateNotice.swift'),
+                str(ROOT / 'Sources/GreenBubblesHistoryApp/HistoryDesign.swift'),
                 str(ROOT / 'scripts/update-e2e/Host.swift'), '-o', str(binary)], check=True)
 
 
@@ -65,11 +74,23 @@ def make_app(target, build):
             'CFBundleShortVersionString': '0.10.0', 'CFBundleVersion': str(build),
             'CFBundleDevelopmentRegion': 'zh_CN', 'LSMinimumSystemVersion': '14.0',
             'GBUpdatePreview': True, 'GBUpdateEvidenceDirectory': str(root)}
+    if args.product_ui:
+        info.update(CFBundleIdentifier='me.greenbubbles.PresentationPreview',GBOfflineAcceptance=True)
+        fixture=target/'Contents/Resources/offline-fixture'
+        (fixture/'session').mkdir(parents=True)
+        (fixture/'session/session.db').write_bytes(b'Synthetic notification fixture')
+        (fixture/'update-notice-acceptance').touch()
+        shutil.copy2(ROOT/'Resources/Brand/GreenBubbles.iconset/icon_128x128.png',fixture/'sample.png')
+        for name in ['GreenBubbles.icns','GreenBubbles-black.png']:
+            shutil.copy2(ROOT/'Resources/Brand'/name,target/'Contents/Resources'/name)
+        info['CFBundleIconFile']='GreenBubbles'
+        shutil.copy2(ROOT/'scripts/presentation-fixture/greenbubbles',mac/'greenbubbles')
+        subprocess.run(['codesign','--force','--sign',args.identity,str(mac/'greenbubbles')],check=True,capture_output=True)
     (target / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
     embed_sparkle(target, args.identity)
     info = plistlib.loads((target / 'Contents/Info.plist').read_bytes())
     info.update(SUFeedURL=base + '/appcast.xml', SUPublicEDKey=public,
-                SUEnableAutomaticChecks=False, SUShowReleaseNotes=False,
+                SUEnableAutomaticChecks=args.automatic, SUShowReleaseNotes=False,
                 NSAppTransportSecurity={'NSAllowsLocalNetworking': True})
     (target / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
     subprocess.run(['codesign', '--force', '--sign', args.identity, str(target)], check=True, capture_output=True)
@@ -98,7 +119,7 @@ valid = ET.parse(server_root / 'available.xml').getroot()
 valid.find('./channel/item/enclosure').set('url', base + '/tampered.zip')
 ET.ElementTree(valid).write(server_root / 'bad-archive.xml', encoding='utf-8', xml_declaration=True)
 subprocess.run([str(SIGN), '--ed-key-file', str(key), str(server_root / 'bad-archive.xml')], check=True, capture_output=True)
-shutil.copy2(server_root / 'current.xml', server_root / 'appcast.xml')
+shutil.copy2(server_root / ('available.xml' if args.automatic else 'current.xml'), server_root / 'appcast.xml')
 receipt = {'application': str(app), 'feed': base + '/appcast.xml', 'port': port,
            'baselineBuild': '1', 'candidateBuild': '2', 'feedTamperRejectedBySigningTool': True,
            'archiveSHA256': hashlib.sha256(archive.read_bytes()).hexdigest(),

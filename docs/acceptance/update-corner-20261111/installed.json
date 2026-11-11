@@ -1,0 +1,19 @@
+{
+  "build": "75",
+  "sameIdentity": true,
+  "existingHelpersUnchanged": true,
+  "allCandidateFilesEqualBeforeLaunch": true,
+  "mainSHA256": "46734992bbe4a552c9a1ce9661fa91f7849a6353d142a17fa97460ff64b21a4c",
+  "tccOrKeychainACLChanged": false,
+  "coldStart1MainSHA256": "46734992bbe4a552c9a1ce9661fa91f7849a6353d142a17fa97460ff64b21a4c",
+  "coldStart1AutoConnected": true,
+  "inlineUpdateNotice": true,
+  "noModalUpdateAlert": true,
+  "settingsAndAboutPassed": true,
+  "passwordEntry": false,
+  "coldStart2MainSHA256": "46734992bbe4a552c9a1ce9661fa91f7849a6353d142a17fa97460ff64b21a4c",
+  "coldStart2AutoConnected": true,
+  "statusMenuUpdateEntry": true,
+  "realChatRestored": true,
+  "syntheticPreviewWindowsClosed": true
+}

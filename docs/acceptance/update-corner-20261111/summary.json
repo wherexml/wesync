@@ -1,0 +1,95 @@
+{
+  "startedDate": "2026-11-11",
+  "completedDate": "2026-11-12",
+  "timeZone": "Asia/Singapore",
+  "installedBuild": "75",
+  "version": "0.10.0",
+  "reference": "CyberMe V6 UpdateNotice.tsx: 24px right/bottom, background download, ready notification",
+  "status": "Local implementation and installed acceptance passed; public binary release not performed.",
+  "nativeChecks": {
+    "passed": 18,
+    "total": 18,
+    "report": "native-e2e.json"
+  },
+  "localCI": {
+    "passed": 23,
+    "total": 23,
+    "report": "local-ci.json"
+  },
+  "installedChecks": {
+    "twoNativeColdStartsAutoConnected": true,
+    "passwordEntry": false,
+    "sameIdentity": true,
+    "existingHelpersUnchanged": true,
+    "candidateBytesEqualAfterBothStarts": true,
+    "inlineNoticeNoModal": true,
+    "realChatForegroundAtEnd": true,
+    "previewWindowsClosed": true,
+    "report": "installed.json"
+  },
+  "signingCache": {
+    "reusedExactSignedBytes": true,
+    "corruptionRejected": true,
+    "frameworkSignCallsOnHit": 0,
+    "newMainBundleSigns": 1,
+    "report": "signing-cache.json"
+  },
+  "passwordFinding": {
+    "userReported": "Keychain or signing-tool access prompt",
+    "originalPromptProcessIdentified": false,
+    "runtimeUpdaterReadsUpdatePrivateKey": false,
+    "runtimeUpdaterInvokesSigningTools": false,
+    "passwordEnteredDuringNativeUpgrade": false,
+    "keychainACLPartitionListOrTCCModified": false,
+    "developmentSigningStillUsesNormalMacOSAuthorization": true
+  },
+  "appearance": {
+    "productionOrSystemThemeChanged": false,
+    "syntheticLightPreviewOnly": true,
+    "initialBlankTestHostClosed": true,
+    "currentE2EDefault": "Full production chat UI with synthetic messages"
+  },
+  "privacy": {
+    "wechatOperated": false,
+    "realChatsModified": false,
+    "realChatScreenshotsPublished": false,
+    "privateKeysExportedOrRegenerated": false
+  },
+  "delivery": {
+    "publicDMGReleased": false,
+    "websiteDeployed": false,
+    "githubActionsEnabled": false,
+    "localDevelopmentIdentityNotMigrated": true
+  },
+  "limitations": [
+    "Public update channel remains limited to the existing Developer ID team; local development identity is preserved.",
+    "Native evidence covers successful update, integrity failures, retry, cancellation and data retention; not disk-full, crash or failed-launch rollback.",
+    "Early dark/isolated traces predate final lightweight menu and fixture changes; final light full-product flow and installed restart cover final app behavior.",
+    "One automation focus change and one 30-second tool timeout were recovered by fresh UI observation."
+  ],
+  "sourceSHA256": {
+    "Sources/GreenBubblesHistoryApp/HistoryUpdater.swift": "d8a0d7ac75603751a5751a029c27e74457bad6da7308e12374c17967309d74ea",
+    "Sources/GreenBubblesHistoryApp/HistoryUpdateNotice.swift": "484d3e82494c630402f0d6875361fe61bb01b27f2eabeecdb37bd55610c8adf8",
+    "Sources/GreenBubblesHistoryApp/GreenBubblesHistoryApp.swift": "6e6bc71f718f1d93a53fcd721813fdd55dc65c5ef22bd8be95b571e6510f9df9",
+    "Sources/GreenBubblesHistoryApp/HistoryRememberedConnection.swift": "9d7c0c1f92dd240c2a9eed1d80ae34a0dbfc6a948b7d295bcfd7a4a8d6f12c45",
+    "Sources/GreenBubblesHistoryApp/OfflinePresentationAcceptance.swift": "0c810fb93d57fa4e38162f341418455a3b61ab7c6072667524646634be3e9014",
+    "scripts/sparkle_bundle.py": "b2cd23103434f11ba336fbc0bc106ced74ec6a91522202a20002b57b02840b32",
+    "scripts/stage-local-brand-update.py": "f996ba64821d12b4e0ab90699a88cdaea597f4df1bd0e9ea3784dc219992b555",
+    "scripts/presentation-fixture/greenbubbles": "238c2b67b81893332be8ee74120f3694915ca5433a27ab11067f1e9eae0b208b",
+    "scripts/update-e2e/Host.swift": "b72173d59416df972f1d87e4f454d11508ef9799adfe61b6897ff11d2c201b48",
+    "scripts/update-e2e/prepare.py": "0510a29d29d037046d56d77b4e25874d31e22d077a69aac3badcbe35ebf197ed",
+    "scripts/update-e2e/slow-download.py": "762242e6385b3e3dc9bc83a326541d4e0345b08b0814742995720205d8cb90e8"
+  },
+  "artifactSHA256": {
+    "README.md": "883a6f718d102de9df3606b3173891b6baf1e6c172b82adc6e7be28c7675e861",
+    "about.png": "409e67fd7fd4fde2f864fa965265cef746ad1c7fa6cf3d4644efadf372ed4bf8",
+    "chat-ready-dark.png": "87604dc3f53fa1e92bae7dd0c28210b031587ad77dbbc84664e5fd156c9d296b",
+    "chat-ready-light.png": "5fe392fa448b7decda100f53ec66ce99259923556f23fcb2a93d9e2f0e302580",
+    "downloading-light.png": "8d83dc063b2ea43e640bd8c9aed533b54cc5c745c5a1015a2d07d0ace1a8721c",
+    "installed.json": "aed8ebe1d4749d9cd4ad118b966229ce3473c9e41a71c954d456f9332df52f3b",
+    "local-ci.json": "4dc09cf6548ad664a37ecaf0ac6442d471af5d742ec77b68b97c01a0a084c677",
+    "native-e2e.json": "f23a1d744309e71c9bd009491095b673b41168e725c7212b0209484115f84b84",
+    "rejected-feed.png": "2bf1e895ab5e9193a4b642abcec280c3fab1eeac8380f84b44098cb77cbdce58",
+    "signing-cache.json": "1a905750189f51da6a80447a71f2d69afd0bd84cb33be7a4b027c14a66f7fa14"
+  }
+}

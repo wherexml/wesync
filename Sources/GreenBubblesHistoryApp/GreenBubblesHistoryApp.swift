@@ -16,6 +16,9 @@ struct GreenBubblesHistoryApplication: App {
     // Dock reopen and menu-bar actions must address the same main window.
     Window("微信聊天记录", id: "history") {
       HistoryRootView(model: model)
+        .overlay(alignment: .bottomTrailing) {
+          HistoryUpdateNotice(updater: applicationDelegate.updater).padding(24)
+        }
         .environment(\.locale, Locale(identifier: "zh_CN"))
         .frame(minWidth: 980, minHeight: 680)
         .onAppear { [model] in
@@ -174,7 +177,7 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
 
   func menuWillOpen(_ menu: NSMenu) {
     dockMenuItem?.state = showDockIcon ? .on : .off
-    updateMenuItem?.isEnabled = updater.canCheck
+    updateMenuItem?.isEnabled = updater.canOpenNotice
     automaticUpdateMenuItem?.state = updater.automaticallyChecks ? .on : .off
   }
   @objc private func checkForUpdates() { updater.check() }

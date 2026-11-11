@@ -1,0 +1,167 @@
+{
+  "source": "synthetic-only",
+  "checks": {
+    "automatic-download-without-download-click": true,
+    "close-and-reopen-preserves-ready-update": true,
+    "restart-opens-build2": true,
+    "no-password-entered-during-restart": true,
+    "full-product-chat-ready-dark": true,
+    "chat-scroll-responds-while-ready": true,
+    "full-product-restart-restores-chat": true,
+    "invalid-feed-fails-inline": true,
+    "retry-after-feed-error-recovers": true,
+    "tampered-archive-rejected-without-install-action": true,
+    "background-download-can-open-progress-from-menu": true,
+    "download-cancellation-keeps-current-build": true,
+    "retry-after-cancellation-reaches-ready": true,
+    "light-product-ready-card": true,
+    "light-product-restart-restores-chat": true,
+    "sentinel-preserved": true,
+    "no-standard-update-dialog-observed": true,
+    "test-window-closed-and-user-chat-restored": true
+  },
+  "passed": true,
+  "traceEvents": {
+    "automatic-isolated": [
+      {
+        "build": "1",
+        "code": null,
+        "event": "launched"
+      },
+      {
+        "build": "1",
+        "code": null,
+        "event": "available"
+      },
+      {
+        "build": "1",
+        "code": null,
+        "event": "ready"
+      },
+      {
+        "build": "1",
+        "code": null,
+        "event": "installing"
+      },
+      {
+        "build": "2",
+        "code": null,
+        "event": "launched"
+      },
+      {
+        "build": "2",
+        "code": null,
+        "event": "current"
+      },
+      {
+        "build": "2",
+        "code": 1001,
+        "event": "error"
+      }
+    ],
+    "complete-chat-dark": [
+      {
+        "code": null,
+        "event": "started",
+        "build": "1"
+      },
+      {
+        "build": "1",
+        "event": "available",
+        "code": null
+      },
+      {
+        "code": null,
+        "build": "1",
+        "event": "ready"
+      },
+      {
+        "event": "installing",
+        "code": null,
+        "build": "1"
+      },
+      {
+        "event": "started",
+        "code": null,
+        "build": "2"
+      },
+      {
+        "build": "2",
+        "event": "current",
+        "code": null
+      },
+      {
+        "build": "2",
+        "event": "error",
+        "code": 1000
+      },
+      {
+        "code": null,
+        "build": "2",
+        "event": "current"
+      },
+      {
+        "code": null,
+        "build": "2",
+        "event": "available"
+      },
+      {
+        "event": "error",
+        "build": "2",
+        "code": 4005
+      }
+    ],
+    "complete-chat-light": [
+      {
+        "build": "1",
+        "event": "started",
+        "code": null
+      },
+      {
+        "build": "1",
+        "event": "available",
+        "code": null
+      },
+      {
+        "build": "1",
+        "event": "cancelled",
+        "code": null
+      },
+      {
+        "code": null,
+        "event": "available",
+        "build": "1"
+      },
+      {
+        "code": null,
+        "event": "ready",
+        "build": "1"
+      },
+      {
+        "code": null,
+        "build": "1",
+        "event": "installing"
+      },
+      {
+        "event": "started",
+        "code": null,
+        "build": "2"
+      },
+      {
+        "code": null,
+        "event": "current",
+        "build": "2"
+      }
+    ]
+  },
+  "passwordEntryByAgent": false,
+  "signingPrivateKeyReadByRuntimeUpdater": false,
+  "productionRememberedConnectionReadByFixtures": false,
+  "keychainACLOrTCCModified": false,
+  "notes": [
+    "The initial minimal host was left in front after its upgrade. It was closed and the user chat restored after the user reported a black screen; all subsequent visual acceptance used the real product chat UI.",
+    "Dark and light evidence use production chat/notice components with synthetic messages. The light appearance is set only inside the DEBUG update-notice acceptance case; user/system appearance is unchanged.",
+    "The error recorder on the earliest minimal host includes normal Sparkle no-update code 1001. Later source filters that normal completion out of failure traces.",
+    "Disk-full, crash and failed-launch rollback remain outside this acceptance scope."
+  ]
+}
