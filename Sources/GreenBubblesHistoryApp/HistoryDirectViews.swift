@@ -507,6 +507,7 @@ struct HistoryDirectLibraryView: View {
         .frame(height: 32)
         .padding(.horizontal, isSidebarCollapsed ? 10 : 14)
         .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
         if !isSidebarCollapsed, let notice = model.connectionPersistenceNotice {
           Text(notice).font(.caption).foregroundStyle(.orange).padding(.horizontal)
         }
@@ -857,7 +858,9 @@ private struct HistoryDirectConversationList: View {
           }
           .listRowBackground(Color.clear)
           .listRowSeparator(.hidden)
-          .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+          .listRowInsets(
+            EdgeInsets(
+              top: 2, leading: isCollapsed ? 0 : 8, bottom: 2, trailing: isCollapsed ? 0 : 8))
         }
 
         if model.directConversationCursor != nil {
@@ -877,7 +880,8 @@ private struct HistoryDirectConversationList: View {
         }
 
       }
-      .listStyle(.inset)
+      .listStyle(.plain)
+      .contentMargins(.horizontal, 0, for: .scrollContent)
       .scrollContentBackground(.hidden)
       .background(HistoryChatPalette.sidebar)
       .background(HistoryScrollAppearance())

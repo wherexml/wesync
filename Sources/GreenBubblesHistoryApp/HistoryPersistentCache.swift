@@ -5,7 +5,7 @@ import LocalAuthentication
 import Security
 
 /// Encrypted disposable cache. The existing connection secret never leaves memory.
-struct HistoryPersistentCache {
+struct HistoryPersistentCache: Sendable {
   let url: URL
   let key: SymmetricKey
 

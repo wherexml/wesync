@@ -131,7 +131,7 @@ final class HistoryBrowserModel {
   var directMessages: [HistoryDirectMessage] = []
   var directImagePreviews: [String: NSImage] = [:]
   private var directImagePreviewOrder: [String] = []
-  private struct CachedTimeline: Codable {
+  private struct CachedTimeline: Codable, Sendable {
     let messages: [HistoryDirectMessage]
     let cursor: String?
     let warnings: [HistoryDirectWarning]
@@ -153,12 +153,45 @@ final class HistoryBrowserModel {
   private var recentPreloadAttempted: Set<String> = []
   private var recentPreloadPaused = false
   private(set) var isPreloadingRecentConversations = false
-  private struct DiskHistory: Codable {
+  private struct DiskHistory: Codable, Sendable {
     var conversations: [HistoryDirectConversation]
     var cursor: String?
     var timelines: [String: CachedTimeline]
     var avatarPool: [String: String]?
     var avatarReferences: [String: [String: String]]?
+
+    func compactingAvatars() -> DiskHistory {
+      var pool: [String: String] = [:]
+      var references: [String: [String: String]] = [:]
+      var fingerprints: [String: String] = [:]
+      var timelines: [String: CachedTimeline] = [:]
+      for (id, timeline) in self.timelines {
+        let messages = timeline.messages.map { message in
+          var compact = message
+          if let avatar = message.avatarBase64 {
+            let fingerprint: String
+            if let known = fingerprints[avatar] {
+              fingerprint = known
+            } else {
+              fingerprint = SHA256.hash(data: Data(avatar.utf8))
+                .map { String(format: "%02x", $0) }.joined()
+              fingerprints[avatar] = fingerprint
+              pool[fingerprint] = avatar
+            }
+            references[id, default: [:]][message.id] = fingerprint
+            compact.avatarBase64 = nil
+          }
+          return compact
+        }
+        timelines[id] = CachedTimeline(
+          messages: messages, cursor: timeline.cursor,
+          warnings: timeline.warnings, consistency: timeline.consistency,
+          refreshedAt: timeline.refreshedAt, accessedAt: timeline.accessedAt)
+      }
+      return DiskHistory(
+        conversations: conversations, cursor: cursor, timelines: timelines,
+        avatarPool: pool, avatarReferences: references)
+    }
 
     func restoringAvatars() -> [String: CachedTimeline] {
       guard let avatarPool, let avatarReferences else { return timelines }
@@ -195,43 +228,52 @@ final class HistoryBrowserModel {
 
   var isMonitoringDirectConversationChanges: Bool { conversationChangeMonitor != nil }
 
+  private actor CacheWriter {
+    func write(_ snapshot: DiskHistory, to cache: HistoryPersistentCache) throws {
+      try Task.checkCancellation()
+      try cache.write(snapshot.compactingAvatars())
+    }
+  }
+  @ObservationIgnored private let historyCacheWriter = CacheWriter()
+  private struct PendingCacheSave {
+    let id: UUID
+    let task: Task<Void, Never>
+  }
+  @ObservationIgnored private var historyCacheSaves: [URL: PendingCacheSave] = [:]
+
   private func saveHistoryCache() {
     guard let persistentHistory else { return }
-    do {
-      var pool: [String: String] = [:]
-      var references: [String: [String: String]] = [:]
-      var fingerprints: [String: String] = [:]
-      var timelines: [String: CachedTimeline] = [:]
-      for (id, timeline) in directMessagePageCache {
-        let messages = timeline.messages.map { message in
-          var compact = message
-          if let avatar = message.avatarBase64 {
-            let fingerprint: String
-            if let known = fingerprints[avatar] {
-              fingerprint = known
-            } else {
-              fingerprint = SHA256.hash(data: Data(avatar.utf8))
-                .map { String(format: "%02x", $0) }.joined()
-              fingerprints[avatar] = fingerprint
-              pool[fingerprint] = avatar
-            }
-            references[id, default: [:]][message.id] = fingerprint
-            compact.avatarBase64 = nil
-          }
-          return compact
+    let snapshot = DiskHistory(
+      conversations: directConversations, cursor: directConversationCursor,
+      timelines: directMessagePageCache)
+    let sessionID = activeDirectLoadID
+    let url = persistentHistory.url
+    let saveID = UUID()
+    historyCacheSaves[url]?.task.cancel()
+    let writer = historyCacheWriter
+    let task = Task { [weak self] in
+      defer {
+        if self?.historyCacheSaves[url]?.id == saveID {
+          self?.historyCacheSaves.removeValue(forKey: url)
         }
-        timelines[id] = CachedTimeline(
-          messages: messages, cursor: timeline.cursor,
-          warnings: timeline.warnings, consistency: timeline.consistency,
-          refreshedAt: timeline.refreshedAt, accessedAt: timeline.accessedAt)
       }
-      try persistentHistory.write(
-        DiskHistory(
-          conversations: directConversations,
-          cursor: directConversationCursor, timelines: timelines, avatarPool: pool,
-          avatarReferences: references))
-    } catch {
-      connectionPersistenceNotice = "本地缓存暂时无法保存，下次打开将重新加载。"
+      do {
+        try await writer.write(snapshot, to: persistentHistory)
+      } catch is CancellationError {
+        // A newer snapshot supersedes queued work; an in-flight write stays serial.
+      } catch {
+        guard let self, self.activeDirectLoadID == sessionID, !Task.isCancelled else { return }
+        self.connectionPersistenceNotice = "本地缓存暂时无法保存，下次打开将重新加载。"
+      }
+    }
+    historyCacheSaves[url] = PendingCacheSave(id: saveID, task: task)
+  }
+
+  func flushHistoryCache() async {
+    saveHistoryCache()
+    while !historyCacheSaves.isEmpty {
+      let pending = historyCacheSaves.values.map(\.task)
+      for task in pending { await task.value }
     }
   }
 

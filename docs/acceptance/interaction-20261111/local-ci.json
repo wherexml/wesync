@@ -1,0 +1,150 @@
+{
+  "startedAt": "2026-11-11T12:27:19.714380+00:00",
+  "completedAt": "2026-11-11T12:30:50.921028+00:00",
+  "status": "PASS",
+  "sourceRevision": "6de2c0abb5cdae4434e53482dc3165cae39903ac",
+  "sourceSHA256": "4b638544a2a60bd3298047d5c64b54266144e7117d67c41651cbb3ee218b919c",
+  "workingTreeChanged": true,
+  "syntheticOnly": true,
+  "checks": [
+    {
+      "name": "Verify pinned audit tools",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.13
+    },
+    {
+      "name": "Show Swift version",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.15
+    },
+    {
+      "name": "Check formatting",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.71
+    },
+    {
+      "name": "Run tests",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 8.61
+    },
+    {
+      "name": "Verify text emoji and bounded local stickers end to end",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 3.4
+    },
+    {
+      "name": "Build release executable",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 26.57
+    },
+    {
+      "name": "Check distribution dependency baseline",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 2.45
+    },
+    {
+      "name": "Check secret hygiene",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.77
+    },
+    {
+      "name": "Check cross-language pinned build profile",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.38
+    },
+    {
+      "name": "Test the personal-memory driver",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.69
+    },
+    {
+      "name": "Check Homebrew formula syntax",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.08
+    },
+    {
+      "name": "Check packaging manifests",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.2
+    },
+    {
+      "name": "Check the release helper contains no diagnostic bypass",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.35
+    },
+    {
+      "name": "Check the send path ships closed",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.01
+    },
+    {
+      "name": "Show Rust version",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.15
+    },
+    {
+      "name": "Audit Rust dependencies",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 2.27
+    },
+    {
+      "name": "Reproduce the third-party notice bundle",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 2.53
+    },
+    {
+      "name": "Check Rust formatting",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.73
+    },
+    {
+      "name": "Lint restoration engine",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.41
+    },
+    {
+      "name": "Run restoration-engine tests",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 154.98
+    },
+    {
+      "name": "Verify exact-message sticker metadata end to end",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 1.59
+    },
+    {
+      "name": "Verify AI read blacklist end to end",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.32
+    },
+    {
+      "name": "Check the cross-language send vectors are current",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 0.58
+    }
+  ],
+  "fullLocalReport": ".build/local-ci/20261111T122719.714380Z/summary.json"
+}

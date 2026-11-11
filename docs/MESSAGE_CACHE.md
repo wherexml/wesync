@@ -95,3 +95,7 @@
 本轮结果：11 项合成 E2E 通过；原生合成窗口阶段 103 保留同一历史消息锚点，阶段 104 在底部自动跟随。build 57 沿用原身份及全部 helper 字节，安装版两次冷启动自动连接、会话往返、主动刷新、历史滚动/返回最新通过。未发送真实测试消息；真实入站变化的控制实验使用独立合成来源。锚点保持到消息行，不承诺像素偏移不变。证据见 [body-refresh-20261106](acceptance/body-refresh-20261106/installed.json) 与 [synthetic.json](acceptance/body-refresh-20261106/synthetic.json)。完整本机 CI 在第 16 项现有 Rust 压缩依赖审计失败，后续 7 项未运行；未提交推送。
 
 上述 CI 阻塞已在同日后续安全升级解决：完整 23 项通过，最终 build 58 安装与连接验收见 [安全升级记录](acceptance/security-upgrade-20261106/summary.json)。此前 build 57 记录保留为当时状态。
+
+## 后台持久化（2026-11-11）
+
+主线程只捕获值类型快照。串行 CacheWriter actor 负责头像池去重、JSON 编码、AES-GCM 和原子写盘；同一缓存文件的新快照取消尚未执行的旧任务，正在写入的任务串行完成；不同来源末次写入互不取消，退出等待全部来源的待完成任务，避免旧版本覆盖新版本。写入失败仅反馈到原连接。退出通过 applicationShouldTerminate 的 terminateLater 等待末次快照，保留跨重启缓存；源隔离、磁盘格式、权限和容量上限不变。已有合成 E2E 在直接检查缓存文件之前显式等待 flushHistoryCache；预热 E2E 同时记录主线程 10ms 心跳的最大间隔。重复步骤及结果见 [交互响应](INTERACTION_RESPONSIVENESS.md)。

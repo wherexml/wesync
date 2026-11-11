@@ -81,3 +81,5 @@ SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；用�
 产品首页源文件位于 `website/`。`python3 scripts/build-website.py` 生成三语静态页面及 Cloudflare Pages 部署包。首屏和底部下载区的 SVG 对话气泡位于波形后方，减少动态效果时波形静止。连接、搜索和 Codex 提问演示使用同一组合成会话，见 [docs/WEBSITE.md](docs/WEBSITE.md)。
 
 经用户授权的公开 DMG 在本机使用 Developer ID 签名，App 和 DMG 分别公证并贴票据。GitHub Releases 公开下载与校验和通过后再部署首页链接，见 [docs/MACOS_RELEASE.md](docs/MACOS_RELEASE.md)。
+
+Application/status menus expose Settings (⌘,) and About. Keep the 76 pt avatar rail centered without native inset-list margins. Cache compaction, encoding, encryption and atomic writes run on a serial background actor; await the last save on termination. See [docs/INTERACTION_RESPONSIVENESS.md](docs/INTERACTION_RESPONSIVENESS.md).

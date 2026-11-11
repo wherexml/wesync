@@ -18,8 +18,10 @@ struct GreenBubblesHistoryApplication: App {
       HistoryRootView(model: model)
         .environment(\.locale, Locale(identifier: "zh_CN"))
         .frame(minWidth: 980, minHeight: 680)
-        .onAppear {
+        .onAppear { [model] in
           applicationDelegate.showWindowHandler = { openWindow(id: "history") }
+          applicationDelegate.settingsHandler = { model.presentDirectConnection() }
+          applicationDelegate.flushHandler = { await model.flushHistoryCache() }
           applicationDelegate.ensureStatusItem()
           applicationDelegate.activateHistoryWindow()
           applicationDelegate.registerOpenURLHandler { [weak model] urls in
@@ -29,6 +31,13 @@ struct GreenBubblesHistoryApplication: App {
     }
     .defaultSize(width: 1_320, height: 860)
     .commands {
+      CommandGroup(replacing: .appInfo) {
+        Button("关于 we-sync") { applicationDelegate.showAbout() }
+      }
+      CommandGroup(replacing: .appSettings) {
+        Button("设置…") { applicationDelegate.showSettings() }
+          .keyboardShortcut(",")
+      }
       CommandGroup(after: .toolbar) {
         Button("菜单栏选项") { applicationDelegate.presentStatusMenu() }
           .keyboardShortcut("m", modifiers: [.control, .option])
@@ -68,6 +77,8 @@ struct GreenBubblesHistoryApplication: App {
 @MainActor
 final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
   var showWindowHandler: (() -> Void)?
+  var settingsHandler: (() -> Void)?
+  var flushHandler: (() async -> Void)?
   private var statusItem: NSStatusItem?
   private var dockMenuItem: NSMenuItem?
   private var openURLHandler: (([URL]) -> Void)?
@@ -124,6 +135,9 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     _ = add("打开 \(HistoryBrand.name)", #selector(showHistory))
     _ = add("隐藏窗口", #selector(hideHistory))
     menu.addItem(.separator())
+    _ = add("设置…", #selector(showSettings))
+    _ = add("关于 we-sync", #selector(showAbout))
+    menu.addItem(.separator())
     dockMenuItem = add("在程序坞中显示", #selector(toggleDock))
     menu.addItem(.separator())
     _ = add("退出 \(HistoryBrand.name)", #selector(quitHistory))
@@ -164,6 +178,14 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     showWindowHandler?()
     activateHistoryWindow()
   }
+  @objc func showSettings() {
+    showHistory()
+    settingsHandler?()
+  }
+  @objc func showAbout() {
+    NSApp.activate(ignoringOtherApps: true)
+    NSApp.orderFrontStandardAboutPanel(nil)
+  }
   @objc private func hideHistory() {
     for window in NSApp.windows where window.canBecomeKey {
       window.orderOut(nil)
@@ -176,6 +198,15 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     activateHistoryWindow()
   }
   @objc private func quitHistory() { NSApp.terminate(nil) }
+
+  func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+    guard let flushHandler else { return .terminateNow }
+    Task {
+      await flushHandler()
+      sender.reply(toApplicationShouldTerminate: true)
+    }
+    return .terminateLater
+  }
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     false

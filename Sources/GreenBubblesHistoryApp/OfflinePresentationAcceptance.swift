@@ -424,6 +424,21 @@
       return
     }
     if FileManager.default.fileExists(atPath: root.appending(path: "preload-acceptance").path) {
+      var heartbeatTicks = 0
+      var maximumHeartbeatGap = 0.0
+      let heartbeat = Task { @MainActor in
+        var previous = ContinuousClock.now
+        while !Task.isCancelled {
+          do { try await Task.sleep(for: .milliseconds(10)) } catch { return }
+          let now = ContinuousClock.now
+          let gap = previous.duration(to: now).components
+          maximumHeartbeatGap = max(
+            maximumHeartbeatGap, Double(gap.seconds) + Double(gap.attoseconds) / 1e18)
+          heartbeatTicks += 1
+          previous = now
+        }
+      }
+      defer { heartbeat.cancel() }
       func waitForWarm(_ ready: @escaping () -> Bool) async throws {
         for _ in 0..<2400 {
           if ready() { return }
@@ -508,6 +523,7 @@
             && !model.isLoadingDirectConversations && !model.isPreloadingRecentConversations
         }
         let config = model.directConfiguration!
+        await model.flushHistoryCache()
         let cache = HistoryPersistentCache(configuration: config, secret: [], enabled: true)!
         try require(
           try Data(contentsOf: cache.url).range(of: Data("Synthetic cache message".utf8)) == nil,
@@ -539,10 +555,14 @@
             && model.directConfiguration == nil,
           "close-cancels-warm-and-clears-source")
         try FileManager.default.removeItem(at: root.appending(path: "warm-slow"))
+        try require(heartbeatTicks > 100, "main-actor-heartbeat-observed")
+        try require(maximumHeartbeatGap < 0.5, "main-actor-gap-under-500ms")
       } catch { failure = error.localizedDescription }
       let report: [String: Any] = [
         "checks": checks, "passed": failure == nil,
         "error": failure ?? "", "source": "synthetic-only", "wechatRead": false,
+        "heartbeatTicks": heartbeatTicks,
+        "maximumMainActorGapMilliseconds": maximumHeartbeatGap * 1000,
         "keychainAccess": false,
       ]
       if let data = try? JSONSerialization.data(
@@ -626,6 +646,7 @@
         try await waitFor { !model.isLoadingDirectMessages }
         let configuration = model.directConfiguration!
         let disk = HistoryPersistentCache(configuration: configuration, secret: [], enabled: true)!
+        await model.flushHistoryCache()
         let encrypted = try Data(contentsOf: disk.url)
         try require(
           encrypted.range(of: Data("Synthetic cache message".utf8)) == nil,
@@ -649,6 +670,7 @@
         try require(model.directConversations.isEmpty, "corrupt-cache-is-ignored")
         try await waitFor { !model.isDirectConnecting && model.directConversationCursor == nil }
         try require(model.directConversations.count == 230, "corrupt-cache-rebuilt-from-source")
+        await model.flushHistoryCache()
         model.selectDirectConversation("demo-room")
         try await waitFor { !model.isLoadingDirectMessages }
       } catch { failure = error.localizedDescription }

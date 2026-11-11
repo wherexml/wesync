@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-11",
+  "timezone": "Asia/Singapore",
+  "status": "PASS",
+  "application": "we-sync",
+  "version": "0.10.0",
+  "baselineBuild": "62",
+  "installedBuild": "65",
+  "baselineObservation": {
+    "applicationMenuOpenedDuringReproduction": true,
+    "settingsMenuMissing": true,
+    "aboutVersion": "0.10.0 (62)",
+    "collapsedRowClippedAndOffset": true,
+    "idleSampleNotContinuouslyBusy": true,
+    "continuousFrameworkFailureReproduced": false
+  },
+  "signing": {
+    "strictVerification": "PASS",
+    "originalDesignatedRequirementPreserved": true,
+    "allHelperBytesPreserved": true,
+    "signingIdentityMigration": false,
+    "tccOrKeychainACLChanged": false,
+    "rollbackBundle": ".local-install/interaction-20261111/installed-build62-backup.app"
+  },
+  "finalBuildNativeAcceptance": {
+    "coldStart1": "PASS",
+    "coldStart2": "PASS",
+    "processAbsenceConfirmedBetweenStarts": true,
+    "automaticConnectionWithoutCredentialEntry": "PASS",
+    "chatLoadAndManualRefreshBothStarts": "PASS",
+    "settingsShortcutBothStarts": "PASS",
+    "applicationMenuSettingsAndAbout": "PASS",
+    "aboutVersion": "0.10.0 (65)",
+    "collapsedPreferenceAfterRestart": "PASS",
+    "doneReturnsToChat": "PASS",
+    "credentialEntry": false,
+    "sourceDataMutations": false
+  },
+  "uiAcceptanceOnBuild63": {
+    "sidebarCollapseExpandKeepsSelection": "PASS",
+    "chatSearchOpenEscape": "PASS",
+    "statusMenuSettings": "PASS",
+    "collapsedContextMenuOpenCancel": "PASS"
+  },
+  "syntheticAcceptance": {
+    "preloadChecks": 316,
+    "cacheChecks": 17,
+    "total": 333,
+    "maximumMainActorGapMilliseconds": 306.480792,
+    "performanceMetricMeaning": "Maximum heartbeat scheduling gap over the whole synthetic run, including batch selections and cache restore; not frame rate or per-click latency. No before/after benchmark."
+  },
+  "localCI": {
+    "status": "PASS",
+    "checks": 23,
+    "report": "local-ci.json"
+  },
+  "githubActionsEnabled": false,
+  "screenshots": {
+    "sidebar.png": "Final synthetic preview, production layout; no real chats or contacts.",
+    "settings.png": "Synthetic preview on initial candidate; identical final settings layout.",
+    "about.png": "Reviewed final installed build 65 About panel; only public application metadata."
+  },
+  "sourceFilesSHA256": {
+    "Sources/GreenBubblesHistoryApp/OfflinePresentationAcceptance.swift": "b485043fc21246b8f2f6cd618070696f346fbee04e75ae517d9627347293faf0",
+    "Sources/GreenBubblesHistoryApp/HistoryPersistentCache.swift": "41768a33a2a6aba69b9c51a3553b281c63beffc3fe7bf11470582b468335d801",
+    "Sources/GreenBubblesHistoryApp/GreenBubblesHistoryApp.swift": "0ff75ceefba1e6c0eac278760bee0c7f27f605b5aa06f3d3dd80f6c97e10e753",
+    "Sources/GreenBubblesHistoryApp/HistoryBrowserModel.swift": "bef621ac55c121e5d779a46af1a58ff8f8b12d03624349a9abdd07a3475be770",
+    "Sources/GreenBubblesHistoryApp/HistoryDirectViews.swift": "ad15c66a1dae0197f3fa350e48383f0d206eb5ad8808098feaeb0b0ab412e53c"
+  },
+  "artifactSHA256": {
+    "local-ci.json": "9510cb0c7943fd6cc4bc33c0f8528310de16eb318ea4a00934f1c90224d3d42a",
+    "settings.png": "599b99d95dc452108d706eb667222386a8952b595eee4dad9b609334ff905e9d",
+    "preload.json": "b9c6e0a4d09e3cd43593091107bbecd4cdec84f8ad616029fe41d6c97d463b43",
+    "message-cache.json": "1d29439767faaa5aa9dfa64890ef9f5d562c066ef6f857802a8132f822632956",
+    "about.png": "1ee2d9df9c1b268a1020fe521044e4f1dd02de2916995c0689f940333da807fe",
+    "sidebar.png": "06f4b86c463722820cbabff542ac2504194ad925aaee16848382d98479fe547d"
+  },
+  "limitations": [
+    "No before/after performance benchmark or guaranteed frame rate.",
+    "Native dark mode, high contrast and VoiceOver were not repeated in this change.",
+    "Closed-window settings recovery was not separately concluded from native observation."
+  ]
+}
