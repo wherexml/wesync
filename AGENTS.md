@@ -16,6 +16,7 @@ Inherit parent repository instructions and user privacy constraints.
 同一会话 ID 的最近消息日期改变时，`HistoryConversationTimestamp` 须以日期重建时间内容，避免摘要变新但时间停住；合成截图与保持分类不变的原生验收见 `docs/CONVERSATION_TIMESTAMPS.md`。
 
 - Keep the supplied twin-bot paths in `assets/greenbubbles-twin-bots.svg`; product icons use a white rounded tile, menu bar icons use transparent monochrome templates. See `docs/BRANDING.md`.
+- Welcome uses the application's full-color, high-resolution product icon; never enlarge the 44 px menu bar template. See `docs/BRANDING.md`.
 - Regenerate `Resources/Brand` with `python3 scripts/generate-brand-assets.py`; include `GreenBubbles-black.png` in every app package. Resource-only updates still require the signing and restart acceptance above.
 - Local-only stable certificate signing and migration are documented in `docs/LOCAL_SIGNING.md`. Keep the same certificate across updates, preserve bundled CLI bytes for icon-only changes, and never bypass native security prompts or equate a local certificate with Developer ID distribution.
 

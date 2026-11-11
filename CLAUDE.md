@@ -6,6 +6,8 @@ Follow [AGENTS.md](AGENTS.md), including remembered-connection privacy, stable s
 
 Brand asset sources, regeneration, packaging and pending installation acceptance are documented in [docs/BRANDING.md](docs/BRANDING.md).
 
+Welcome uses the application's full-color, high-resolution product icon; never enlarge the 44 px menu bar template. See [docs/BRANDING.md](docs/BRANDING.md).
+
 For local update signing and permission migration, follow [docs/LOCAL_SIGNING.md](docs/LOCAL_SIGNING.md). The icon-only staging script preserves installed program code and connection-tool digests; it does not install automatically.
 
 Message cache behavior, capacity, privacy boundaries and E2E reproduction: [docs/MESSAGE_CACHE.md](docs/MESSAGE_CACHE.md).

@@ -92,9 +92,9 @@ private struct HistoryWelcomeView: View {
   var body: some View {
     VStack(spacing: 24) {
       Spacer()
-      Image(nsImage: HistoryApplicationDelegate.menuIcon)
-        .resizable().scaledToFit().frame(width: 112, height: 112)
-        .foregroundStyle(.primary).accessibilityLabel(HistoryBrand.name)
+      Image(nsImage: NSApplication.shared.applicationIconImage)
+        .resizable().interpolation(.high).scaledToFit().frame(width: 112, height: 112)
+        .accessibilityLabel(HistoryBrand.name)
       VStack(spacing: 8) {
         Text("查看你的微信聊天记录")
           .font(.system(size: 28, weight: .semibold, design: .rounded))
