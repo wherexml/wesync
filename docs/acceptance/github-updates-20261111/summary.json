@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-11",
+  "status": "Implementation and local acceptance passed; initial feed published with the source push, no new binary release.",
+  "reference": "CyberMe native update flow; Sparkle handles native verified installation in we-sync.",
+  "installedVersion": "0.10.0",
+  "installedBuild": "74",
+  "nativeSyntheticE2E": {
+    "checks": 13,
+    "passed": true,
+    "report": "native-e2e.json"
+  },
+  "installedAcceptance": {
+    "twoNativeColdStartsAutoConnected": true,
+    "credentialEntry": false,
+    "sameSigningIdentity": true,
+    "existingCLIAndInputHelpersUnchanged": true,
+    "mainBytesEqualCandidateAfterBothStarts": true,
+    "applicationAndStatusMenuUpdateEntries": true,
+    "settingsAboutAndRefresh": true,
+    "localToPublicIdentityMigrationBlocked": true,
+    "report": "installed.json"
+  },
+  "releasePreflight": {
+    "existingVersion": "0.10.1",
+    "publishedArchiveHashMatched": true,
+    "appAndDMGNotarizationTicketsValidated": true,
+    "signaturesVerified": true,
+    "tamperedTemporaryCopyRejected": true,
+    "newNotarizationOrBinaryPublication": false
+  },
+  "security": {
+    "sparkleVersion": "2.10.1",
+    "signedFeedRequired": true,
+    "signedFeedFailureExpirationDisabled": true,
+    "archiveVerifiedBeforeExtraction": true,
+    "publicChannelDeveloperIDTeam": "T695TT4HT9",
+    "productionFeedOrKeyEnvironmentOverride": false,
+    "updaterPrivateKeyCreatedOnceInDedicatedKeychainItem": true,
+    "privateKeyExportedOrRegenerated": false,
+    "keychainEnumerated": false,
+    "tccOrACLModified": false,
+    "wechatOperated": false,
+    "systemProfilingOff": true,
+    "unattendedInstallation": false
+  },
+  "localCI": {
+    "checks": 23,
+    "passed": true,
+    "report": "local-ci.json",
+    "priorSQLCipherInitializationFailureRetained": true,
+    "rustSourceChangedForFailure": false
+  },
+  "delivery": {
+    "githubActionsEnabled": false,
+    "newDMGPublished": false,
+    "websiteDeployed": false,
+    "firstUpdaterPublicBinaryStillRequiresSeparateRelease": true,
+    "legacyPublished0101NeedsOneManualBootstrapInstall": true,
+    "initialFeedURL": "https://raw.githubusercontent.com/wherexml/wesync/main/updates/appcast.xml",
+    "initialFeedSHA256": "6625e74d1669bddb74c172b571dc807bb9b404dad622401ebe9b528e066d2593"
+  },
+  "limits": [
+    "Native synthetic update flow uses DEBUG-only isolated identity and loopback fixtures, not a real user data migration.",
+    "No disk-full, crash or launch-failure rollback simulation; integrity failure preserves the old app, successful replacement/relaunch and download cancellation are covered.",
+    "Current local Apple Development identity remains separate from the public Developer ID channel.",
+    "Initial feed references the existing public v0.10.1; this task did not publish a new updater-enabled public binary."
+  ],
+  "sourceSHA256": {
+    "Package.swift": "884ca60414feeaf95a0c119c2362c4b9eabfa12d7211d0711016ffda69a89a62",
+    "Package.resolved": "8e128e40d76472e6a5e65586683138a7b656b7c0a8ba85830781d34020d510d1",
+    "Sources/GreenBubblesHistoryApp/HistoryUpdater.swift": "b932d361a0dd15ff82e5b345280793c53d9aebb454fd986d4fc428f0bffd7f86",
+    "Sources/GreenBubblesHistoryApp/GreenBubblesHistoryApp.swift": "e1f99ebc83e55a2f35d79e253ff8e140c55c61f26ae7560b742419bef89a72b3",
+    "scripts/sparkle_bundle.py": "7f974c2e04ea979e51fb04495d397ce11aab3acfe8914cb2dde4b58fe43ace6b",
+    "scripts/sparkle_feed.py": "a6f61e89adb3a64a10096506f761fb5beec9aae3ddfbe46f3fe934aace250ed4",
+    "scripts/prepare-github-update.py": "1adcd51eecc10de7c7b0c11be5e51c7399268ebb377c6b980d0c5ac4d781e259",
+    "scripts/package-send-helper.sh": "02f97420b332bf28bcb48a9c40784e23c992403a6326ed5ab7f712ea7d8c801c",
+    "scripts/stage-local-brand-update.py": "b7228455c1516339eaef2239b727f6eefe5d4de25fc2fce4245d74555e6ce474",
+    "scripts/stage-local-tool-update.py": "a04e51155921f30a26d9c27c0899df89b98768121ffbfdb3754ee46920aefdeb",
+    "scripts/package-presentation-preview.py": "ed0b2b54106bd699c48782f279d5a6626793c5b1210d4566510dea67fc31fa96",
+    "scripts/check-distribution-inventory.swift": "b50c44087b7eb63242295383ae561b4d24695a6fdbfdaecc2a5cd32bdd1e5ffe",
+    "scripts/update-e2e/Host.swift": "154f9b2c803bcfff80904beb98657d55956ab6cd782c76b03f8b44720e805e54",
+    "scripts/update-e2e/prepare.py": "28e1b5b73d4bc1ccbb568028445ee5e3fdbe02fb3b7955fc3f8579b87a9990cc",
+    "scripts/update-e2e/slow-download.py": "b3c38e28304df604d37ae032c00cd2b2db2b02d72cd6ec0d54a4f3a10a8fcbfd",
+    "Packaging/GreenBubbles/ToolPredecessors.json": "90c45540a224c8292615cfdc6e14c079b8e56cb9ce562bb954dcd2559381c17e",
+    "docs/distribution-dependencies.json": "bc87094897e70cc0ab33f4fa4dc6b0f3b01f72dbfc7165ec5d8c2a48049eeacd",
+    "SPARKLE_LICENSE.txt": "389a4e4e9a32f059775b13a06e25a591445ba229d2838d26dd3e7c0c45127cfe",
+    "updates/appcast.xml": "6625e74d1669bddb74c172b571dc807bb9b404dad622401ebe9b528e066d2593",
+    ".gitattributes": "5ac637d8c643c953c5902ce6e1132cf8f072a8bd03aca6379939842f355ffe59"
+  },
+  "artifactSHA256": {
+    "README.md": "2ca1d3fc795dad804a479edf8af9bc95edf6134552523013bf1212ab24fa12aa",
+    "about.png": "0b319ace71819d3c672832a716e822032be797a3f38cfc2106bdc73c1a66321a",
+    "available.png": "885370088f12f50a30173c86d8337d145af7a1f2996de10219341012b30cd247",
+    "current.png": "b6840b7bcd2b53568ac9cad1d1a52b0f4b6bebd603976b4946134b5ac6724667",
+    "initial-release.json": "bf20d3d71e311a67801ed600316ebf151593f8fdbeb1a92706b51369a59ad9e7",
+    "installed-preview.png": "118b53b5290394ac2795ea785a075aa1b796f2e13638dbd05d82ca8adb19b278",
+    "installed.json": "daf5cea782bef1edbb23b8243e8e32e71e54469bd05304ec17efd313dbecc03f",
+    "local-channel.png": "58f937600ec2dc6c8c86dfea3079d730bb0d007a797d596f0feffe392736c409",
+    "local-ci.json": "2465a5f7c9b8693edd2ef52e5d5bb4139cf437b6df43ff1d26ad6212c939a9c4",
+    "native-e2e.json": "94d4a3c882bf7e7ca8cd109366a40bbc4abe3acf796a32519973444aa7c0590e",
+    "preflight.json": "8f90f2c64c632ad7c8bf9f8763fe2d6ed3455748cab45b1aef6b793ca53b4313",
+    "rejected-archive.png": "5d10624653aee61732db2e702f849e631ca1d3d216017ba6c016ab7993e760c7",
+    "rejected-feed.png": "3ef9707797aa045c3d77bff7c7ac809a1e205bd9be6b4fce4eeecf0f7770d6bc"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "version": "0.10.1",
+  "build": "1",
+  "archiveSHA256": "735ff9e36f62b1d6ab07571a30a03c3017e3d334acfd556488dc8781dc26aff8",
+  "feedSHA256": "6625e74d1669bddb74c172b571dc807bb9b404dad622401ebe9b528e066d2593",
+  "downloadURL": "https://github.com/wherexml/wesync/releases/download/v0.10.1/we-sync-0.10.1-macos-arm64.dmg",
+  "signatureVerified": true,
+  "developerIDAndNotarizationVerified": true,
+  "publicAssetVerified": true,
+  "publishedByThisCommand": false
+}

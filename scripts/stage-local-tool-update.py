@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import time
+from sparkle_bundle import embed_sparkle
 
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -59,6 +60,7 @@ for key in ('CFBundleName', 'CFBundleDisplayName'):
 info['CFBundleVersion'] = str(int(info['CFBundleVersion'])+1)
 info['GBStickerQuerySHA256'] = digest(mac/'greenbubbles-sticker-query')
 info_path.write_bytes(plistlib.dumps(info))
+embed_sparkle(target, args.identity)
 launch_agent = Path('me.greenbubbles.InputHelper.plist')
 bundled_agent = target/'Contents/Library/LaunchAgents'/launch_agent
 if bundled_agent.is_file():

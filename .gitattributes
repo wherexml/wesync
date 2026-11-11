@@ -1,0 +1,2 @@
+# Preserve the upstream license verbatim; the dependency inventory verifies its exact bytes.
+SPARKLE_LICENSE.txt whitespace=-blank-at-eol

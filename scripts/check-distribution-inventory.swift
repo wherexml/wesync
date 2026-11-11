@@ -1,5 +1,4 @@
 #!/usr/bin/env swift
-
 import CryptoKit
 import Foundation
 
@@ -252,7 +251,11 @@ func buildInventory() throws -> [String: Any] {
 
   let nativePackages = try ["libsqlite3-sys", "silk-rs", "sqlcipher-src", "zstd-sys"].map {
     expectedName -> [String: Any] in
-    guard let package = packages.first(where: { ($0["name"] as? String) == expectedName && $0["source"] is String }) else {
+    guard
+      let package = packages.first(where: {
+        ($0["name"] as? String) == expectedName && $0["source"] is String
+      })
+    else {
       throw InventoryError.missingField("resolved native package \(expectedName)")
     }
     return [
@@ -270,6 +273,21 @@ func buildInventory() throws -> [String: Any] {
   } else {
     throw InventoryError.missingField("cargo root package.publish")
   }
+  let sparkleLicense = repositoryRoot.appendingPathComponent("SPARKLE_LICENSE.txt")
+  let upstreamSparkleLicense = repositoryRoot.appendingPathComponent(
+    ".build/artifacts/sparkle/Sparkle/LICENSE")
+  let licenseData = try Data(contentsOf: sparkleLicense)
+  guard licenseData == (try Data(contentsOf: upstreamSparkleLicense)) else {
+    throw InventoryError.missingField("reviewed Sparkle license differs from resolved artifact")
+  }
+  let swiftResolution = try jsonObject(
+    Data(contentsOf: repositoryRoot.appendingPathComponent("Package.resolved")),
+    source: "Package.resolved")
+  guard let pins = swiftResolution["pins"] as? [[String: Any]], pins.count == 1,
+    let pin = pins.first, pin["identity"] as? String == "sparkle",
+    let state = pin["state"] as? [String: Any]
+  else { throw InventoryError.missingField("pinned Sparkle resolution") }
+
   return [
     "formatVersion": 1,
     "rust": [
@@ -290,6 +308,13 @@ func buildInventory() throws -> [String: Any] {
     ],
     "swift": [
       "externalDependencies": swiftDependencies,
+      "externalDependencyLicenses": [
+        [
+          "name": "Sparkle", "version": try string(state, "version", context: "Sparkle"),
+          "revision": try string(state, "revision", context: "Sparkle"),
+          "license": "MIT with bundled third-party notices", "licenseSHA256": sha256(licenseData),
+        ]
+      ],
       "package": try string(swiftPackage, "name", context: "swift package"),
     ],
   ]

@@ -2,6 +2,7 @@
 """Package isolated offline acceptance app. Does not launch or read WeChat."""
 from pathlib import Path
 import argparse,plistlib,shutil,os,re,subprocess,sys
+from sparkle_bundle import embed_sparkle
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--identity',required=True,help='Existing Apple Development certificate SHA-1; never ad-hoc')
 parser.add_argument('--polish',action='store_true')
@@ -45,7 +46,8 @@ hevc=(data/'sample.hevc').read_bytes()
 (data/'sample.wxgf').write_bytes(b'wxgf'+bytes([8])+bytes(3)+len(hevc).to_bytes(4,'big')+hevc)
 with (app/'Contents/Info.plist').open('wb') as f:
  plistlib.dump({'CFBundleExecutable':'greenbubbles-history','CFBundleIdentifier':app_id,'CFBundleName':app_name,'CFBundleDisplayName':app_name,'CFBundleIconFile':'GreenBubbles','CFBundlePackageType':'APPL','CFBundleDevelopmentRegion':'zh_CN','CFBundleLocalizations':['zh_CN'],'CFBundleVersion':'1','CFBundleShortVersionString':'0.10.0-preview','NSHighResolutionCapable':True,'LSMinimumSystemVersion':'14.0',('GBSetupAcceptance' if args.setup else 'GBOfflineAcceptance'):True},f)
-subprocess.run(['/usr/bin/codesign','--force','--deep','--sign',args.identity,str(app)],check=True)
+embed_sparkle(app,args.identity)
+subprocess.run(['/usr/bin/codesign','--force','--sign',args.identity,str(app)],check=True)
 subprocess.run(['/usr/bin/codesign','--verify','--deep','--strict',str(app)],check=True)
 signature=subprocess.run(['/usr/bin/codesign','-dv','--verbose=2',str(app)],check=True,capture_output=True,text=True)
 if 'Authority=Apple Development:' not in signature.stderr or 'TeamIdentifier=not set' in signature.stderr:

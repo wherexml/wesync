@@ -35,6 +35,9 @@ let package = Package(
       targets: ["GreenBubblesInputHelper"]
     ),
   ],
+  dependencies: [
+    .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.1")
+  ],
   targets: [
     .target(name: "GreenBubblesCore"),
     .target(
@@ -61,8 +64,13 @@ let package = Package(
     ),
     .executableTarget(
       name: "GreenBubblesHistoryApp",
-      dependencies: ["GreenBubblesCore", "GreenBubblesHistory"],
-      linkerSettings: [.linkedFramework("Security")]
+      dependencies: [
+        "GreenBubblesCore", "GreenBubblesHistory", .product(name: "Sparkle", package: "Sparkle"),
+      ],
+      linkerSettings: [
+        .linkedFramework("Security"),
+        .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"]),
+      ]
     ),
     .executableTarget(
       name: "GreenBubblesSendCLI",

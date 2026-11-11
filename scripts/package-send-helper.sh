@@ -4,8 +4,8 @@
 #
 # The send path is a Developer-ID direct distribution only: the helper needs
 # cross-application control, which the App Sandbox forbids and the Mac App Store
-# does not accept. Nothing is downloaded at run time; every executable in the
-# bundle is built here and covered by one signature.
+# does not accept. Every bundled executable is built here or pinned in SwiftPM;
+# full application updates use the signed GitHub feed, never separate send code.
 #
 # Required environment:
 #   GREENBUBBLES_SIGNING_IDENTITY   Developer ID Application certificate name
@@ -14,6 +14,7 @@
 # Optional environment:
 #   GREENBUBBLES_VERSION             Bundle marketing version. Defaults to the
 #                                   root Rust package version.
+#   GREENBUBBLES_BUILD               Monotonic bundle build. Defaults to git commit count.
 #   GREENBUBBLES_SKIP_BUILD          Set to 1 when verified release binaries
 #                                   were already built before credentials were
 #                                   imported into an ephemeral CI keychain.
@@ -35,6 +36,7 @@ cd "$repository_root"
 signing_identity="${GREENBUBBLES_SIGNING_IDENTITY:-}"
 team_identifier="${GREENBUBBLES_TEAM_IDENTIFIER:-}"
 version="${GREENBUBBLES_VERSION:-$(awk -F '"' '/^version[[:space:]]*=/ { print $2; exit }' Native/GreenBubbles/Cargo.toml)}"
+build="${GREENBUBBLES_BUILD:-$(git rev-list --count HEAD)}"
 skip_build="${GREENBUBBLES_SKIP_BUILD:-0}"
 release_public_keys="${GREENBUBBLES_SEND_RELEASE_PUBLIC_KEYS:-}"
 notary_profile="${GREENBUBBLES_NOTARY_PROFILE:-}"
@@ -73,6 +75,7 @@ notarize_and_staple() {
 
 [ -n "$signing_identity" ] || fail "set GREENBUBBLES_SIGNING_IDENTITY to a Developer ID Application identity"
 [ -n "$team_identifier" ] || fail "set GREENBUBBLES_TEAM_IDENTIFIER to the Apple team identifier"
+[[ "$build" =~ ^[1-9][0-9]*$ ]] || fail "GREENBUBBLES_BUILD must be a positive integer"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] \
   || fail "GREENBUBBLES_VERSION must be a semantic version"
 [[ "$skip_build" == "0" || "$skip_build" == "1" ]] \
@@ -139,6 +142,9 @@ cp Packaging/GreenBubblesInputHelper/Info.plist "$helper_bundle/Contents/Info.pl
   "$app_bundle/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" \
   "$helper_bundle/Contents/Info.plist"
+for bundle in "$app_bundle" "$helper_bundle"; do
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build" "$bundle/Contents/Info.plist"
+done
 cp Packaging/GreenBubblesInputHelper/me.greenbubbles.InputHelper.plist \
   "$app_bundle/Contents/Library/LaunchAgents/"
 cp .build/release/greenbubbles-history "$app_bundle/Contents/MacOS/"
@@ -198,6 +204,7 @@ swift scripts/check-distribution-inventory.swift --print \
 cp "$output_directory/greenbubbles-sbom.json" "$app_bundle/Contents/Resources/sbom.json"
 
 echo "==> signing (Hardened Runtime, library validation on, no sandbox)"
+python3 scripts/sparkle_bundle.py --app "$app_bundle" --identity "$signing_identity" --distribution
 # Inside out: the helper first, then its enclosing bundle, so every seal is
 # computed over already-signed contents.
 codesign --force --timestamp --options runtime \
@@ -211,6 +218,17 @@ for executable in greenbubbles-history greenbubbles-send greenbubbles greenbubbl
 done
 sticker_query_sha256=$(shasum -a 256 "$app_bundle/Contents/MacOS/greenbubbles-sticker-query" | awk '{print $1}')
 /usr/libexec/PlistBuddy -c "Add :GBStickerQuerySHA256 string $sticker_query_sha256" "$app_bundle/Contents/Info.plist"
+python3 - "$app_bundle" <<'PY'
+import hashlib,json,re,sys
+from pathlib import Path
+app=Path(sys.argv[1])
+prior=json.loads(Path('Packaging/GreenBubbles/ToolPredecessors.json').read_text())['publishedQueryToolSHA256s']
+if not prior or any(not re.fullmatch('[0-9a-f]{64}',value) for value in prior):
+    raise SystemExit('Invalid published query-tool predecessor inventory')
+current=hashlib.sha256((app/'Contents/MacOS/greenbubbles').read_bytes()).hexdigest()
+(app/'Contents/Resources/ToolUpdate.json').write_text(json.dumps({'previousSHA256':prior[0],
+    'previousSHA256s':sorted(set(prior)),'currentSHA256':current})+'\n')
+PY
 codesign --force --timestamp --options runtime \
   --entitlements Packaging/GreenBubbles.entitlements \
   --identifier me.greenbubbles.GreenBubbles \

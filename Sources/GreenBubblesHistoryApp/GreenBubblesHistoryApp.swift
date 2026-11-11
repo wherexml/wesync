@@ -33,6 +33,7 @@ struct GreenBubblesHistoryApplication: App {
     .commands {
       CommandGroup(replacing: .appInfo) {
         Button("关于 we-sync") { applicationDelegate.showAbout() }
+        HistoryUpdateMenu(updater: applicationDelegate.updater)
       }
       CommandGroup(replacing: .appSettings) {
         Button("设置…") { applicationDelegate.showSettings() }
@@ -76,11 +77,14 @@ struct GreenBubblesHistoryApplication: App {
 
 @MainActor
 final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+  let updater = HistoryUpdater()
   var showWindowHandler: (() -> Void)?
   var settingsHandler: (() -> Void)?
   var flushHandler: (() async -> Void)?
   private var statusItem: NSStatusItem?
   private var dockMenuItem: NSMenuItem?
+  private var updateMenuItem: NSMenuItem?
+  private var automaticUpdateMenuItem: NSMenuItem?
   private var openURLHandler: (([URL]) -> Void)?
   private var pendingOpenURLs: [URL] = []
 
@@ -114,12 +118,14 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     HistoryInteractionTrace.shared.start()
+    updater.start()
     ensureStatusItem()
     activateHistoryWindow()
   }
 
   func ensureStatusItem() {
     guard statusItem == nil else { return }
+    updater.start()
     applyDockPolicy()
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     item.button?.image = Self.menuIcon
@@ -138,6 +144,10 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     menu.addItem(.separator())
     _ = add("设置…", #selector(showSettings))
     _ = add("关于 we-sync", #selector(showAbout))
+    updateMenuItem = add("检查更新…", #selector(checkForUpdates))
+    if updater.supportsAutomaticUpdates {
+      automaticUpdateMenuItem = add("自动检查更新", #selector(toggleAutomaticUpdates))
+    }
     menu.addItem(.separator())
     dockMenuItem = add("在程序坞中显示", #selector(toggleDock))
     menu.addItem(.separator())
@@ -162,7 +172,15 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     activateHistoryWindow()
   }
 
-  func menuWillOpen(_ menu: NSMenu) { dockMenuItem?.state = showDockIcon ? .on : .off }
+  func menuWillOpen(_ menu: NSMenu) {
+    dockMenuItem?.state = showDockIcon ? .on : .off
+    updateMenuItem?.isEnabled = updater.canCheck
+    automaticUpdateMenuItem?.state = updater.automaticallyChecks ? .on : .off
+  }
+  @objc private func checkForUpdates() { updater.check() }
+  @objc private func toggleAutomaticUpdates() {
+    updater.automaticallyChecks.toggle()
+  }
   func presentStatusMenu() {
     // Also expose the same menu inside the window when the system menu bar is crowded.
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in

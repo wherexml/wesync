@@ -1,0 +1,122 @@
+{
+  "source": "synthetic-only",
+  "passed": true,
+  "checks": {
+    "no-update-native-alert": true,
+    "tampered-feed-native-rejection": true,
+    "tampered-archive-native-rejection": true,
+    "available-update-native-alert": true,
+    "deferred-install-keeps-old-version": true,
+    "actual-install-and-relaunch-build2": true,
+    "same-version-not-offered-after-update": true,
+    "second-install-and-relaunch-build3": true,
+    "download-cancelled-in-native-ui": true,
+    "cancel-keeps-build3": true,
+    "synthetic-user-data-preserved": true,
+    "strict-code-signatures-pass": true,
+    "feed-tamper-rejected-by-signing-tool": true
+  },
+  "events": [
+    {
+      "build": "1",
+      "code": null,
+      "event": "launched"
+    },
+    {
+      "build": "1",
+      "code": null,
+      "event": "current"
+    },
+    {
+      "build": "1",
+      "code": 1001,
+      "event": "error"
+    },
+    {
+      "build": "1",
+      "code": 1000,
+      "event": "error"
+    },
+    {
+      "build": "1",
+      "code": null,
+      "event": "available"
+    },
+    {
+      "build": "1",
+      "code": 4005,
+      "event": "error"
+    },
+    {
+      "build": "1",
+      "code": null,
+      "event": "available"
+    },
+    {
+      "build": "1",
+      "code": null,
+      "event": "available"
+    },
+    {
+      "build": "1",
+      "code": null,
+      "event": "installing"
+    },
+    {
+      "build": "2",
+      "code": null,
+      "event": "launched"
+    },
+    {
+      "build": "2",
+      "code": null,
+      "event": "current"
+    },
+    {
+      "build": "2",
+      "code": 1001,
+      "event": "error"
+    },
+    {
+      "build": "2",
+      "code": null,
+      "event": "available"
+    },
+    {
+      "build": "2",
+      "code": null,
+      "event": "installing"
+    },
+    {
+      "build": "3",
+      "code": null,
+      "event": "launched"
+    },
+    {
+      "build": "3",
+      "code": null,
+      "event": "available"
+    },
+    {
+      "build": "3",
+      "code": null,
+      "event": "cancelled"
+    },
+    {
+      "build": "3",
+      "code": null,
+      "event": "launched"
+    }
+  ],
+  "wechatOperated": false,
+  "realApplicationReplacedBySyntheticUpdate": false,
+  "notes": [
+    "First cancellation attempt reached ready-to-install too quickly and did not exercise cancel. Completed build3 upgrade, then cancelled a throttled build4 download while still downloading.",
+    "This exercises the production HistoryUpdater and Sparkle with a DEBUG-only isolated Bundle ID, a synthetic signing key and a loopback feed.",
+    "Native E2E preceded the small menu notification/start-order follow-up; final installed acceptance covers that application source.",
+    "Disk-full, process-crash and launch-failure rollback are not simulated; signature rejection preserves the old app, and successful replacement/relaunch is verified."
+  ],
+  "runtimeUsesSyntheticMaterialOnly": true,
+  "realConnectionCredentialsUsed": false,
+  "signingUsesExistingAppleCertificate": true
+}

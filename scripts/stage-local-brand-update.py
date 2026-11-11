@@ -12,6 +12,7 @@ import plistlib
 import re
 import shutil
 import subprocess
+from sparkle_bundle import embed_sparkle
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -67,6 +68,8 @@ def main():
     info['CFBundleDisplayName'] = 'we-sync'
     info['CFBundleVersion'] = str(int(info['CFBundleVersion']) + 1)
     plist.write_bytes(plistlib.dumps(info))
+    if args.main_executable:
+        embed_sparkle(candidate, args.identity)
     for target in (baseline, candidate):
         # Do not use --deep while signing: preserve the query-tool bytes and
         # its remembered digest. Do not preserve the old ad-hoc requirement.

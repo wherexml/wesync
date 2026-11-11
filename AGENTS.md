@@ -99,3 +99,5 @@ SQLCipher 安全升级须验证真实链接版本和旧版生成的数据；仅�
 应用菜单与菜单栏图标均保留设置、关于入口；折叠列表不得叠加 inset 缩进。缓存头像去重、编码、加密与写盘在串行后台执行，退出等待末次保存；规范与原生验收见 [docs/INTERACTION_RESPONSIVENESS.md](docs/INTERACTION_RESPONSIVENESS.md)。
 
 缓存核验覆盖已加载窗口（最多 400 条），不完整读取不据此删除；源变化即使摘要不变也标记待核验，完整目录后清理已移除会话。切换/滚动内容无关诊断默认关闭，测量后恢复偏好；规范与现场边界见 [docs/TIMELINE_INVESTIGATION.md](docs/TIMELINE_INVESTIGATION.md)。
+
+GitHub 更新使用固定 Sparkle 版本、签名 appcast 与签名 DMG，用户确认安装；公开通道只接收既有 Developer ID 团队，本机开发身份不自动迁移。嵌入 framework 必须先同身份签署嵌套代码，CLI 更新保留发布前驱摘要。更新密钥不重建、不导出，生产不可通过环境变量切换 feed/key；规范及原生升级验收见 [docs/GITHUB_UPDATES.md](docs/GITHUB_UPDATES.md)。

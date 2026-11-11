@@ -1,0 +1,23 @@
+{
+  "installedVersion": "0.10.0",
+  "installedBuild": "74",
+  "sameIdentity": true,
+  "existingHelpersUnchanged": true,
+  "allCandidateFilesEqualBeforeLaunch": true,
+  "mainSHA256": "6fbb99b67501b2e6e36ad72088e4e584f350c96aac053dbf0fe90bfb7880034c",
+  "strictSignedFeedWithoutFailureExpiration": true,
+  "verifyArchiveBeforeExtraction": true,
+  "libraryValidationKept": true,
+  "noAutomaticInstallation": true,
+  "systemProfilingOff": true,
+  "keychainOrTCCChanged": false,
+  "coldStart1MainSHA256": "6fbb99b67501b2e6e36ad72088e4e584f350c96aac053dbf0fe90bfb7880034c",
+  "coldStart1AutoConnected": true,
+  "settingsAboutRefreshAndUpdateEntryPassed": true,
+  "localIdentityMigrationBlocked": true,
+  "coldStart2MainSHA256": "6fbb99b67501b2e6e36ad72088e4e584f350c96aac053dbf0fe90bfb7880034c",
+  "coldStart2AutoConnected": true,
+  "credentialEntry": false,
+  "statusMenuUpdateEntry": true,
+  "normalChatWindowRestored": true
+}

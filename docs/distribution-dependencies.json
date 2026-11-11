@@ -503,7 +503,40 @@
   },
   "swift" : {
     "externalDependencies" : [
-
+      {
+        "sourceControl" : [
+          {
+            "identity" : "sparkle",
+            "location" : {
+              "remote" : [
+                {
+                  "urlString" : "https://github.com/sparkle-project/Sparkle"
+                }
+              ]
+            },
+            "productFilter" : null,
+            "requirement" : {
+              "exact" : [
+                "2.10.1"
+              ]
+            },
+            "traits" : [
+              {
+                "name" : "default"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "externalDependencyLicenses" : [
+      {
+        "license" : "MIT with bundled third-party notices",
+        "licenseSHA256" : "389a4e4e9a32f059775b13a06e25a591445ba229d2838d26dd3e7c0c45127cfe",
+        "name" : "Sparkle",
+        "revision" : "ab7d71291238df6e0492143b120c9b696a35f603",
+        "version" : "2.10.1"
+      }
     ],
     "package" : "greenbubbles"
   }
