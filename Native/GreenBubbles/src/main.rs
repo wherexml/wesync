@@ -203,6 +203,12 @@ fn process_query_operation() -> Option<&'static str> {
 fn query_error_details(
     error: &(dyn std::error::Error + 'static),
 ) -> (&'static str, &'static str, bool) {
+    if error
+        .downcast_ref::<greenbubbles::query_proxy::Unavailable>()
+        .is_some()
+    {
+        return ("proxyUnavailable", "we-sync query proxy unavailable. Open we-sync and restore its connection; do not grant disk access to the AI app.", true);
+    }
     if let Some(error) = error.downcast_ref::<LiveQueryError>() {
         return match error {
             LiveQueryError::AiReadDenied => ("aiReadDenied", "AI read blacklist denies this operation; manage access in the native app settings.", false),
@@ -560,6 +566,28 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
         eprintln!("{}", complete_command_listing());
         return Ok(());
+    }
+    if raw.first().is_some_and(|value| value == "query-serve") {
+        return run_query_proxy(&raw[1..]);
+    }
+    if greenbubbles::query_proxy::should_proxy(&raw) {
+        use greenbubbles::query_proxy::{call, Request};
+        let input = if raw.iter().any(|value| value == "--query-stdin") {
+            read_utf8_stdin_limited(MAX_SEARCH_QUERY_BYTES as u64)?.to_string()
+        } else {
+            String::new()
+        };
+        match call(&Request {
+            arguments: raw,
+            input,
+        }) {
+            Ok(response) => {
+                print!("{}", response.stdout);
+                eprint!("{}", response.stderr);
+                std::process::exit(response.status);
+            }
+            Err(_) => return Err(greenbubbles::query_proxy::Unavailable.into()),
+        }
     }
     let mut arguments = raw.into_iter().peekable();
     let command = arguments.next().unwrap_or_else(|| "help".to_string());
@@ -5880,6 +5908,124 @@ fn send_profile_template() -> Result<String, Box<dyn std::error::Error>> {
         "issuedAtUnixSeconds": 0,
         "expiresAtUnixSeconds": 0
     }))?)
+}
+
+fn run_query_proxy(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
+    use greenbubbles::query_proxy::{self, Response};
+    use std::process::{Command, Stdio};
+    #[cfg(target_os = "macos")]
+    if !greenbubbles::ai_read_policy::native_parent() {
+        return Err("The installed we-sync application must start the query proxy".into());
+    }
+    // A crashed/force-quit app must not leave a credential-bearing service alive.
+    let owner = unsafe { libc::getppid() };
+    std::thread::spawn(move || loop {
+        std::thread::sleep(Duration::from_millis(250));
+        if unsafe { libc::getppid() } != owner {
+            std::process::exit(0);
+        }
+    });
+    let root = PathBuf::from(args.first().ok_or("Missing proxy source")?);
+    let socket = PathBuf::from(args.get(1).ok_or("Missing proxy socket")?);
+    let access = load_live_query_access(&root, &args[2..])?;
+    let exe = env::current_exe()?;
+    query_proxy::serve(&socket, |request| {
+        let failure = || Response {
+            status: 2,
+            stdout: String::new(),
+            stderr: "Invalid or unavailable we-sync proxy query\n".into(),
+        };
+        let mut arguments = request.arguments;
+        if arguments.is_empty() {
+            return failure();
+        }
+        if arguments.get(1).is_none_or(|value| value.starts_with("--")) {
+            let subcommand = match arguments[0].as_str() {
+                "source" => Some("status"),
+                "chats" | "conversations" | "contacts" => Some("list"),
+                _ => None,
+            };
+            if let Some(subcommand) = subcommand {
+                arguments.insert(1, subcommand.into());
+            }
+        }
+        let Ok(position) = query_proxy::source_position(&arguments) else {
+            return failure();
+        };
+        arguments.insert(position, root.to_string_lossy().into_owned());
+        let mut input = Zeroizing::new(Vec::new());
+        match &access {
+            OwnedLiveQueryAccess::LiveEncrypted(key) => {
+                arguments.push("--passphrase-stdin".into());
+                input
+                    .extend_from_slice(hex::encode(key.expose_for_database_operation()).as_bytes());
+                input.push(b'\n');
+            }
+            OwnedLiveQueryAccess::SnapshotEncrypted(key) => {
+                arguments.push("--snapshot-key-stdin".into());
+                input
+                    .extend_from_slice(hex::encode(key.expose_for_snapshot_operation()).as_bytes());
+                input.push(b'\n');
+            }
+            OwnedLiveQueryAccess::Decrypted => arguments.push("--decrypted".into()),
+        }
+        input.extend_from_slice(request.input.as_bytes());
+        let Ok(mut child) = Command::new(&exe)
+            .args(arguments)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+        else {
+            return failure();
+        };
+        let Some(mut stdin) = child.stdin.take() else {
+            let _ = child.kill();
+            return failure();
+        };
+        if stdin.write_all(&input).is_err() {
+            let _ = child.kill();
+        }
+        drop(stdin);
+        let stdout = child.stdout.take().expect("piped stdout");
+        let stderr = child.stderr.take().expect("piped stderr");
+        let out = std::thread::spawn(move || {
+            let mut bytes = Vec::new();
+            let _ = stdout
+                .take(query_proxy::MAX_RESPONSE + 1)
+                .read_to_end(&mut bytes);
+            bytes
+        });
+        let err = std::thread::spawn(move || {
+            let mut bytes = Vec::new();
+            let _ = stderr.take(64 * 1024).read_to_end(&mut bytes);
+            bytes
+        });
+        let deadline = Instant::now() + Duration::from_secs(60);
+        let status = loop {
+            match child.try_wait() {
+                Ok(Some(status)) => break status.code().unwrap_or(2),
+                Ok(None) if Instant::now() < deadline => {
+                    std::thread::sleep(Duration::from_millis(10))
+                }
+                _ => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    break 2;
+                }
+            }
+        };
+        let stdout = out.join().unwrap_or_default();
+        let stderr = err.join().unwrap_or_default();
+        if stdout.len() as u64 > query_proxy::MAX_RESPONSE - 128 * 1024 {
+            return failure();
+        }
+        Response {
+            status,
+            stdout: String::from_utf8_lossy(&stdout).into_owned(),
+            stderr: String::from_utf8_lossy(&stderr).into_owned(),
+        }
+    })
 }
 
 #[cfg(test)]

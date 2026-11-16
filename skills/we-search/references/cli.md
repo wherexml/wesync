@@ -5,7 +5,7 @@ help exits without opening private inputs or reading a key.
 
 ## Bounded live or snapshot query
 
-Ordinary live reads use the configured/default source and saved credential;
+Ordinary reads use the connected we-sync application’s private query proxy;
 no explicit source path or access flag is normally needed. Preserve the existing
 connection and do not inspect credential contents. These are command shapes;
 for message reads, always add the time bounds selected in SKILL.md:
@@ -70,29 +70,13 @@ and missing/null is unknown. Filter retrieved records by that field and stable
 `sender`; use `senderDisplayName` only for presentation. In groups, non-self
 includes all other members. Do not use a name keyword as an author filter.
 
-For a second account, a snapshot, or an explicit source, choose exactly one
-access mode:
+The source is the connection selected in we-sync. Switch accounts or open a
+snapshot in the application; do not give source paths or credentials to AI hosts.
 
 ```text
---passphrase-stdin                  encrypted live WeChat database root
---snapshot-local-credential <file> ordinary local snapshot reopening
---snapshot-recovery-kit <file>     portable 24-word snapshot recovery
---snapshot-passphrase-stdin        optional Argon2id snapshot passphrase
---snapshot-key-stdin               legacy raw-key snapshot compatibility
---decrypted                         explicit plaintext fixture/export root
-```
-
-List conversations, then page only the selected conversation:
-
-```text
-greenbubbles conversations list <source-root> \
-  --passphrase-stdin --limit 100
-
-greenbubbles messages list <source-root> \
-  --passphrase-stdin --conversation <id> --limit 100 [--cursor <token>]
-
-greenbubbles message get <source-root> \
-  --passphrase-stdin --conversation <id> --message <opaque-id>
+greenbubbles conversations list --limit 100
+greenbubbles messages list --conversation <id> --limit 100 [--cursor <token>]
+greenbubbles message get --conversation <id> --message <opaque-id>
 ```
 
 The default page is 100 and the hard maximum is 500. There is no `--all`.
@@ -101,29 +85,17 @@ and filter, and should be discarded if the CLI rejects them. `message get`
 accepts an opaque identity returned by `messages list` or `messages search` for
 the same source and conversation.
 
-For ordinary search, pass `--query "text"` as an argument. Use `--query-stdin`
-for interactive or piped input instead. Choose exactly one. With `--query`,
-stdin is needed only for a credential in an explicit access mode. Keep keys out
-of arguments. Both input forms use the same literal, parameterized search.
+For ordinary search, pass `--query "text"` or use `--query-stdin` for piped
+input. Choose exactly one. Standard input contains only the search text.
 
-Search prefers WeChat's compatible native FTS database read-only. When native
-FTS is unavailable, it scans a fixed decoded source window without writing an
-index; it never silently scans the entire corpus in one request:
+Search prefers WeChat's native FTS database. When unavailable, the service
+scans a bounded decoded window without writing an index:
 
 ```text
-{ <key-line>; <query-utf8>; } | \
-  greenbubbles messages search <source-root> \
-  --passphrase-stdin --query-stdin [--conversation <id>] \
-  [--limit 50] [--cursor <token>]
+printf '%s' 'literal search' | greenbubbles messages search --query-stdin \
+  --conversation <id> --limit 50 [--cursor <token>]
 ```
 
-For `--snapshot-key-stdin`, the input ordering is likewise snapshot key line,
-then query. For `--snapshot-passphrase-stdin`, it is passphrase line, then
-query. For `--snapshot-local-credential`, `--snapshot-recovery-kit`, and
-`--decrypted`, standard input contains only the query. A protector file path is
-an argument, but its contents and the unwrapped database key are not. Ordinary
-query text may use `--query`; use `--query-stdin` when it should stay out of
-process arguments or shell history. Keys must never be process arguments.
 Search is capped at 200 returned results.
 The fallback examines at most 500 source messages and 16 conversations per
 response, may return an empty page with `hasMore: true`, and identifies itself
@@ -155,14 +127,14 @@ batch of at most 500 unique IDs. It ordinarily makes `databaseCount` include
 does not block the primary result.
 
 Lazy attachment access is separate from message-page retrieval. Prefer the
-exact message-bound form and select exactly one database access mode:
+exact message-bound form through the same application proxy:
 
 ```text
-greenbubbles attachment inspect <account-or-source-root> \
+greenbubbles attachment inspect \
   --conversation <id> --message <opaque-message-id> \
-  --kind image|voice|video|document <access-mode>
+  --kind image|voice|video|document
 
-greenbubbles attachment materialize <account-or-source-root> \
+greenbubbles attachment materialize \
   --conversation <id> --message <opaque-message-id> \
   --kind image|voice|video|document \
   --attachment <opaque-id> --output <new-private-path>
@@ -177,7 +149,7 @@ payload and 128 MiB cumulative/output, video at 2 GiB, document at 512 MiB, and
 inspection at 256 candidates, 4,096 directories, and 100,000 entries.
 
 Compatibility-only image access may use `--conversation <id> --md5
-<32-hex-md5>` with no database access option. This form does not support voice,
+<32-hex-md5>` through the same proxy. This form does not support voice,
 video, or documents.
 
 ## Advanced workflows

@@ -28,6 +28,7 @@ pub mod operator;
 pub mod personal_memory;
 pub mod progress;
 pub mod query_profile;
+pub mod query_proxy;
 pub mod reconcile;
 pub mod recoverable_snapshot;
 pub mod replica;

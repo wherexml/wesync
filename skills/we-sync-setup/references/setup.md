@@ -26,11 +26,10 @@
   A similarly named discovery executable may lack message queries. If a binary
   is found but fails validation, check it explicitly rather than switching to
   another tool to circumvent a failure or policy.
-- **Source unavailable:** check that the expected local account or snapshot
-  is accessible in this agent host. If macOS denies filesystem access, compare
-  the owner terminal with the agent host and retry after the owner grants access.
-  Check existing credentials and source selection before considering capture.
-  Do not inspect key contents or enumerate Keychain.
+- **Source unavailable:** open `/Applications/we-sync.app` and restore its existing
+  connection. Daily queries use the app-owned local proxy. Never ask for Full Disk
+  Access for the AI host, copy its credentials, or fall back to direct source reads.
+  Disk access recovery, if needed, belongs to we-sync itself.
 - **Other account or snapshot:** use an existing named profile. Verify with
   `greenbubbles source status --profile NAME`. If a profile is needed, use
   `profile path` and `profile template`; preserve the existing default and

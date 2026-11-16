@@ -91,3 +91,5 @@ Cache verification rereads the loaded window (up to 400 messages); never infer d
 GitHub updates use pinned Sparkle, signed feeds and archives, and explicit installation. Keep the public Developer ID channel separate from the existing local development identity. Embed/sign nested framework code first; preserve published CLI predecessor digests. Never regenerate/export updater keys or add production feed/key environment overrides. See [docs/GITHUB_UPDATES.md](docs/GITHUB_UPDATES.md).
 
 Use the CyberMe V6 corner notice (24 pt right/bottom), background checking/downloading and restart when ready. Runtime update clients only verify signatures; signing-key access belongs to artifact preparation. UI E2E defaults to the real synthetic chat screen; quit previews and restore the user's chat afterward. Reuse unchanged same-certificate local framework bytes only with pinned input/permissions/certificate/policy hashes; reject cache corruption. See [docs/GITHUB_UPDATES.md](docs/GITHUB_UPDATES.md).
+
+日常 AI 查询通过应用拥有的私有 socket，禁止代理不可用时回退直读或要求 AI 宿主磁盘权限；保留原生本人浏览与代理黑名单边界，见 [docs/AI_QUERY_PROXY.md](docs/AI_QUERY_PROXY.md)。

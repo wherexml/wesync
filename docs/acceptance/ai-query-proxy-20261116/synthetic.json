@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "checks": {
+    "private-socket": true,
+    "app-source-without-client-config": true,
+    "list": true,
+    "pagination": true,
+    "find": true,
+    "contacts": true,
+    "contacts-short-form": true,
+    "source-short-form": true,
+    "messages": true,
+    "exact-message": true,
+    "stdin-search": true,
+    "live-blacklist-list": true,
+    "live-blacklist-exact": true,
+    "corrupt-policy-closed": true,
+    "unsafe-policy-closed": true,
+    "reject-empty-request": true,
+    "reject-source-status": true,
+    "reject-chats-list": true,
+    "reject-help": true,
+    "reject-source-presentation": true,
+    "malformed-client-survival": true,
+    "source-unchanged": true,
+    "unavailable-no-fallback": true,
+    "restart-reconnect": true
+  }
+}

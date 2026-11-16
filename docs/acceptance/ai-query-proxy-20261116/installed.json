@@ -1,0 +1,25 @@
+{
+  "build": 79,
+  "checks": {
+    "sandboxedSourceStatus": true,
+    "sandboxedChatFind": true,
+    "sandboxedMessageList": true,
+    "sandboxedExactMessage": true,
+    "sandboxedSearch": true,
+    "policyBytesUnchanged": true,
+    "appExitStopsProxy": true,
+    "default-source": true,
+    "default-chats": true,
+    "default-contacts": true,
+    "finalColdStartAutoConnected": true,
+    "nativeColdStartWithoutKeyEntry": true,
+    "nativeConversationAndRefresh": true,
+    "sameSigningIdentity": true,
+    "toolDigestMigrated": true,
+    "sendHelperUnchanged": true,
+    "emptyRequestRejectedWithoutStoppingProxy": true
+  },
+  "clientDatabaseAndCredentialReadsDenied": true,
+  "credentialsEntered": false,
+  "permissionChanges": false
+}

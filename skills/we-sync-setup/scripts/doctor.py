@@ -46,7 +46,7 @@ def check(binary=None, profile=None):
     if ready:
         next_step = "The existing connection works. Continue with we-search."
     elif compatible:
-        next_step = "Check existing source selection, credentials and access in references/setup.md."
+        next_step = "Open we-sync and restore its existing connection. Do not grant disk access to the AI app."
     else:
         next_step = "Select a compatible Rust CLI. The source was not opened."
     return {"ok": ready, "binary": str(Path(resolved).resolve()), "checks": checks,

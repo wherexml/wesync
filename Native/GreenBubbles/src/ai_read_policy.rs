@@ -56,7 +56,7 @@ pub fn load() -> Result<BTreeSet<String>, LiveQueryError> {
 // Only the installed, signed app's direct children retain human browsing access.
 // Both the app and bundled CLI must share a certificate, and ad-hoc signatures fail.
 #[cfg(target_os = "macos")]
-fn native_parent() -> bool {
+pub fn native_parent() -> bool {
     use std::{path::Path, process::Command};
     unsafe extern "C" {
         fn proc_pidpath(pid: i32, buffer: *mut libc::c_void, size: u32) -> i32;
@@ -119,7 +119,7 @@ fn native_parent() -> bool {
         .is_ok_and(|o| o.status.success())
 }
 #[cfg(not(target_os = "macos"))]
-fn native_parent() -> bool {
+pub fn native_parent() -> bool {
     false
 }
 

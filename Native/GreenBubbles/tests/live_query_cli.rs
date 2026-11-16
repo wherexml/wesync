@@ -717,7 +717,10 @@ fn default_and_named_profiles_remove_repeated_source_arguments() {
         (vec!["profile", "list"], None),
         (vec!["profile", "show", "plain"], None),
         (vec!["profile", "validate"], None),
-        (vec!["source", "status"], Some("source.status")),
+        (
+            vec!["source", "status", "--profile", "plain"],
+            Some("source.status"),
+        ),
     ] {
         let output = run_with_home(profile_home.path(), &arguments, None);
         assert_success(&output);
@@ -831,80 +834,11 @@ fn live_key_profile_keeps_key_out_of_arguments_and_search_stdin() {
 }
 
 #[test]
-fn missing_profile_opens_the_newest_live_database_with_the_captured_key() {
-    let fixture = Fixture::new(true);
+fn missing_proxy_never_falls_back_to_captured_key() {
     let home = tempfile::tempdir().unwrap();
-    fs::set_permissions(home.path(), fs::Permissions::from_mode(0o700)).unwrap();
-    let credential_directory = home.path().join(".greenbubbles-acquire");
-    fs::create_dir_all(&credential_directory).unwrap();
-    fs::set_permissions(&credential_directory, fs::Permissions::from_mode(0o700)).unwrap();
-    write_private_file(
-        &credential_directory.join("passphrase.txt"),
-        format!("{}\n", hex::encode(RAW_KEY)).as_bytes(),
-    );
-
-    let database_root = home.path().join(
-        "Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/acct/db_storage",
-    );
-    copy_directory(&fixture.root, &database_root);
-
-    let output = run_with_home(
-        home.path(),
-        &["conversations", "list", "--limit", "1"],
-        None,
-    );
-    assert_success(&output);
-    let response: Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(response["source"]["mode"], "liveEncrypted");
-    assert_eq!(response["page"]["returned"], 1);
-
-    let search = run_with_home(
-        home.path(),
-        &[
-            "messages",
-            "search",
-            "--json",
-            "--query-stdin",
-            "--conversation",
-            "wxid_talker",
-            "--limit",
-            "1",
-        ],
-        Some(b"hello\n"),
-    );
-    assert_success(&search);
-
-    let settings_directory = home.path().join(".greenbubbles");
-    fs::create_dir_all(&settings_directory).unwrap();
-    fs::set_permissions(&settings_directory, fs::Permissions::from_mode(0o700)).unwrap();
-    let alternate = home.path().join("alternate-passphrase.txt");
-    write_private_file(
-        &alternate,
-        format!("{}\n", hex::encode([0x11; 32])).as_bytes(),
-    );
-    write_private_file(
-        &settings_directory.join("config.toml"),
-        format!("[source]\npassphrase_file = \"{}\"\n", alternate.display()).as_bytes(),
-    );
-    let overridden = run_with_home(
-        home.path(),
-        &["conversations", "list", "--limit", "1"],
-        None,
-    );
-    assert!(!overridden.status.success());
-    let response: Value = serde_json::from_slice(&overridden.stdout).unwrap();
-    assert_eq!(response["error"]["code"], "databaseUnavailable");
-    fs::remove_file(settings_directory.join("config.toml")).unwrap();
-
-    fs::set_permissions(
-        credential_directory.join("passphrase.txt"),
-        fs::Permissions::from_mode(0o640),
-    )
-    .unwrap();
     let failure = run_with_home(home.path(), &["conversations", "list"], None);
     assert!(!failure.status.success());
-    let response: Value = serde_json::from_slice(&failure.stdout).unwrap();
-    assert_eq!(response["error"]["code"], "invalidProfile");
+    assert!(String::from_utf8_lossy(&failure.stderr).contains("query proxy unavailable"));
 }
 
 #[test]
@@ -1401,19 +1335,6 @@ impl ProfileHome {
     }
 }
 
-fn copy_directory(source: &Path, destination: &Path) {
-    fs::create_dir_all(destination).unwrap();
-    for entry in fs::read_dir(source).unwrap() {
-        let entry = entry.unwrap();
-        let target = destination.join(entry.file_name());
-        if entry.file_type().unwrap().is_dir() {
-            copy_directory(&entry.path(), &target);
-        } else if entry.file_type().unwrap().is_file() {
-            fs::copy(entry.path(), target).unwrap();
-        }
-    }
-}
-
 fn write_private_file(path: &Path, bytes: &[u8]) {
     fs::write(path, bytes).unwrap();
     fs::set_permissions(path, fs::Permissions::from_mode(0o600)).unwrap();
@@ -1445,9 +1366,26 @@ fn run(arguments: &[&str], input: Option<&[u8]>) -> Output {
 }
 
 fn run_with_home(home: &Path, arguments: &[&str], input: Option<&[u8]>) -> Output {
+    // These fixtures exercise explicit offline profiles, not the app-owned default proxy.
+    let document = fs::read(home.join(".greenbubbles/query-profiles.json"))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok());
+    let profile = document.as_ref().and_then(|v| v["defaultProfile"].as_str());
+    let mut explicit = arguments.to_vec();
+    if let Some(profile) = profile {
+        if !arguments.contains(&"--profile")
+            && !arguments.contains(&"--decrypted")
+            && matches!(
+                arguments.first(),
+                Some(&"conversations" | &"messages" | &"source")
+            )
+        {
+            explicit.extend(["--profile", profile]);
+        }
+    }
     let mut command = Command::new(env!("CARGO_BIN_EXE_greenbubbles"));
     command
-        .args(arguments)
+        .args(&explicit)
         .env("HOME", home)
         .env_remove("GREENBUBBLES_QUERY_PROFILES_FILE")
         .stdout(Stdio::piped())

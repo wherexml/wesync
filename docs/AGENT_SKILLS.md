@@ -34,11 +34,11 @@ python3 skills/we-sync-setup/scripts/doctor.py
 ```
 
 doctor 先检查 CLI 的消息查询能力，再调用 `source status`，不读聊天正文。
-可以用 `--greenbubbles PATH` 选择现有二进制，用 `--profile NAME` 验证
-已配置的其他来源。如果 PATH 里没有 CLI，它会查找已安装应用的内置工具。
-验证通过即可继续搜索，无需重复输入密钥或建立 profile。
+可以用 `--greenbubbles PATH` 选择现有二进制。如果 PATH 里没有 CLI，
+它会查找已安装应用的内置工具。验证通过即可继续搜索，无需输入密钥。
+日常查询不要指定 profile；账号和备份在应用中切换。
 
-桌面应用通过 macOS 钥匙串恢复已记住的连接，CLI 通过已有私有凭据文件恢复。
+桌面应用通过 macOS 钥匙串恢复已记住的连接，日常 CLI 经本机代理复用该连接。显式离线 profile 保留已有私有凭据文件。
 重装 skill 不改动两者。重装应用时按 [本机签名](LOCAL_SIGNING.md) 保持原签名
 身份、应用 ID 和工具摘要迁移，安装后退出再原生启动并验证自动连接。
 
@@ -61,3 +61,10 @@ python3 -m unittest discover -s scripts -p 'test_skill_package.py' -v
 验收会将可移植包移到带空格的路径，再在六种 Agent 的独立项目目录中安装两遍。
 本机 doctor 只输出连接状态。实际搜索受 [AI 读取黑名单](AI_READ_BLACKLIST.md)
 约束；使用云端模型时，提供给模型的消息由该模型服务处理。
+
+## 应用查询代理
+
+日常查询通过运行中 we-sync 的私有 socket，复用应用当前连接和黑名单。
+Agent 不需要磁盘权限或密钥文件；代理不可用时打开并连接 we-sync，不回退直读。
+显式来源/profile 属于独立离线管理入口，不能作为日常查询故障的替代。
+详见 [AI_QUERY_PROXY.md](AI_QUERY_PROXY.md)。

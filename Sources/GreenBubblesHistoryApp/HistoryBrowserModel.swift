@@ -272,7 +272,10 @@ final class HistoryBrowserModel {
     historyCacheSaves[url] = PendingCacheSave(id: saveID, task: task)
   }
 
+  private let queryProxy = HistoryQueryProxy()
+
   func flushHistoryCache() async {
+    queryProxy.stop()
     saveHistoryCache()
     while !historyCacheSaves.isEmpty {
       let pending = historyCacheSaves.values.map(\.task)
@@ -758,6 +761,11 @@ final class HistoryBrowserModel {
         )
         try Task.checkCancellation()
         guard activeDirectLoadID == loadID, directConfiguration == configuration else { return }
+        do {
+          try queryProxy.start(configuration: configuration, key: key)
+        } catch {
+          connectionPersistenceNotice = "AI 查询服务未能启动，请重新连接。"
+        }
         directStatus = status
         setupRecoverySource = nil
         enqueueChangedBodies(page.items)
@@ -2169,6 +2177,7 @@ final class HistoryBrowserModel {
   }
 
   private func clearDirectState() {
+    queryProxy.stop()
     bodyRefreshTask?.cancel()
     bodyRefreshTask = nil
     pendingBodyRefresh.removeAll()

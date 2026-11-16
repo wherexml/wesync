@@ -5,7 +5,10 @@ description: Find WeChat conversations and read or search their messages with th
 
 # Search WeChat
 
-Use the configured local `greenbubbles` CLI and its existing source. If
+Use the local `greenbubbles` CLI through the connected we-sync application proxy.
+Do not pass a source path, profile, key or access flag for daily queries.
+If the proxy is unavailable, open we-sync and restore its existing connection;
+never request Full Disk Access for the AI host or fall back to direct reads. If
 connection fails, follow [we-sync-setup](../we-sync-setup/SKILL.md).
 Use the binary reported by its doctor if the command is not on PATH. Read
 [CLI details](references/cli.md) for query, pagination, and attachment options.

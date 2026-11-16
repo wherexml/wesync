@@ -13,18 +13,20 @@ python3 scripts/doctor.py
 ```
 
 Resolve the script from this skill directory. Use `--greenbubbles PATH` for a
-specific executable or `--profile NAME` for an already configured alternate
-source. If the doctor succeeds, setup is complete. Use its reported binary
+specific executable. Use the active connection selected in we-sync. If the doctor succeeds, setup is complete. Use its reported binary
 with [we-search](../we-search/SKILL.md).
 
 If the check fails, use [setup and recovery](references/setup.md) for the
 specific failure. Keep the desktop app's remembered connection and the CLI's
-existing private credential. Diagnose tool path, account selection, and macOS
-permissions before considering a new credential. A reinstall is not a reason to
+existing private credential. Diagnose tool path and the application connection
+before considering a new credential. A reinstall is not a reason to
 clear settings or reacquire a key.
 
-On first setup, an existing private key file can serve the CLI without typing.
 If the desktop app has no saved connection, enter the verified database key
 once in its native connection form. Keep secrets out of chat, arguments, and
 logs. Only the owner can perform first-time capture when no verified credential
 exists. Do not attach to, re-sign, restart, or operate WeChat during setup.
+
+Daily queries require the we-sync app to be running and connected. The CLI
+uses its private local proxy, not the AI host’s disk access. Never request
+Full Disk Access for an AI app or pass direct-source options as a fallback.
