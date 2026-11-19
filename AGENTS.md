@@ -105,3 +105,5 @@ GitHub 更新使用固定 Sparkle 版本、签名 appcast 与签名 DMG，用户
 更新采用 CyberMe V6 式右下角 24pt 卡片，后台检查并自动下载，已就绪后重启；正常升级端只验签，不调用签名私钥/签名工具。测试默认使用完整合成聊天界面，结束关闭测试窗口并恢复真实聊天。本机同证书封装可复用按原始内容、权限、证书和策略绑定的签名 framework；损坏复用记录必须报错，不静默重签。见 [docs/GITHUB_UPDATES.md](docs/GITHUB_UPDATES.md)。
 
 日常 AI 查询通过应用拥有的私有 socket，禁止代理不可用时回退直读或要求 AI 宿主磁盘权限；保留原生本人浏览与代理黑名单边界，见 [docs/AI_QUERY_PROXY.md](docs/AI_QUERY_PROXY.md)。
+
+普通 AI 查询由 CLI 静默后台启动 we-sync 并恢复现有连接；不得为查询主动打开或激活窗口。失败仅返回错误，交互设置需用户明确请求。见 docs/AI_QUERY_PROXY.md。

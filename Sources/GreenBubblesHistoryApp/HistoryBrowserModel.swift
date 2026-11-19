@@ -326,6 +326,7 @@ final class HistoryBrowserModel {
   @ObservationIgnored private let snapshotKeychain = SnapshotKeychainStore()
   private var pendingStartupBundleURL: URL?
   private var processedStartupBundle = false
+  private let backgroundQueryLaunch: Bool
   private let mediaSessionURL = FileManager.default.temporaryDirectory.appending(
     path: "greenbubbles-history-media-\(UUID().uuidString)", directoryHint: .isDirectory)
   private let snapshotUnlockSessionURL = FileManager.default.temporaryDirectory.appending(
@@ -337,6 +338,7 @@ final class HistoryBrowserModel {
       fileURLWithPath: FileManager.default.currentDirectoryPath,
       isDirectory: true)
   ) {
+    backgroundQueryLaunch = HistoryLaunchMode.background || arguments.contains("--background-query")
     let candidates = [
       HistoryRememberedConnection.bundledReadTool,
       URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -377,7 +379,7 @@ final class HistoryBrowserModel {
     }
     do {
       pendingStartupBundleURL = try HistoryBrowserLaunchOptions(
-        arguments: arguments,
+        arguments: arguments.filter { $0 != "--background-query" },
         currentDirectoryURL: currentDirectoryURL
       ).bundleURL
     } catch {
@@ -822,7 +824,7 @@ final class HistoryBrowserModel {
         if needsAccess {
           setupRecoverySource = configuration.sourceURL
           libraryError = "无法读取本机记录，请在初始化设置中检查磁盘访问。"
-          presentSetupGuide()
+          if !backgroundQueryLaunch { presentSetupGuide() }
         }
       }
     }
@@ -1443,7 +1445,7 @@ final class HistoryBrowserModel {
     #endif
     guard let pendingStartupBundleURL else {
       restoreRememberedConnection()
-      showSetupGuideForNewUser()
+      if !backgroundQueryLaunch { showSetupGuideForNewUser() }
       return
     }
     self.pendingStartupBundleURL = nil

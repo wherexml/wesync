@@ -2,6 +2,27 @@ import AppKit
 import GreenBubblesHistory
 import SwiftUI
 
+enum HistoryLaunchMode {
+  // LaunchServices may reuse a just-terminated application registration and omit argv.
+  // This short-lived, owner-only marker carries no source or credential information.
+  static let background: Bool = {
+    let path = FileManager.default.homeDirectoryForCurrentUser
+      .appending(path: "Library/Application Support/GreenBubbles/query-start-mode")
+    let explicit = CommandLine.arguments.contains("--background-query")
+    guard let attributes = try? FileManager.default.attributesOfItem(atPath: path.path),
+      attributes[.type] as? FileAttributeType == .typeRegular,
+      (attributes[.ownerAccountID] as? NSNumber)?.uint32Value == getuid(),
+      (attributes[.posixPermissions] as? NSNumber)?.intValue == 0o600,
+      let size = (attributes[.size] as? NSNumber)?.intValue, size > 0, size < 64,
+      let content = try? String(contentsOf: path, encoding: .utf8),
+      let timestamp = Double(content),
+      (0...30).contains(Date().timeIntervalSince1970 - timestamp)
+    else { return explicit }
+    try? FileManager.default.removeItem(at: path)
+    return true
+  }()
+}
+
 enum HistoryBrand {
   static let name = "we-sync"
 }
@@ -13,6 +34,12 @@ struct GreenBubblesHistoryApplication: App {
   @Environment(\.openWindow) private var openWindow
 
   var body: some Scene {
+    // Configure lifecycle work independently of a visible window.
+    applicationDelegate.configure(model: model, openHistory: { openWindow(id: "history") })
+    return historyScene
+  }
+
+  private var historyScene: some Scene {
     // Dock reopen and menu-bar actions must address the same main window.
     Window("微信聊天记录", id: "history") {
       HistoryRootView(model: model)
@@ -21,15 +48,9 @@ struct GreenBubblesHistoryApplication: App {
         }
         .environment(\.locale, Locale(identifier: "zh_CN"))
         .frame(minWidth: 980, minHeight: 680)
-        .onAppear { [model] in
-          applicationDelegate.showWindowHandler = { openWindow(id: "history") }
-          applicationDelegate.settingsHandler = { model.presentDirectConnection() }
-          applicationDelegate.flushHandler = { await model.flushHistoryCache() }
+        .onAppear {
           applicationDelegate.ensureStatusItem()
-          applicationDelegate.activateHistoryWindow()
-          applicationDelegate.registerOpenURLHandler { [weak model] urls in
-            model?.openExternalURLs(urls)
-          }
+          if !applicationDelegate.backgroundLaunch { applicationDelegate.activateHistoryWindow() }
         }
     }
     .defaultSize(width: 1_320, height: 860)
@@ -81,6 +102,18 @@ struct GreenBubblesHistoryApplication: App {
 @MainActor
 final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
   let updater = HistoryUpdater()
+  private(set) var backgroundLaunch = HistoryLaunchMode.background
+  private var didFinishLaunching = false
+  private var startupHandler: (() -> Void)?
+
+  func configure(model: HistoryBrowserModel, openHistory: @escaping () -> Void) {
+    showWindowHandler = openHistory
+    settingsHandler = { model.presentDirectConnection() }
+    flushHandler = { await model.flushHistoryCache() }
+    startupHandler = { model.openStartupBundleIfNeeded() }
+    registerOpenURLHandler { [weak model] urls in model?.openExternalURLs(urls) }
+    if didFinishLaunching && backgroundLaunch { startupHandler?() }
+  }
   var showWindowHandler: (() -> Void)?
   var settingsHandler: (() -> Void)?
   var flushHandler: (() async -> Void)?
@@ -106,7 +139,7 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
   }
 
   func applyDockPolicy() {
-    NSApp.setActivationPolicy(showDockIcon ? .regular : .accessory)
+    NSApp.setActivationPolicy(!backgroundLaunch && showDockIcon ? .regular : .accessory)
   }
 
   func activateHistoryWindow() {
@@ -120,10 +153,16 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
   }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    didFinishLaunching = true
     HistoryInteractionTrace.shared.start()
     updater.start()
     ensureStatusItem()
-    activateHistoryWindow()
+    if backgroundLaunch {
+      NSApp.hide(nil)
+      startupHandler?()
+    } else {
+      activateHistoryWindow()
+    }
   }
 
   func ensureStatusItem() {
@@ -172,7 +211,6 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
         }
       }
     #endif
-    activateHistoryWindow()
   }
 
   func menuWillOpen(_ menu: NSMenu) {
@@ -197,6 +235,8 @@ final class HistoryApplicationDelegate: NSObject, NSApplicationDelegate, NSMenuD
     }
   }
   @objc private func showHistory() {
+    backgroundLaunch = false
+    applyDockPolicy()
     showWindowHandler?()
     activateHistoryWindow()
   }

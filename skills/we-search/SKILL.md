@@ -7,9 +7,11 @@ description: Find WeChat conversations and read or search their messages with th
 
 Use the local `greenbubbles` CLI through the connected we-sync application proxy.
 Do not pass a source path, profile, key or access flag for daily queries.
-If the proxy is unavailable, open we-sync and restore its existing connection;
-never request Full Disk Access for the AI host or fall back to direct reads. If
-connection fails, follow [we-sync-setup](../we-sync-setup/SKILL.md).
+The CLI silently starts we-sync in the background and restores its remembered
+connection when needed. Never run `open`, activate the app, or open its chat or
+settings window for a routine query. If background recovery fails, report the
+error and ask the user to open settings manually; do not open UI yourself,
+request Full Disk Access for the AI host, or fall back to direct reads.
 Use the binary reported by its doctor if the command is not on PATH. Read
 [CLI details](references/cli.md) for query, pagination, and attachment options.
 

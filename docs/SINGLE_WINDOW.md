@@ -13,3 +13,9 @@ we-sync 只保留一个聊天主窗口。Dock 点击、Finder 再次打开和菜
 直接 Dock 点击验收受原生 Dock 自动化接口超时阻塞；Finder 的原生应用重开入口用于覆盖相同的 applicationShouldHandleReopen 流程，不将其记录为直接 Dock 点击通过。
 
 脱敏记录及复验步骤：[single-window-20261016.json](acceptance/single-window-20261016.json)。本地回滚包位于 `.build/single-window-install-20261016/installed-backup.app`，须完整退出后恢复。工作区已有搜索框修改未混入本次构建和提交。
+
+## AI 后台启动
+
+`--background-query` 使用 LaunchServices 的后台/隐藏启动方式；自动恢复不依赖
+窗口出现，不主动激活聊天或设置页。用户显式 Dock/Finder/菜单打开后再显示唯一
+窗口，保持关闭、最小化和隐藏后的恢复行为。见 [AI_QUERY_PROXY.md](AI_QUERY_PROXY.md)。

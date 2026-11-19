@@ -26,8 +26,8 @@
   A similarly named discovery executable may lack message queries. If a binary
   is found but fails validation, check it explicitly rather than switching to
   another tool to circumvent a failure or policy.
-- **Source unavailable:** open `/Applications/we-sync.app` and restore its existing
-  connection. Daily queries use the app-owned local proxy. Never ask for Full Disk
+- **Source unavailable:** let the CLI attempt silent startup and existing-connection recovery.
+  If it fails, report the error; ask the user to open settings manually. Daily queries use the app-owned local proxy. Never ask for Full Disk
   Access for the AI host, copy its credentials, or fall back to direct source reads.
   Disk access recovery, if needed, belongs to we-sync itself.
 - **Other account or snapshot:** use an existing named profile. Verify with

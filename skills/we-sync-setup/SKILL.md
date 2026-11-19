@@ -27,6 +27,11 @@ once in its native connection form. Keep secrets out of chat, arguments, and
 logs. Only the owner can perform first-time capture when no verified credential
 exists. Do not attach to, re-sign, restart, or operate WeChat during setup.
 
-Daily queries require the we-sync app to be running and connected. The CLI
-uses its private local proxy, not the AI host’s disk access. Never request
+Daily queries use the we-sync application’s private local proxy. The CLI
+silently starts the app when needed and restores its remembered connection. Never request
 Full Disk Access for an AI app or pass direct-source options as a fallback.
+
+Routine queries and doctor checks must remain in the background. The CLI owns
+silent startup and remembered-connection recovery. Never open or activate the
+we-sync window as an automatic recovery step. Report failures; only open its
+UI when the user explicitly requests setup or interactive troubleshooting.

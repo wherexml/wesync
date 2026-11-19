@@ -1,0 +1,24 @@
+{
+  "case": "cold",
+  "queries": [
+    {
+      "passed": true,
+      "seconds": 1.834
+    }
+  ],
+  "window": {
+    "applicationBecameFrontmost": false,
+    "applicationObserved": true,
+    "baselineKnown": true,
+    "distinctForegroundProcesses": 1,
+    "foregroundUnchanged": true,
+    "maximumApplicationProcesses": 1,
+    "maximumVisibleWindows": 0,
+    "passed": true,
+    "samples": 194
+  },
+  "startupMarkerRemoved": true,
+  "clientDirectDatabaseReadsDenied": true,
+  "policyUnchanged": true,
+  "passed": true
+}

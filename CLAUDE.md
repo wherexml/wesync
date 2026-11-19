@@ -93,3 +93,5 @@ GitHub updates use pinned Sparkle, signed feeds and archives, and explicit insta
 Use the CyberMe V6 corner notice (24 pt right/bottom), background checking/downloading and restart when ready. Runtime update clients only verify signatures; signing-key access belongs to artifact preparation. UI E2E defaults to the real synthetic chat screen; quit previews and restore the user's chat afterward. Reuse unchanged same-certificate local framework bytes only with pinned input/permissions/certificate/policy hashes; reject cache corruption. See [docs/GITHUB_UPDATES.md](docs/GITHUB_UPDATES.md).
 
 日常 AI 查询通过应用拥有的私有 socket，禁止代理不可用时回退直读或要求 AI 宿主磁盘权限；保留原生本人浏览与代理黑名单边界，见 [docs/AI_QUERY_PROXY.md](docs/AI_QUERY_PROXY.md)。
+
+普通 AI 查询由 CLI 静默后台启动 we-sync 并恢复现有连接；不得为查询主动打开或激活窗口。失败仅返回错误，交互设置需用户明确请求。见 docs/AI_QUERY_PROXY.md。

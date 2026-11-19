@@ -64,7 +64,8 @@ python3 -m unittest discover -s scripts -p 'test_skill_package.py' -v
 
 ## 应用查询代理
 
-日常查询通过运行中 we-sync 的私有 socket，复用应用当前连接和黑名单。
-Agent 不需要磁盘权限或密钥文件；代理不可用时打开并连接 we-sync，不回退直读。
+日常查询通过 we-sync 的私有 socket，复用应用当前连接和黑名单。
+应用未运行时 CLI 静默后台启动并恢复现有连接，不弹出或激活窗口。
+Agent 不需要磁盘权限或密钥文件；恢复失败仅报告错误，由用户决定何时打开设置，不回退直读。
 显式来源/profile 属于独立离线管理入口，不能作为日常查询故障的替代。
 详见 [AI_QUERY_PROXY.md](AI_QUERY_PROXY.md)。

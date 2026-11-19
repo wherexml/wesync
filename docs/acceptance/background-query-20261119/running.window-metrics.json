@@ -1,0 +1,11 @@
+{
+  "applicationBecameFrontmost" : false,
+  "applicationObserved" : true,
+  "baselineKnown" : true,
+  "distinctForegroundProcesses" : 1,
+  "foregroundUnchanged" : true,
+  "maximumApplicationProcesses" : 1,
+  "maximumVisibleWindows" : 0,
+  "passed" : true,
+  "samples" : 167
+}

@@ -1,0 +1,21 @@
+{
+  "build": 82,
+  "installedMatchesValidatedCandidate": {
+    "greenbubbles": true,
+    "greenbubbles-history": true,
+    "greenbubbles-send": true
+  },
+  "signingIdentityPreserved": true,
+  "connectionSecretEntered": false,
+  "systemPermissionChanges": false,
+  "windowCases": {
+    "cold": true,
+    "concurrent": true,
+    "running": true,
+    "closed-window": true
+  },
+  "readBlacklistPolicyUnchanged": true,
+  "sharedSkillsSynchronized": true,
+  "localCI": "23/23 PASS",
+  "proxySyntheticE2E": "24/24 PASS"
+}

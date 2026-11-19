@@ -1,0 +1,36 @@
+{
+  "case": "concurrent",
+  "queries": [
+    {
+      "passed": true,
+      "seconds": 2.476
+    },
+    {
+      "passed": true,
+      "seconds": 3.18
+    },
+    {
+      "passed": true,
+      "seconds": 2.938
+    },
+    {
+      "passed": true,
+      "seconds": 2.686
+    }
+  ],
+  "window": {
+    "applicationBecameFrontmost": false,
+    "applicationObserved": true,
+    "baselineKnown": true,
+    "distinctForegroundProcesses": 1,
+    "foregroundUnchanged": true,
+    "maximumApplicationProcesses": 1,
+    "maximumVisibleWindows": 0,
+    "passed": true,
+    "samples": 195
+  },
+  "startupMarkerRemoved": true,
+  "clientDirectDatabaseReadsDenied": true,
+  "policyUnchanged": true,
+  "passed": true
+}

@@ -207,7 +207,7 @@ fn query_error_details(
         .downcast_ref::<greenbubbles::query_proxy::Unavailable>()
         .is_some()
     {
-        return ("proxyUnavailable", "we-sync query proxy unavailable. Open we-sync and restore its connection; do not grant disk access to the AI app.", true);
+        return ("proxyUnavailable", "we-sync query proxy unavailable. The background connection could not be restored; ask the user to open settings manually if setup is needed. Do not activate a window or grant disk access to the AI app.", true);
     }
     if let Some(error) = error.downcast_ref::<LiveQueryError>() {
         return match error {
